@@ -2,6 +2,7 @@ package com.marfeel.demoapp
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,10 +17,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.marfeel.compass.tracker.CompassTracker
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun MainScreen() {
+fun MainScreen(
+	tracker: CompassTracker
+) {
 	val scaffoldState = rememberScaffoldState()
 	val backgroundColor = Color.White
 
@@ -39,6 +43,9 @@ fun MainScreen() {
 				Modifier
 					.fillMaxWidth()
 					.background(Color.Blue)
+					.clickable {
+						tracker.startPageView("losjavis.com")
+					}
 			) {
 				Text(
 					text = "Start",
@@ -52,6 +59,9 @@ fun MainScreen() {
 					.fillMaxWidth()
 					.padding(top = 32.dp)
 					.background(Color.Blue)
+					.clickable {
+						tracker.stopTracking()
+					}
 			) {
 				Text(
 					text = "Stop",
@@ -67,6 +77,6 @@ fun MainScreen() {
 @Composable
 fun MainScreenPreview() {
 	MaterialTheme {
-		MainScreen()
+		MainScreen(CompassTracker())
 	}
 }
