@@ -11,12 +11,13 @@ internal class PingEmitter {
 	private val scope = GlobalScope
 	private var job: Job? = null
 	private var isRunning: Boolean = false
+	var appOnBackground: Boolean = false
 
 	fun start() {
 		isRunning = true
 
 		job = scope.launch {
-			while (true) {
+			while (!appOnBackground) {
 				ping()
 				delay(pingFrequencyInMs)
 			}
@@ -32,4 +33,5 @@ internal class PingEmitter {
 		job = null
 		isRunning = false
 	}
+
 }
