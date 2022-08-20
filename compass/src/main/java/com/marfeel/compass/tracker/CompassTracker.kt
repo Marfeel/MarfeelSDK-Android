@@ -8,13 +8,14 @@ interface CompassTracking {
     fun stopTracking()
 }
 
-internal object CompassTracker : CompassTracking {
+//TODO: Internal when DI is ready
+object CompassTracker : CompassTracking {
 
     private val pingEmitter = PingEmitter()
     private val backgroundWatcher = BackgroundWatcher(pingEmitter).apply { initialize() }
 
     override fun startPageView(url: String) {
-        pingEmitter.start()
+        pingEmitter.start(url)
     }
 
     override fun stopTracking() {
