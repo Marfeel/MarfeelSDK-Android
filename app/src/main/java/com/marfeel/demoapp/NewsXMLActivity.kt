@@ -1,10 +1,11 @@
 package com.marfeel.demoapp
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.ui.AppBarConfiguration
 import com.marfeel.compass.tracker.CompassTracker
 import com.marfeel.demoapp.databinding.ActivityNewsXmlactivityBinding
+
 
 class NewsXMLActivity : AppCompatActivity() {
 
@@ -13,8 +14,9 @@ class NewsXMLActivity : AppCompatActivity() {
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		tracker.startPageView("NewsActivity - XML")
 		binding = ActivityNewsXmlactivityBinding.inflate(layoutInflater)
+		val scrollView = binding.root
+		tracker.startPageView("NewsActivity - XML", scrollView)
 		setContentView(binding.root)
 	}
 }
