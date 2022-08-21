@@ -32,7 +32,8 @@ import com.marfeel.compass.tracker.CompassTracker
 @Composable
 fun MainScreen(
 	tracker: CompassTracker,
-	navigateToExternalNews: () -> Unit,
+	navigateToComposeNews: () -> Unit,
+	navigateToXmlNews: () -> Unit,
 	navigateToSettings: () -> Unit,
 ) {
 	val scaffoldState = rememberScaffoldState()
@@ -71,7 +72,7 @@ fun MainScreen(
 			) {
 				Column {
 					Text(
-						text = "Noticia 1",
+						text = "Noticia Extensible",
 						color = Color.White,
 						style = titleStyle,
 						modifier = Modifier.padding(16.dp)
@@ -93,11 +94,29 @@ fun MainScreen(
 					.clip(RoundedCornerShape(4.dp))
 					.background(Color(0xFFE06581))
 					.clickable {
-						navigateToExternalNews()
+						navigateToComposeNews()
 					}
 			) {
 				Text(
-					text = "Noticia 2",
+					text = "Noticia Compose",
+					color = Color.White,
+					style = titleStyle,
+					modifier = Modifier.padding(16.dp)
+				)
+			}
+
+			Box(
+				Modifier
+					.fillMaxWidth()
+					.padding(top = 32.dp)
+					.clip(RoundedCornerShape(4.dp))
+					.background(Color(0xFFCCAA44))
+					.clickable {
+						navigateToXmlNews()
+					}
+			) {
+				Text(
+					text = "Noticia XML",
 					color = Color.White,
 					style = titleStyle,
 					modifier = Modifier.padding(16.dp)
@@ -130,6 +149,6 @@ fun MainScreen(
 @Composable
 fun MainScreenPreview() {
 	MaterialTheme {
-		MainScreen(CompassTracker, {}, {})
+		MainScreen(CompassTracker, {}, {}, {})
 	}
 }

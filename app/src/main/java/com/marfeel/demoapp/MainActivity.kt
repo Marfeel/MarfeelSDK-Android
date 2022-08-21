@@ -17,8 +17,12 @@ class MainActivity : FragmentActivity() {
 			MaterialTheme {
 				MainScreen(
 					tracker = tracker,
-					navigateToExternalNews = {
-						val intent = Intent(this, NewsActivity::class.java)
+					navigateToXmlNews = {
+						val intent = Intent(this, NewsXMLActivity::class.java)
+						startActivity(intent)
+					},
+					navigateToComposeNews = {
+						val intent = Intent(this, NewsComposeActivity::class.java)
 						startActivity(intent)
 					},
 					navigateToSettings = {
