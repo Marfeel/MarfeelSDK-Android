@@ -12,17 +12,19 @@ internal class PingEmitter {
 	private val pingFrequencyInMs = 10000L
 	private val scope = GlobalScope
 	private var job: Job? = null
-	private var isRunning: Boolean = false
-	private var scrollPercentage: Int? = null
+	private var pingEmitterState: PingEmitterState? = null
 	var appOnBackground: Boolean = false
 
 	fun start(
 		url: String,
 		scrollPosition: Int? = null
 	) {
-		Log.d("xtest", "pingStart: $url")
-		isRunning = true
-		scrollPercentage = scrollPosition
+		pingEmitterState = PingEmitterState(
+			url = url,
+			pingCounter = 0,
+			scrollPercent = scrollPosition,
+			pageStartTimeStamp = System.currentTimeMillis()
+		)
 
 		job = scope.launch {
 			while (!appOnBackground) {
@@ -33,7 +35,7 @@ internal class PingEmitter {
 	}
 
 	private fun ping() {
-		Log.d("xtest", "ping \n scrollPercentage: $scrollPercentage \n")
+		Log.d("xtest", "ping \n scrollPercentage: ${pingEmitterState?.scrollPercent} \n")
 		Timber.d("Timber ping")
 	}
 
@@ -41,11 +43,17 @@ internal class PingEmitter {
 		Log.d("xtest", "pingStop")
 		job?.cancelChildren()
 //		job = null
-		isRunning = false
-		scrollPercentage = null
+		pingEmitterState = null
 	}
 
 	fun updateScrollPercentage(scrollPosition: Int) {
-		scrollPercentage = scrollPosition
+		pingEmitterState = pingEmitterState?.copy(scrollPercent = scrollPosition)
 	}
 }
+
+internal data class PingEmitterState(
+	val url: String,
+	val pingCounter: Long,
+	val scrollPercent: Int?,
+	val pageStartTimeStamp: Long
+)
