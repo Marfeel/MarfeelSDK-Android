@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.marfeel.compass.core.UserType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -18,6 +19,7 @@ internal class Storage(
 	companion object {
 		private const val storageName = "EncryptedStorage"
 		private const val userIdKey = "userId_key"
+		private const val userTypeKey = "userType_key"
 		private const val firstSessionTimeStampKey = "firstSessionTimeStamp_key"
 		private const val previousSessionTimeStampKey = "previousSessionTimestampTimeStamp_key"
 	}
@@ -102,4 +104,29 @@ internal class Storage(
 		}
 	}
 
+	fun updateUserType(userType: UserType) {
+		storageScope.launch {
+			setUserType(userType)
+		}
+	}
+
+	private fun setUserType(userType: UserType) {
+		preferences.edit {
+			putInt(userTypeKey, userType.numericValue)
+		}
+	}
+
+	fun readUserType(): UserType =
+		runBlocking {
+			getUserType()
+		}
+
+	private fun getUserType(): UserType =
+		when (val type = preferences.getInt(userTypeKey, -155)) {
+			-155,
+			UserType.Anonymous.numericValue -> UserType.Anonymous
+			UserType.Logged.numericValue -> UserType.Logged
+			UserType.Paid.numericValue -> UserType.Paid
+			else -> UserType.CustomUserJourney(type)
+		}
 }
