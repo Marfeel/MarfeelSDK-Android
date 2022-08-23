@@ -5,10 +5,10 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.material.MaterialTheme
 import androidx.fragment.app.FragmentActivity
-import com.marfeel.compass.tracker.CompassTracker
+import com.marfeel.compass.tracker.CompassTracking
 
 class MainActivity : FragmentActivity() {
-	private val tracker: CompassTracker = CompassTracker
+	private val tracker: CompassTracking = CompassTracking.getInstance()
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
