@@ -45,18 +45,18 @@ internal class Storage(
 		}
 	}
 
-	fun readFirstSessionTimeStamp(): Long =
+	fun readFirstSessionTimeStamp(): Long? =
 		runBlocking(storageScope.coroutineContext) {
-			getFirstSessionTimeStamp()
+			getFirstSessionTimeStamp()?.toLong()
 		}
 
 	private fun setFirstSessionTimeStamp(firstSessionTimeStamp: Long) =
 		preferences.edit {
-			putLong(firstSessionTimeStampKey, firstSessionTimeStamp)
+			putString(firstSessionTimeStampKey, firstSessionTimeStamp.toString())
 		}
 
-	private fun getFirstSessionTimeStamp(): Long =
-		preferences.getLong(firstSessionTimeStampKey, System.currentTimeMillis())
+	private fun getFirstSessionTimeStamp(): String? =
+		preferences.getString(firstSessionTimeStampKey, null)
 
 	fun updatePreviousSessionTimeStamp(previousSessionTimeStamp: Long) {
 		storageScope.launch {
@@ -64,18 +64,18 @@ internal class Storage(
 		}
 	}
 
-	fun readPreviousSessionTimeStamp(): Long =
+	fun readPreviousSessionTimeStamp(): Long? =
 		runBlocking(storageScope.coroutineContext) {
-			getPreviousSessionTimeStamp()
+			getPreviousSessionTimeStamp()?.toLong()
 		}
 
 	private fun setPreviousSessionTimeStamp(previousSessionTimeStamp: Long) =
 		preferences.edit {
-			putLong(previousSessionTimeStampKey, previousSessionTimeStamp)
+			putString(previousSessionTimeStampKey, previousSessionTimeStamp.toString())
 		}
 
-	private fun getPreviousSessionTimeStamp(): Long =
-		preferences.getLong(previousSessionTimeStampKey, getFirstSessionTimeStamp())
+	private fun getPreviousSessionTimeStamp(): String? =
+		preferences.getString(previousSessionTimeStampKey, null)
 
 	fun updateUserId(userId: String) {
 		storageScope.launch {
@@ -112,7 +112,7 @@ internal class Storage(
 
 	private fun setUserType(userType: UserType) {
 		preferences.edit {
-			putInt(userTypeKey, userType.numericValue)
+			putString(userTypeKey, userType.numericValue.toString())
 		}
 	}
 
@@ -122,8 +122,8 @@ internal class Storage(
 		}
 
 	private fun getUserType(): UserType =
-		when (val type = preferences.getInt(userTypeKey, -155)) {
-			-155,
+		when (val type = preferences.getString(userTypeKey, null)?.toInt()) {
+			null,
 			UserType.Anonymous.numericValue -> UserType.Anonymous
 			UserType.Logged.numericValue -> UserType.Logged
 			UserType.Paid.numericValue -> UserType.Paid
