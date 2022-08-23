@@ -36,6 +36,9 @@ internal class PingEmitter {
 
 	private fun ping() {
 //		val userId = storage.
+		pingEmitterState?.let {
+			pingEmitterState = it.copy(pingCounter = it.pingCounter + 1)
+		}
 		Log.d("xtest", "ping \n scrollPercentage: ${pingEmitterState?.scrollPercent} \n")
 		Timber.d("Timber ping")
 	}
