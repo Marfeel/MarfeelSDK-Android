@@ -1,20 +1,26 @@
 package com.marfeel.compass.tracker
 
-import android.util.Log
+import android.app.Application
+import android.content.Context
 import android.view.ViewTreeObserver
 import androidx.core.widget.NestedScrollView
 import com.marfeel.compass.BackgroundWatcher
 import com.marfeel.compass.core.PingEmitter
+import com.marfeel.compass.core.UserType
+import com.marfeel.compass.storage.Storage
 
 interface CompassTracking {
 	fun startPageView(url: String)
 	fun startPageView(url: String, scrollView: NestedScrollView)
 	fun stopTracking()
+	fun setUserId(userId: String)
+	fun setUserType(userType: UserType)
 }
 
 //TODO: Internal when DI is ready
 object CompassTracker : CompassTracking {
 
+//	private val storage = Storage(context)
 	private val pingEmitter = PingEmitter()
 	private val backgroundWatcher = BackgroundWatcher(pingEmitter).apply { initialize() }
 
@@ -44,5 +50,13 @@ object CompassTracker : CompassTracking {
 
 	override fun stopTracking() {
 		pingEmitter.stop()
+	}
+
+	override fun setUserId(userId: String) {
+//		storage.updateUserId(userId)
+	}
+
+	override fun setUserType(userType: UserType) {
+//		storage.updateUserType(userType)
 	}
 }

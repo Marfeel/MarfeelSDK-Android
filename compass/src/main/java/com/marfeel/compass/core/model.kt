@@ -23,8 +23,8 @@ internal data class PingRequest(
 
 sealed class UserType(open val numericValue: Int) {
     object Anonymous : UserType(1)
-    object Logged : UserType(1)
-    object Paid : UserType(1)
+    object Logged : UserType(2)
+    object Paid : UserType(3)
     data class CustomUserJourney(override val numericValue: Int) : UserType(numericValue)
 }
 

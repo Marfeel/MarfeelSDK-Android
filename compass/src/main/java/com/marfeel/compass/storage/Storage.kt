@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.marfeel.compass.core.UserType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -18,6 +19,7 @@ internal class Storage(
 	companion object {
 		private const val storageName = "EncryptedStorage"
 		private const val userIdKey = "userId_key"
+		private const val userTypeKey = "userType_key"
 		private const val firstSessionTimeStampKey = "firstSessionTimeStamp_key"
 		private const val previousSessionTimeStampKey = "previousSessionTimestampTimeStamp_key"
 	}
@@ -43,18 +45,18 @@ internal class Storage(
 		}
 	}
 
-	fun readFirstSessionTimeStamp(): Long =
+	fun readFirstSessionTimeStamp(): Long? =
 		runBlocking(storageScope.coroutineContext) {
-			getFirstSessionTimeStamp()
+			getFirstSessionTimeStamp()?.toLong()
 		}
 
 	private fun setFirstSessionTimeStamp(firstSessionTimeStamp: Long) =
 		preferences.edit {
-			putLong(firstSessionTimeStampKey, firstSessionTimeStamp)
+			putString(firstSessionTimeStampKey, firstSessionTimeStamp.toString())
 		}
 
-	private fun getFirstSessionTimeStamp(): Long =
-		preferences.getLong(firstSessionTimeStampKey, System.currentTimeMillis())
+	private fun getFirstSessionTimeStamp(): String? =
+		preferences.getString(firstSessionTimeStampKey, null)
 
 	fun updatePreviousSessionTimeStamp(previousSessionTimeStamp: Long) {
 		storageScope.launch {
@@ -62,18 +64,18 @@ internal class Storage(
 		}
 	}
 
-	fun readPreviousSessionTimeStamp(): Long =
+	fun readPreviousSessionTimeStamp(): Long? =
 		runBlocking(storageScope.coroutineContext) {
-			getPreviousSessionTimeStamp()
+			getPreviousSessionTimeStamp()?.toLong()
 		}
 
 	private fun setPreviousSessionTimeStamp(previousSessionTimeStamp: Long) =
 		preferences.edit {
-			putLong(previousSessionTimeStampKey, previousSessionTimeStamp)
+			putString(previousSessionTimeStampKey, previousSessionTimeStamp.toString())
 		}
 
-	private fun getPreviousSessionTimeStamp(): Long =
-		preferences.getLong(previousSessionTimeStampKey, getFirstSessionTimeStamp())
+	private fun getPreviousSessionTimeStamp(): String? =
+		preferences.getString(previousSessionTimeStampKey, null)
 
 	fun updateUserId(userId: String) {
 		storageScope.launch {
@@ -102,4 +104,29 @@ internal class Storage(
 		}
 	}
 
+	fun updateUserType(userType: UserType) {
+		storageScope.launch {
+			setUserType(userType)
+		}
+	}
+
+	private fun setUserType(userType: UserType) {
+		preferences.edit {
+			putString(userTypeKey, userType.numericValue.toString())
+		}
+	}
+
+	fun readUserType(): UserType =
+		runBlocking {
+			getUserType()
+		}
+
+	private fun getUserType(): UserType =
+		when (val type = preferences.getString(userTypeKey, null)?.toInt()) {
+			null,
+			UserType.Anonymous.numericValue -> UserType.Anonymous
+			UserType.Logged.numericValue -> UserType.Logged
+			UserType.Paid.numericValue -> UserType.Paid
+			else -> UserType.CustomUserJourney(type)
+		}
 }
