@@ -1,13 +1,10 @@
 package com.marfeel.compass.tracker
 
-import android.app.Application
-import android.content.Context
 import android.view.ViewTreeObserver
 import androidx.core.widget.NestedScrollView
 import com.marfeel.compass.BackgroundWatcher
 import com.marfeel.compass.core.PingEmitter
 import com.marfeel.compass.core.UserType
-import com.marfeel.compass.storage.Storage
 import com.marfeel.compass.di.CompassKoinComponent
 import org.koin.core.component.inject
 
