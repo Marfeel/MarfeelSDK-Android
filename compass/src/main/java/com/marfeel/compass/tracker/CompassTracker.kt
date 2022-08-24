@@ -14,6 +14,7 @@ interface CompassTracking {
 	fun stopTracking()
 	fun setUserId(userId: String)
 	fun setUserType(userType: UserType)
+	fun getRFV(): String?
 
 	companion object {
 		fun getInstance(): CompassTracking = CompassTracker
@@ -60,6 +61,10 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
 
 	override fun setUserType(userType: UserType) {
 //		storage.updateUserType(userType)
+	}
+
+	override fun getRFV(): String? {
+		TODO("Not yet implemented")
 	}
 }
 
