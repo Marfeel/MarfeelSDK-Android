@@ -94,18 +94,4 @@ internal class StorageTest {
 
 		assertEquals(savedUserType, retrievedUserType)
 	}
-
-	@Test
-	fun `readAccountId returns null if not set previously`() {
-		assertEquals(null, storage.readAccountId())
-	}
-
-	@Test
-	fun `updates accountId`() {
-		val savedAccountId = UUID.randomUUID().toString()
-		storage.updateAccountId(savedAccountId)
-		val retrievedUserType = storage.readAccountId()
-
-		assertEquals(savedAccountId, retrievedUserType)
-	}
 }

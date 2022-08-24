@@ -8,6 +8,7 @@ import com.marfeel.compass.core.PingEmitter
 import com.marfeel.compass.core.UserType
 import com.marfeel.compass.di.CompassKoinComponent
 import com.marfeel.compass.di.addAndroidContextToDiApplication
+import com.marfeel.compass.rfv.GetRFV
 import com.marfeel.compass.storage.Storage
 import org.koin.core.component.inject
 
@@ -38,6 +39,7 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
 	private val pingEmitter: PingEmitter by inject()
 	private val backgroundWatcher: BackgroundWatcher by inject()
 	private val storage: Storage by inject()
+	private val getRFV: GetRFV by inject()
 
 	override fun startPageView(url: String) {
 		requireNotNull(CompassTracking.accountId)
@@ -81,7 +83,6 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
 		storage.updateUserType(userType)
 	}
 
-	override fun getRFV(): String? {
-		TODO("Not yet implemented")
-	}
+	override fun getRFV(): String? =
+		getRFV.invoke()
 }
