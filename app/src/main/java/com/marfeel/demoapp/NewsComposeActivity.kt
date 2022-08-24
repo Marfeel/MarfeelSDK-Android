@@ -20,10 +20,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.FragmentActivity
-import com.marfeel.compass.tracker.CompassTracker
+import com.marfeel.compass.tracker.CompassTracking
 
 class NewsComposeActivity : FragmentActivity() {
-	private val tracker: CompassTracker = CompassTracker
+	private val tracker: CompassTracking = CompassTracking.getInstance()
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)

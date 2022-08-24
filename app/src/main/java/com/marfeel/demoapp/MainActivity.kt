@@ -8,10 +8,13 @@ import androidx.fragment.app.FragmentActivity
 import com.marfeel.compass.tracker.CompassTracking
 
 class MainActivity : FragmentActivity() {
+
 	private val tracker: CompassTracking = CompassTracking.getInstance()
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+		CompassTracking.initialize(this, "accountId")
+		tracker.setUserId("UserId")
 
 		setContent {
 			MaterialTheme {
