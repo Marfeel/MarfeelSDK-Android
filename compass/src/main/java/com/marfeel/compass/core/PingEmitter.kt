@@ -1,14 +1,17 @@
 package com.marfeel.compass.core
 
 import android.util.Log
+import com.marfeel.compass.di.CompassKoinComponent
+import com.marfeel.compass.usecase.Ping
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import timber.log.Timber
+import org.koin.core.component.inject
 
-internal class PingEmitter {
+internal class PingEmitter : CompassKoinComponent {
+	private val pingUseCase: Ping by inject()
 	private val pingFrequencyInMs = 10000L
 	private val scope = GlobalScope
 	private var job: Job? = null
@@ -35,12 +38,10 @@ internal class PingEmitter {
 	}
 
 	private fun ping() {
-//		val userId = storage.
 		pingEmitterState?.let {
 			pingEmitterState = it.copy(pingCounter = it.pingCounter + 1)
+			pingUseCase(it)
 		}
-		Log.d("xtest", "ping \n scrollPercentage: ${pingEmitterState?.scrollPercent} \n")
-		Timber.d("Timber ping")
 	}
 
 	fun stop() {

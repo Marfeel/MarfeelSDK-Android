@@ -1,11 +1,11 @@
 package com.marfeel.compass.memory
 
+import com.marfeel.compass.core.Session
 import junit.framework.TestCase.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import java.util.*
+import kotlin.test.assertNotNull
 
 internal class MemoryTest {
 
@@ -28,5 +28,22 @@ internal class MemoryTest {
 		val retrievedUserType = memory.readAccountId()
 
 		assertEquals(savedAccountId, retrievedUserType)
+	}
+
+	@Test
+	fun `readSession returns new session if not set previously`() {
+		assertNotNull(memory.readSession())
+	}
+
+	@Test
+	fun `updates session`() {
+		val savedSession = Session(
+			id = UUID.randomUUID().toString(),
+			timeStamp = System.currentTimeMillis()
+		)
+		memory.updateSession(savedSession)
+		val retrievedSession = memory.readSession()
+
+		assertEquals(savedSession, retrievedSession)
 	}
 }

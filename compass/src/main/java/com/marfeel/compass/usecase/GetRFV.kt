@@ -1,4 +1,4 @@
-package com.marfeel.compass.rfv
+package com.marfeel.compass.usecase
 
 import com.marfeel.compass.core.NoInputUseCase
 import com.marfeel.compass.core.RfvRequest
