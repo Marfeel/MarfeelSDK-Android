@@ -18,6 +18,7 @@ internal class Storage(
 ) {
 	companion object {
 		private const val storageName = "EncryptedStorage"
+		private const val accountIdKey = "accountId_key"
 		private const val userIdKey = "userId_key"
 		private const val userTypeKey = "userType_key"
 		private const val firstSessionTimeStampKey = "firstSessionTimeStamp_key"
@@ -129,4 +130,24 @@ internal class Storage(
 			UserType.Paid.numericValue -> UserType.Paid
 			else -> UserType.CustomUserJourney(type)
 		}
+
+	fun updateAccountId(accountId: String) {
+		storageScope.launch {
+			setAccountId(accountId)
+		}
+	}
+
+	private fun setAccountId(accountId: String) {
+		preferences.edit {
+			putString(accountIdKey, accountId)
+		}
+	}
+
+	fun readAccountId(): String? =
+		runBlocking {
+			getAccountId()
+		}
+
+	private fun getAccountId(): String? =
+		preferences.getString(accountIdKey, null)
 }
