@@ -1,5 +1,7 @@
 package com.marfeel.compass.core
 
+import java.util.*
+
 internal data class PingRequest(
 	val accountId: String,
 	val sessionTimeStamp: Long,
@@ -36,4 +38,10 @@ internal data class RfvRequest(
 internal data class Session(
 	val id: String,
 	val timeStamp: Long
+)
+
+internal data class Page(
+	val url: String,
+	val pageId: String = UUID.randomUUID().toString(),
+	val startTimeStamp: Long = System.currentTimeMillis(),
 )

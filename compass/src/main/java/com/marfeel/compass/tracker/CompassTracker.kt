@@ -4,10 +4,12 @@ import android.content.Context
 import android.view.ViewTreeObserver
 import androidx.core.widget.NestedScrollView
 import com.marfeel.compass.BackgroundWatcher
+import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.PingEmitter
 import com.marfeel.compass.core.UserType
 import com.marfeel.compass.di.CompassKoinComponent
 import com.marfeel.compass.di.addAndroidContextToDiApplication
+import com.marfeel.compass.memory.Memory
 import com.marfeel.compass.storage.Storage
 import com.marfeel.compass.usecase.GetRFV
 import com.marfeel.compass.usecase.Ping
@@ -40,11 +42,13 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
 	private val pingEmitter: PingEmitter by inject()
 	private val backgroundWatcher: BackgroundWatcher by inject()
 	private val storage: Storage by inject()
+	private val memory: Memory by inject()
 	private val getRFV: GetRFV by inject()
 
 	override fun startPageView(url: String) {
 		requireNotNull(CompassTracking.accountId)
 		backgroundWatcher.initialize()
+		memory.updatePage(Page(url))
 		pingEmitter.start(url)
 	}
 

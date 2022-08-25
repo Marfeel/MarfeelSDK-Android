@@ -1,6 +1,7 @@
 package com.marfeel.compass.usecase
 
 import android.util.Log
+import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.PingEmitterState
 import com.marfeel.compass.core.PingRequest
 import com.marfeel.compass.core.UseCase
@@ -20,8 +21,8 @@ internal class Ping(
 			sessionTimeStamp = memory.readSession().timeStamp,
 			referralUrl = null, //TODO
 			url = pingEmitterState.url,
-			previousUrl = "", //TODO
-			pageId = "", //TODO
+			previousUrl = memory.readPreviousUrl() ?: "",
+			pageId = memory.readPage()?.pageId ?: "",
 			userId = storage.readUserId(),
 			sessionId = memory.readSession().id,
 			pingCounter = pingEmitterState.pingCounter,
@@ -29,11 +30,11 @@ internal class Ping(
 			userType = storage.readUserType(),
 			registeredUserId = storage.readUserId(),
 			cookiesAllowed = true, //TODO
-			scrollPercent = pingEmitterState.scrollPercent ?: 0, //TODO: 0 if null?
+			scrollPercent = pingEmitterState.scrollPercent ?: 0,
 			firsVisitTimeStamp = storage.readFirstSessionTimeStamp(),
-			previousSessionTimeStamp = null, //TODO
-			timeOnPage = 1L, //TODO
-			pageStartTimeStamp = 1L //TODO
+			previousSessionTimeStamp = storage.readPreviousSessionTimeStamp(),
+			timeOnPage = memory.readPage()?.timeOnPage(System.currentTimeMillis()) ?: 0L,
+			pageStartTimeStamp = memory.readPage()?.startTimeStamp ?: 0L
 		)
 		api.ping(pingRequest)
 
@@ -42,3 +43,7 @@ internal class Ping(
 	}
 
 }
+
+private fun Page.timeOnPage(currentTimeMillis: Long): Long =
+	(currentTimeMillis - startTimeStamp) / 1000
+
