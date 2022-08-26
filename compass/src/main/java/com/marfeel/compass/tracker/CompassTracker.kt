@@ -1,7 +1,6 @@
 package com.marfeel.compass.tracker
 
 import android.content.Context
-import android.view.ViewTreeObserver
 import androidx.core.widget.NestedScrollView
 import com.marfeel.compass.BackgroundWatcher
 import com.marfeel.compass.core.PingEmitter
@@ -46,18 +45,20 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
 
     override fun startPageView(url: String, scrollView: NestedScrollView) {
         check(CompassTracking.accountId != null) { compassNotInitializedErrorMessage }
-        scrollView.viewTreeObserver.addOnScrollChangedListener(ViewTreeObserver.OnScrollChangedListener {
-            val scrollViewHeight: Double =
-                (scrollView.getChildAt(0).bottom - scrollView.height).toDouble()
-            val getScrollY: Double = scrollView.scrollY.toDouble()
-            val scrollPosition = getScrollY / scrollViewHeight * 100.0
-            pingEmitter.updateScrollPercentage(scrollPosition.toScrollPercentage())
-        })
 
+        scrollView.setOnScrollChangeListener(
+            NestedScrollView.OnScrollChangeListener { view, _, scrollY, _, _ ->
+                    val scrollViewHeight: Double =
+                        (view.getChildAt(0).bottom - scrollView.height).toDouble()
+                    val scrollPosition = scrollY.toDouble() / scrollViewHeight * 100
+                    (scrollView.getChildAt(0).bottom - scrollView.height).toDouble()
+                    pingEmitter.updateScrollPercentage(scrollPosition.toScrollPercentage())
+            }
+        )
         startPageView(url)
     }
 
-    private fun Double.toScrollPercentage(): Int {
+    internal fun Double.toScrollPercentage(): Int {
         val range = 0..100
         return when {
             this > range.last -> range.last
@@ -78,6 +79,10 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
     override fun setUserType(userType: UserType) {
         requireNotNull(CompassTracking.accountId)
         storage.updateUserType(userType)
+    }
+
+    internal fun updateScrollPercentage(scrollPosition: Int){
+        pingEmitter.updateScrollPercentage(scrollPosition)
     }
 }
 
