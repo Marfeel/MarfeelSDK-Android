@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 import org.koin.core.component.inject
 
 internal class PingEmitter(private val doPing: Ping) {
-	private val pingUseCase: Ping by inject()
+	
 	private val pingFrequencyInMs = 10000L
 	private val scope = GlobalScope
 	private var job: Job? = null
