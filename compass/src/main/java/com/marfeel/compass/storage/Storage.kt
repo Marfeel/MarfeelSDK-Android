@@ -45,10 +45,16 @@ internal class Storage(
 		}
 	}
 
-	fun readFirstSessionTimeStamp(): Long? =
+	fun readFirstSessionTimeStamp(): Long =
 		runBlocking(storageScope.coroutineContext) {
-			getFirstSessionTimeStamp()?.toLong()
+			getFirstSessionTimeStamp()?.toLong() ?: trackFirstSession()
 		}
+
+	private fun trackFirstSession(): Long {
+		val timeStamp = System.currentTimeMillis()
+		setFirstSessionTimeStamp(timeStamp)
+		return timeStamp
+	}
 
 	private fun setFirstSessionTimeStamp(firstSessionTimeStamp: Long) =
 		preferences.edit {

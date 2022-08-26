@@ -33,8 +33,8 @@ internal class StorageTest {
 	}
 
 	@Test
-	fun `firstSession TimeStamp is null if not set`() {
-		assertEquals(null, storage.readFirstSessionTimeStamp())
+	fun `firstSession TimeStamp is updated if read but not previously set`() {
+		assertNotNull(storage.readFirstSessionTimeStamp())
 	}
 
 	@Test
