@@ -1,11 +1,11 @@
 package com.marfeel.compass.network
 
+import android.util.Log
 import com.marfeel.compass.core.PingRequest
 import com.marfeel.compass.core.RfvRequest
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import timber.log.Timber
 import java.io.IOException
 
 private const val compassBaseURl = "https://compassdata.mrf.io"
@@ -28,7 +28,7 @@ internal class ApiClient(
             .build()
 
         httpClient.newCall(request).execute().use {
-            if (it.isSuccessful) Timber.d("ping emmited")
+            if (it.isSuccessful) Log.d("Compass","ping emmited")
         }
     }
 

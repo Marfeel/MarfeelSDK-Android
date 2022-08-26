@@ -8,7 +8,6 @@ import com.marfeel.compass.core.UseCase
 import com.marfeel.compass.memory.Memory
 import com.marfeel.compass.network.ApiClient
 import com.marfeel.compass.storage.Storage
-import timber.log.Timber
 
 internal class Ping(
 	private val api: ApiClient,
@@ -38,10 +37,8 @@ internal class Ping(
 		)
 		api.ping(pingRequest)
 
-		Log.d("xtest", "ping \n scrollPercentage: ${pingEmitterState?.scrollPercent} \n")
-		Timber.d("Timber ping")
+		Log.d("Compass", "ping \n scrollPercentage: ${pingEmitterState?.scrollPercent} \n")
 	}
-
 }
 
 private fun Page.timeOnPage(currentTimeMillis: Long): Long =
