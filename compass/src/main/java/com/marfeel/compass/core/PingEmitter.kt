@@ -40,7 +40,7 @@ internal class PingEmitter(private val doPing: Ping) {
 	private fun ping() {
 		pingEmitterState?.let {
 			pingEmitterState = it.copy(pingCounter = it.pingCounter + 1)
-			pingUseCase(it)
+			doPing(it)
 		}
 	}
 
