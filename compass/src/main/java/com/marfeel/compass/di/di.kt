@@ -18,7 +18,7 @@ import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 
 private val compassModule = module {
-	single { PingEmitter() }
+	single { PingEmitter(get()) }
 	single { BackgroundWatcher(get()) }
 	single { Storage(androidContext(), Dispatchers.IO) }
 	single { ApiClient(OkHttpClient()) }
