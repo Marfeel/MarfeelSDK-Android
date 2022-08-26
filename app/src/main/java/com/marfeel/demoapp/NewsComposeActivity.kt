@@ -20,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.FragmentActivity
+import com.marfeel.compass.tracker.CompassScrollTrackerEffect
 import com.marfeel.compass.tracker.CompassTracking
 
 class NewsComposeActivity : FragmentActivity() {
@@ -31,21 +32,15 @@ class NewsComposeActivity : FragmentActivity() {
 		tracker.startPageView("NewsActivity - Compose")
 		setContent {
 			MaterialTheme {
-				NewsScreen(
-					onStartTracking = { scrollState ->
-						tracker.startPageView("News2")
-					}
-				)
+				NewsScreen()
 			}
 		}
 	}
 
 	@Composable
-	private fun NewsScreen(
-		onStartTracking: (ScrollState)-> Unit
-	) {
+	private fun NewsScreen() {
 		val scrollState = rememberScrollState()
-		onStartTracking(scrollState)
+		CompassScrollTrackerEffect(scrollState)
 		Column(
 			Modifier
 				.fillMaxSize()
@@ -82,14 +77,8 @@ class NewsComposeActivity : FragmentActivity() {
 	@Composable
 	fun NewsScreenPreview() {
 		MaterialTheme {
-			NewsScreen() {}
+			NewsScreen()
 		}
-	}
-}
-
-private class TrackerController {
-	fun startTracking() {
-
 	}
 }
 
