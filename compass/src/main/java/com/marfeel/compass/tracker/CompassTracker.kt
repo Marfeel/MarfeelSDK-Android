@@ -12,7 +12,6 @@ import com.marfeel.compass.di.addAndroidContextToDiApplication
 import com.marfeel.compass.memory.Memory
 import com.marfeel.compass.storage.Storage
 import com.marfeel.compass.usecase.GetRFV
-import com.marfeel.compass.usecase.Ping
 import org.koin.core.component.inject
 
 private const val compassNotInitializedErrorMessage =
