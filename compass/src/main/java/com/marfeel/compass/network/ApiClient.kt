@@ -1,6 +1,7 @@
 package com.marfeel.compass.network
 
 import android.util.Log
+import com.marfeel.compass.BuildConfig
 import com.marfeel.compass.core.PingRequest
 import com.marfeel.compass.core.RfvRequest
 import okhttp3.FormBody
@@ -8,7 +9,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 
-private const val compassBaseURl = "https://compassdata.mrf.io"
+private const val compassBaseUrl = BuildConfig.COMPASS_BASE_URL
 private const val pingPath = "ingest.php"
 private const val rfvPath = "data.php"
 private const val apiVersion = "0.2"
@@ -16,7 +17,7 @@ private const val pageType = "4"
 
 internal class ApiClient(
     private val httpClient: OkHttpClient,
-    private val baseUrl: String = compassBaseURl
+    private val baseUrl: String = compassBaseUrl
 ) {
     fun ping(pingRequest: PingRequest) {
         val formBody = FormBody.Builder()
