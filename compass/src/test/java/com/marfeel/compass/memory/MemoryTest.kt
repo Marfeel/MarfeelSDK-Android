@@ -78,4 +78,24 @@ internal class MemoryTest {
 
 		assertEquals(previousUrl, retrievedUrl)
 	}
+
+	@Test
+	fun `readPendingConversions returns emptyList if not set previously`() {
+		assertEquals(0, memory.readPendingConversions().size)
+	}
+
+	@Test
+	fun `readPendingConversions returns as many items as added previously`() {
+		memory.addPendingConversion("First item")
+		memory.addPendingConversion("Second item")
+		assertEquals(2, memory.readPendingConversions().size)
+	}
+
+	@Test
+	fun `addPendingConversion returns as emptyList after clearPendingConversions`() {
+		memory.addPendingConversion("First item")
+		memory.addPendingConversion("Second item")
+		memory.clearPendingConversions()
+		assertEquals(0, memory.readPendingConversions().size)
+	}
 }
