@@ -12,6 +12,9 @@ import com.marfeel.compass.di.addAndroidContextToDiApplication
 import com.marfeel.compass.memory.Memory
 import com.marfeel.compass.storage.Storage
 import com.marfeel.compass.usecase.GetRFV
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.core.component.inject
 
 private const val compassNotInitializedErrorMessage =
@@ -24,6 +27,7 @@ interface CompassTracking {
 	fun setUserId(userId: String)
 	fun setUserType(userType: UserType)
 	fun getRFV(): String?
+	fun getRFV(response: (String?) -> Unit)
 
 	companion object {
 		internal var accountId: String? = null
@@ -43,6 +47,7 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
 	private val storage: Storage by inject()
 	private val memory: Memory by inject()
 	private val getRFV: GetRFV by inject()
+	private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
 	override fun startPageView(url: String) {
 		requireNotNull(CompassTracking.accountId)
@@ -89,4 +94,11 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
 
 	override fun getRFV(): String? =
 		getRFV.invoke()
+
+	override fun getRFV(rfv: (String?) -> Unit) {
+		coroutineScope.launch {
+			val response = getRFV()
+			rfv(response)
+		}
+	}
 }
