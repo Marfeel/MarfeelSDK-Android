@@ -1,5 +1,6 @@
 package com.marfeel.demoapp
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ScrollState
@@ -9,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -40,32 +43,46 @@ class NewsComposeActivity : FragmentActivity() {
 		}
 	}
 
+	@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 	@Composable
 	private fun NewsScreen(
-		onStartTracking: (ScrollState)-> Unit
+		onStartTracking: (ScrollState) -> Unit
 	) {
 		val scrollState = rememberScrollState()
 		onStartTracking(scrollState)
-		Column(
+		Scaffold(
 			Modifier
 				.fillMaxSize()
-				.background(Color.White)
-				.padding(horizontal = 24.dp, vertical = 48.dp)
-				.verticalScroll(scrollState)
+				.background(Color.White),
+			floatingActionButton = {
+				FloatingActionButton(
+					onClick = {
+						tracker.track("conversion@email.com")
+					}) {
+					Text(text = "Conversion", color = Color.White)
+				}
+			}
 		) {
-			Text(
-				text = "Noticia Compose",
-				color = Color.Black,
-				style = TextStyle.Default.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold),
-				modifier = Modifier.padding(bottom = 32.dp)
-			)
+			Column(
+				Modifier
+					.fillMaxSize()
+					.padding(horizontal = 24.dp, vertical = 48.dp)
+					.verticalScroll(scrollState)
+			) {
+				Text(
+					text = "Noticia Compose",
+					color = Color.Black,
+					style = TextStyle.Default.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold),
+					modifier = Modifier.padding(bottom = 32.dp)
+				)
 
-			Paragraph()
-			Paragraph()
-			Paragraph()
-			Paragraph()
-			Paragraph()
-			Paragraph()
+				Paragraph()
+				Paragraph()
+				Paragraph()
+				Paragraph()
+				Paragraph()
+				Paragraph()
+			}
 		}
 	}
 
