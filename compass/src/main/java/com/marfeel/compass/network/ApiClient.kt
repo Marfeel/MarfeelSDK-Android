@@ -16,63 +16,64 @@ private const val apiVersion = "0.2"
 private const val pageType = "4"
 
 internal class ApiClient(
-    private val httpClient: OkHttpClient,
-    private val baseUrl: String = compassBaseUrl
+	private val httpClient: OkHttpClient,
+	private val baseUrl: String = compassBaseUrl
 ) {
-    fun ping(pingRequest: PingRequest) {
-        val formBody = FormBody.Builder()
-            .addPingRequest(pingRequest)
-            .build()
-        val request = Request.Builder()
-            .url("$baseUrl/$pingPath")
-            .post(formBody)
-            .build()
+	fun ping(pingRequest: PingRequest) {
+		val formBody = FormBody.Builder()
+			.addPingRequest(pingRequest)
+			.build()
+		val request = Request.Builder()
+			.url("$baseUrl/$pingPath")
+			.post(formBody)
+			.build()
 
-        httpClient.newCall(request).execute().use {
-            if (it.isSuccessful) Log.d("Compass","ping emmited")
-        }
-    }
+		httpClient.newCall(request).execute().use {
+			if (it.isSuccessful) Log.d("Compass", "ping emmited")
+		}
+	}
 
-    fun getRfv(rfvRequest: RfvRequest): Result<String?> {
-        val formBody = FormBody.Builder()
-            .addRfvRequest(rfvRequest)
-            .build()
-        val request = Request.Builder()
-            .url("$baseUrl/$rfvPath")
-            .post(formBody)
-            .build()
-        return try {
-            val response = httpClient.newCall(request).execute()
-            Result.success(response.body?.string())
-        } catch (exception: IOException) {
-            Result.failure(exception)
-        }
-    }
+	fun getRfv(rfvRequest: RfvRequest): Result<String?> {
+		val formBody = FormBody.Builder()
+			.addRfvRequest(rfvRequest)
+			.build()
+		val request = Request.Builder()
+			.url("$baseUrl/$rfvPath")
+			.post(formBody)
+			.build()
+		return try {
+			val response = httpClient.newCall(request).execute()
+			Result.success(response.body?.string())
+		} catch (exception: IOException) {
+			Result.failure(exception)
+		}
+	}
 }
 
 private fun FormBody.Builder.addPingRequest(pingRequest: PingRequest): FormBody.Builder =
-    this.addEncoded("ac", pingRequest.accountId)
-        .addEncoded("t", pingRequest.sessionTimeStamp.toString())
-        .addEncoded("r", pingRequest.referralUrl ?: "")
-        .addEncoded("url", pingRequest.url)
-        .addEncoded("c", pingRequest.url)
-        .addEncoded("pp", pingRequest.previousUrl)
-        .addEncoded("p", pingRequest.pageId)
-        .addEncoded("u", pingRequest.userId)
-        .addEncoded("s", pingRequest.sessionId)
-        .addEncoded("v", apiVersion)
-        .addEncoded("a", pingRequest.pingCounter.toString())
-        .addEncoded("n", pingRequest.currentTimeStamp.toString())
-        .addEncoded("l", pingRequest.timeOnPage.toString())
-        .addEncoded("ps", pingRequest.pageStartTimeStamp.toString())
-        .addEncoded("ut", pingRequest.userType.numericValue.toString())
-        .addEncoded("uc", pingRequest.cookiesAllowed.toString())
-        .addEncoded("sc", pingRequest.scrollPercent.toString())
-        .addEncoded("fv", pingRequest.firsVisitTimeStamp.toString())
-        .addEncoded("lv", pingRequest.previousSessionTimeStamp?.toString() ?: "null")
-        .addEncoded("pageType", pageType)
+	this.addEncoded("ac", pingRequest.accountId)
+		.addEncoded("t", pingRequest.sessionTimeStamp.toString())
+		.addEncoded("r", pingRequest.referralUrl ?: "")
+		.addEncoded("url", pingRequest.url)
+		.addEncoded("c", pingRequest.url)
+		.addEncoded("pp", pingRequest.previousUrl)
+		.addEncoded("p", pingRequest.pageId)
+		.addEncoded("u", pingRequest.userId)
+		.addEncoded("s", pingRequest.sessionId)
+		.addEncoded("v", apiVersion)
+		.addEncoded("a", pingRequest.pingCounter.toString())
+		.addEncoded("n", pingRequest.currentTimeStamp.toString())
+		.addEncoded("l", pingRequest.timeOnPage.toString())
+		.addEncoded("ps", pingRequest.pageStartTimeStamp.toString())
+		.addEncoded("ut", pingRequest.userType.numericValue.toString())
+		.addEncoded("uc", pingRequest.cookiesAllowed.toString())
+		.addEncoded("sc", pingRequest.scrollPercent.toString())
+		.addEncoded("fv", pingRequest.firsVisitTimeStamp.toString())
+		.addEncoded("lv", pingRequest.previousSessionTimeStamp?.toString() ?: "null")
+		.addEncoded("pageType", pageType)
+		.addEncoded("conv", pingRequest.conversions ?: "")
 
 private fun FormBody.Builder.addRfvRequest(request: RfvRequest): FormBody.Builder =
-    this.addEncoded("ac", request.accountId)
-        .addEncoded("u", request.userId)
+	this.addEncoded("ac", request.accountId)
+		.addEncoded("u", request.userId)
 
