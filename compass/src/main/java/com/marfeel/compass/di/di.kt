@@ -22,7 +22,7 @@ private val compassModule = module {
 	single { BackgroundWatcher(get()) }
 	single { Storage(androidContext(), Dispatchers.IO) }
 	single { ApiClient(OkHttpClient()) }
-	single { Memory() }
+	single { Memory(get()) }
 	factory { Ping(get(), get(), get()) }
 	factory { GetRFV(get(), get(), get()) }
 }

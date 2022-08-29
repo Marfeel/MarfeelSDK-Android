@@ -7,9 +7,7 @@ import com.marfeel.compass.storage.Storage
 import org.koin.core.component.inject
 import java.util.*
 
-internal class Memory : CompassKoinComponent {
-
-	private val storage: Storage by inject()
+internal class Memory(private val storage: Storage) : CompassKoinComponent {
 
 	private var accountId: String? = null
 	private var session: Session? = null

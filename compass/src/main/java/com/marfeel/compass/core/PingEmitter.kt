@@ -1,64 +1,63 @@
 package com.marfeel.compass.core
 
 import android.util.Log
-import com.marfeel.compass.di.CompassKoinComponent
 import com.marfeel.compass.usecase.Ping
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import org.koin.core.component.inject
+import kotlinx.coroutines.*
+import kotlin.coroutines.CoroutineContext
 
-internal class PingEmitter(private val doPing: Ping) {
-	
-	private val pingFrequencyInMs = 10000L
-	private val scope = GlobalScope
-	private var job: Job? = null
-	private var pingEmitterState: PingEmitterState? = null
-	var appOnBackground: Boolean = false
+internal class PingEmitter(
+    private val doPing: Ping,
+    coroutineContext: CoroutineContext = Dispatchers.Unconfined
+) {
 
-	fun start(
-		url: String,
-		scrollPosition: Int? = null
-	) {
-		pingEmitterState = PingEmitterState(
-			url = url,
-			pingCounter = 0,
-			scrollPercent = scrollPosition,
-			pageStartTimeStamp = System.currentTimeMillis()
-		)
+    private val pingFrequencyInMs = 10000L
+    private val job = SupervisorJob()
+    private val scope: CoroutineScope = CoroutineScope(coroutineContext + job)
+    private var pingEmitterState: PingEmitterState? = null
+    var appOnBackground: Boolean = false
 
-		job = scope.launch {
-			while (!appOnBackground) {
-				ping()
-				delay(pingFrequencyInMs)
-			}
-		}
-	}
+    fun start(
+        url: String,
+        scrollPosition: Int? = null
+    ) {
+        pingEmitterState = PingEmitterState(
+            url = url,
+            pingCounter = 0,
+            scrollPercent = scrollPosition,
+            pageStartTimeStamp = System.currentTimeMillis()
+        )
 
-	private fun ping() {
-		pingEmitterState?.let {
-			pingEmitterState = it.copy(pingCounter = it.pingCounter + 1)
-			doPing(it)
-		}
-	}
+        scope.launch {
+            while (true) {
+                if (!appOnBackground)
+                launch(Dispatchers.IO) { ping() }
+                delay(pingFrequencyInMs)
+            }
+        }
+    }
 
-	fun stop() {
-		Log.d("xtest", "pingStop")
-		job?.cancelChildren()
-//		job = null
-		pingEmitterState = null
-	}
+    private fun ping() {
+        pingEmitterState?.let {
+            pingEmitterState = it.copy(pingCounter = it.pingCounter + 1)
+            doPing(it)
+        }
+    }
 
-	fun updateScrollPercentage(scrollPosition: Int) {
-		pingEmitterState = pingEmitterState?.copy(scrollPercent = scrollPosition)
-	}
+    fun stop() {
+        Log.d("xtest", "pingStop")
+        job.cancel()
+        //job.cancelChildren()
+        pingEmitterState = null
+    }
+
+    fun updateScrollPercentage(scrollPosition: Int) {
+        pingEmitterState = pingEmitterState?.copy(scrollPercent = scrollPosition)
+    }
 }
 
 internal data class PingEmitterState(
-	val url: String,
-	val pingCounter: Long,
-	val scrollPercent: Int?,
-	val pageStartTimeStamp: Long
+    val url: String,
+    val pingCounter: Long,
+    val scrollPercent: Int?,
+    val pageStartTimeStamp: Long
 )
