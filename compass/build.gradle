@@ -29,11 +29,29 @@ android {
 	kotlinOptions {
 		jvmTarget = '1.8'
 	}
+	flavorDimensions "ui"
+	productFlavors{
+		viewsUi {
+			dimension "ui"
+		}
+		composeUi {
+			dimension "ui"
+		}
+	}
+
+	composeOptions {
+		kotlinCompilerExtensionVersion = "1.1.0"
+	}
+	sourceSets {
+		composeUi {
+			java.srcDirs +=  "src/composeUi/java"
+		}
+	}
 }
 
 dependencies {
 
-    implementation 'androidx.core:core-ktx:1.6.0'
+    implementation 'androidx.core:core-ktx:1.8.0'
     implementation 'androidx.lifecycle:lifecycle-process:2.5.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
@@ -43,11 +61,14 @@ dependencies {
     implementation "io.insert-koin:koin-core:3.2.0"
 	implementation "io.insert-koin:koin-android:3.2.0"
 
+	composeUiImplementation 'androidx.compose.ui:ui:1.1.1'
+	composeUiImplementation 'androidx.compose.foundation:foundation:1.1.1'
+
 	testImplementation 'junit:junit:4.13.2'
     testImplementation "com.squareup.okhttp3:mockwebserver:4.10.0"
     testImplementation "io.insert-koin:koin-test:3.2.0"
 	testImplementation "org.robolectric:robolectric:4.5.1"
-	testImplementation 'androidx.test:core:1.3.0'
+	testImplementation 'androidx.test:core:1.4.0'
 
 	androidTestImplementation 'androidx.test.ext:junit:1.1.3'
 	androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'

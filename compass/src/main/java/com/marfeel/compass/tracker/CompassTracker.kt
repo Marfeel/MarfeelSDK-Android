@@ -1,7 +1,6 @@
 package com.marfeel.compass.tracker
 
 import android.content.Context
-import android.view.ViewTreeObserver
 import androidx.core.widget.NestedScrollView
 import com.marfeel.compass.BackgroundWatcher
 import com.marfeel.compass.core.Page
@@ -52,18 +51,20 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
 		pingEmitter.start(url)
 	}
 
-	override fun startPageView(url: String, scrollView: NestedScrollView) {
-		check(CompassTracking.accountId != null) { compassNotInitializedErrorMessage }
-		scrollView.viewTreeObserver.addOnScrollChangedListener(ViewTreeObserver.OnScrollChangedListener {
-			val scrollViewHeight: Double =
-				(scrollView.getChildAt(0).bottom - scrollView.height).toDouble()
-			val getScrollY: Double = scrollView.scrollY.toDouble()
-			val scrollPosition = getScrollY / scrollViewHeight * 100.0
-			pingEmitter.updateScrollPercentage(scrollPosition.toScrollPercentage())
-		})
+    override fun startPageView(url: String, scrollView: NestedScrollView) {
+        check(CompassTracking.accountId != null) { compassNotInitializedErrorMessage }
 
-		startPageView(url)
-	}
+        scrollView.setOnScrollChangeListener(
+            NestedScrollView.OnScrollChangeListener { view, _, scrollY, _, _ ->
+                    val scrollViewHeight: Double =
+                        (view.getChildAt(0).bottom - scrollView.height).toDouble()
+                    val scrollPosition = scrollY.toDouble() / scrollViewHeight * 100
+                    (scrollView.getChildAt(0).bottom - scrollView.height).toDouble()
+                    pingEmitter.updateScrollPercentage(scrollPosition.toScrollPercentage())
+            }
+        )
+        startPageView(url)
+    }
 
 	private fun Double.toScrollPercentage(): Int {
 		val range = 0..100
@@ -87,6 +88,10 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
 		requireNotNull(CompassTracking.accountId)
 		storage.updateUserType(userType)
 	}
+
+    internal fun updateScrollPercentage(scrollPosition: Int){
+        pingEmitter.updateScrollPercentage(scrollPosition)
+    }
 
 	override fun getRFV(): String? =
 		getRFV.invoke()
