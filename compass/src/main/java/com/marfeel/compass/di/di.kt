@@ -10,6 +10,7 @@ import com.marfeel.compass.usecase.GetRFV
 import com.marfeel.compass.usecase.Ping
 import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.Koin
 import org.koin.core.KoinApplication
@@ -21,7 +22,13 @@ private val compassModule = module {
 	single { PingEmitter(get()) }
 	single { BackgroundWatcher(get()) }
 	single { Storage(androidContext(), Dispatchers.IO) }
-	single { ApiClient(OkHttpClient()) }
+	single {
+		val logging = HttpLoggingInterceptor()
+		logging.level = (HttpLoggingInterceptor.Level.BODY)
+		ApiClient(
+			OkHttpClient.Builder().addInterceptor(logging).build()
+		)
+	}
 	single { Memory() }
 	factory { Ping(get(), get(), get()) }
 	factory { GetRFV(get(), get(), get()) }
