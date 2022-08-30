@@ -3,7 +3,6 @@ package com.marfeel.demoapp
 import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
