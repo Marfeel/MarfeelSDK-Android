@@ -57,7 +57,7 @@ class NewsComposeActivity : FragmentActivity() {
 			floatingActionButton = {
 				FloatingActionButton(
 					onClick = {
-						tracker.track("conversion@email.com")
+						tracker.trackConversion("conversion@email.com")
 					}) {
 					Text(text = "Conversion", color = Color.White)
 				}
