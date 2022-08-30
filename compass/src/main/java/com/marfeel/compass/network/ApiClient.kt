@@ -9,7 +9,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 
-private const val compassBaseUrl = BuildConfig.COMPASS_BASE_URL
 private const val pingPath = "ingest.php"
 private const val rfvPath = "data.php"
 private const val apiVersion = "0.2"
