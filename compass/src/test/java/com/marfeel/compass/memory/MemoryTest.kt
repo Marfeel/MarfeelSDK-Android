@@ -2,6 +2,8 @@ package com.marfeel.compass.memory
 
 import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.Session
+import com.marfeel.compass.storage.Storage
+import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -11,10 +13,11 @@ import kotlin.test.assertNotNull
 internal class MemoryTest {
 
 	private lateinit var memory: Memory
+    private val storage= mockk<Storage>()
 
 	@Before
 	fun setup() {
-		memory = Memory()
+		memory = Memory(storage)
 	}
 
 	@Test

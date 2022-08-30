@@ -29,7 +29,7 @@ private val compassModule = module {
 			OkHttpClient.Builder().addInterceptor(logging).build()
 		)
 	}
-	single { Memory() }
+	single { Memory(get()) }
 	factory { Ping(get(), get(), get()) }
 	factory { GetRFV(get(), get(), get()) }
 }
