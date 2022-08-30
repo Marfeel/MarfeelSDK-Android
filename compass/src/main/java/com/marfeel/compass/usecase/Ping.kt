@@ -5,6 +5,7 @@ import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.PingEmitterState
 import com.marfeel.compass.core.PingRequest
 import com.marfeel.compass.core.UseCase
+import com.marfeel.compass.core.currentTimeStampInSeconds
 import com.marfeel.compass.memory.Memory
 import com.marfeel.compass.network.ApiClient
 import com.marfeel.compass.storage.Storage
@@ -15,6 +16,7 @@ internal class Ping(
 	private val storage: Storage,
 ) : UseCase<PingEmitterState, Unit> {
 	override fun invoke(pingEmitterState: PingEmitterState) {
+		val conversions = memory.readPendingConversions()
 		val pingRequest = PingRequest(
 			accountId = memory.readAccountId() ?: "",
 			sessionTimeStamp = memory.readSession().timeStamp,
@@ -25,19 +27,19 @@ internal class Ping(
 			userId = storage.readUserId(),
 			sessionId = memory.readSession().id,
 			pingCounter = pingEmitterState.pingCounter,
-			currentTimeStamp = System.currentTimeMillis(),
+			currentTimeStamp = currentTimeStampInSeconds(),
 			userType = storage.readUserType(),
 			registeredUserId = storage.readUserId(),
 			cookiesAllowed = true, //TODO
 			scrollPercent = pingEmitterState.scrollPercent ?: 0,
 			firsVisitTimeStamp = storage.readFirstSessionTimeStamp(),
 			previousSessionTimeStamp = storage.readPreviousSessionTimeStamp(),
-			timeOnPage = memory.readPage()?.timeOnPage(System.currentTimeMillis()) ?: 0L,
+			timeOnPage = memory.readPage()?.timeOnPage(currentTimeStampInSeconds()) ?: 0L,
 			pageStartTimeStamp = memory.readPage()?.startTimeStamp ?: 0L,
-			conversions = memory.readPendingConversions().join()
+			conversions = conversions.join()
 		)
 		api.ping(pingRequest)
-		memory.clearPendingConversions()
+		memory.clearTrackedConversions(conversions)
 		Log.d("Compass", "ping \n scrollPercentage: ${pingEmitterState?.scrollPercent} \n")
 	}
 }

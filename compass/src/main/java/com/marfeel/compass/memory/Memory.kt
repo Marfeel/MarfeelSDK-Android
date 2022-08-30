@@ -2,9 +2,9 @@ package com.marfeel.compass.memory
 
 import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.Session
+import com.marfeel.compass.core.currentTimeStampInSeconds
 import com.marfeel.compass.di.CompassKoinComponent
 import com.marfeel.compass.storage.Storage
-import org.koin.core.component.inject
 import java.util.*
 
 internal class Memory(private val storage: Storage) : CompassKoinComponent {
@@ -26,7 +26,7 @@ internal class Memory(private val storage: Storage) : CompassKoinComponent {
 		session ?: newSession().also { session = it }
 
 	private fun newSession(): Session =
-		Session(UUID.randomUUID().toString(), System.currentTimeMillis())
+		Session(UUID.randomUUID().toString(), currentTimeStampInSeconds())
 
 	fun updateSession(newSession: Session) {
 		val currentSession = session
@@ -56,7 +56,7 @@ internal class Memory(private val storage: Storage) : CompassKoinComponent {
 	fun readPendingConversions(): List<String> =
 		pendingConversions.toList()
 
-	fun clearPendingConversions() {
-		pendingConversions.clear()
+	fun clearTrackedConversions(conversions: List<String>) {
+		pendingConversions.removeAll(conversions)
 	}
 }

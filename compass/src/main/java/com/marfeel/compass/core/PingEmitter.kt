@@ -24,7 +24,7 @@ internal class PingEmitter(
             url = url,
             pingCounter = 0,
             scrollPercent = scrollPosition,
-            pageStartTimeStamp = System.currentTimeMillis()
+            pageStartTimeStamp = currentTimeStampInSeconds()
         )
 
         scope.launch {

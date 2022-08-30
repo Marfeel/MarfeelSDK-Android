@@ -2,6 +2,7 @@ package com.marfeel.compass.memory
 
 import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.Session
+import com.marfeel.compass.core.currentTimeStampInSeconds
 import com.marfeel.compass.storage.Storage
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
@@ -13,7 +14,7 @@ import kotlin.test.assertNotNull
 internal class MemoryTest {
 
 	private lateinit var memory: Memory
-    private val storage= mockk<Storage>()
+	private val storage = mockk<Storage>()
 
 	@Before
 	fun setup() {
@@ -43,7 +44,7 @@ internal class MemoryTest {
 	fun `updates session`() {
 		val savedSession = Session(
 			id = UUID.randomUUID().toString(),
-			timeStamp = System.currentTimeMillis()
+			timeStamp = currentTimeStampInSeconds()
 		)
 		memory.updateSession(savedSession)
 		val retrievedSession = memory.readSession()
@@ -95,10 +96,15 @@ internal class MemoryTest {
 	}
 
 	@Test
-	fun `addPendingConversion returns as emptyList after clearPendingConversions`() {
-		memory.addPendingConversion("First item")
-		memory.addPendingConversion("Second item")
-		memory.clearPendingConversions()
-		assertEquals(0, memory.readPendingConversions().size)
+	fun `clearTrackedConversions will not remove not tracked conversions`() {
+		val trackedConversions = listOf("First item", "Second item")
+		val notTrackedConversion = "Another not tracked conversion"
+		memory.addPendingConversion(trackedConversions[0])
+		memory.addPendingConversion(trackedConversions[1])
+		memory.addPendingConversion(notTrackedConversion)
+
+		memory.clearTrackedConversions(trackedConversions)
+		assertEquals(1, memory.readPendingConversions().size)
+		assertEquals(notTrackedConversion, memory.readPendingConversions().first())
 	}
 }
