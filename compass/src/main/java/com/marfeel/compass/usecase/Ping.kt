@@ -15,6 +15,7 @@ internal class Ping(
 	private val storage: Storage,
 ) : UseCase<PingEmitterState, Unit> {
 	override fun invoke(pingEmitterState: PingEmitterState) {
+		val conversions = memory.readPendingConversions()
 		val pingRequest = PingRequest(
 			accountId = memory.readAccountId() ?: "",
 			sessionTimeStamp = memory.readSession().timeStamp,
@@ -34,10 +35,10 @@ internal class Ping(
 			previousSessionTimeStamp = storage.readPreviousSessionTimeStamp(),
 			timeOnPage = memory.readPage()?.timeOnPage(System.currentTimeMillis()) ?: 0L,
 			pageStartTimeStamp = memory.readPage()?.startTimeStamp ?: 0L,
-			conversions = memory.readPendingConversions().join()
+			conversions = conversions.join()
 		)
 		api.ping(pingRequest)
-		memory.clearPendingConversions()
+		memory.clearTrackedConversions(conversions)
 		Log.d("Compass", "ping \n scrollPercentage: ${pingEmitterState?.scrollPercent} \n")
 	}
 }

@@ -4,7 +4,6 @@ import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.Session
 import com.marfeel.compass.di.CompassKoinComponent
 import com.marfeel.compass.storage.Storage
-import org.koin.core.component.inject
 import java.util.*
 
 internal class Memory(private val storage: Storage) : CompassKoinComponent {
@@ -56,7 +55,7 @@ internal class Memory(private val storage: Storage) : CompassKoinComponent {
 	fun readPendingConversions(): List<String> =
 		pendingConversions.toList()
 
-	fun clearPendingConversions() {
-		pendingConversions.clear()
+	fun clearTrackedConversions(conversions: List<String>) {
+		pendingConversions.removeAll(conversions)
 	}
 }
