@@ -9,15 +9,14 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 
-private const val compassBaseUrl = BuildConfig.COMPASS_BASE_URL
 private const val pingPath = "ingest.php"
 private const val rfvPath = "data.php"
 private const val apiVersion = "0.2"
 private const val pageType = "4"
 
 internal class ApiClient(
-	private val httpClient: OkHttpClient,
-	private val baseUrl: String = compassBaseUrl
+    private val httpClient: OkHttpClient,
+    private val baseUrl: String = BuildConfig.COMPASS_BASE_URL
 ) {
 	fun ping(pingRequest: PingRequest) {
 		val formBody = FormBody.Builder()
