@@ -17,7 +17,7 @@ private const val pageType = "4"
 
 internal class ApiClient(
     private val httpClient: OkHttpClient,
-    private val baseUrl: String = compassBaseUrl
+    private val baseUrl: String = BuildConfig.COMPASS_BASE_URL
 ) {
     fun ping(pingRequest: PingRequest) {
         val formBody = FormBody.Builder()
