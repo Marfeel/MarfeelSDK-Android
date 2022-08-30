@@ -2,6 +2,7 @@ package com.marfeel.compass.memory
 
 import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.Session
+import com.marfeel.compass.core.currentTimeStampInSeconds
 import com.marfeel.compass.storage.Storage
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
@@ -43,7 +44,7 @@ internal class MemoryTest {
 	fun `updates session`() {
 		val savedSession = Session(
 			id = UUID.randomUUID().toString(),
-			timeStamp = System.currentTimeMillis()
+			timeStamp = currentTimeStampInSeconds()
 		)
 		memory.updateSession(savedSession)
 		val retrievedSession = memory.readSession()

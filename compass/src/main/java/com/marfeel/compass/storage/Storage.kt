@@ -6,6 +6,7 @@ import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.marfeel.compass.core.UserType
+import com.marfeel.compass.core.currentTimeStampInSeconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -51,7 +52,7 @@ internal class Storage(
 		}
 
 	private fun trackFirstSession(): Long {
-		val timeStamp = System.currentTimeMillis()
+		val timeStamp = currentTimeStampInSeconds()
 		setFirstSessionTimeStamp(timeStamp)
 		return timeStamp
 	}

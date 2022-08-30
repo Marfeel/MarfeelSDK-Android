@@ -44,5 +44,7 @@ internal data class Session(
 internal data class Page(
 	val url: String,
 	val pageId: String = UUID.randomUUID().toString(),
-	val startTimeStamp: Long = System.currentTimeMillis(),
+	val startTimeStamp: Long = currentTimeStampInSeconds()
 )
+
+fun currentTimeStampInSeconds() = System.currentTimeMillis() / 1000

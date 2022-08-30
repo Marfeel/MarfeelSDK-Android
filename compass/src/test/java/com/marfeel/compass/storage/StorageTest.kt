@@ -2,6 +2,7 @@ package com.marfeel.compass.storage
 
 import androidx.test.core.app.ApplicationProvider
 import com.marfeel.compass.core.UserType
+import com.marfeel.compass.core.currentTimeStampInSeconds
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertNotNull
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +40,7 @@ internal class StorageTest {
 
 	@Test
 	fun `updates firstSession TimeStamp`() {
-		val timeStamp = System.currentTimeMillis()
+		val timeStamp = currentTimeStampInSeconds()
 		storage.updateFirstSessionTimeStamp(timeStamp)
 
 		assertEquals(timeStamp, storage.readFirstSessionTimeStamp())
@@ -52,7 +53,7 @@ internal class StorageTest {
 
 	@Test
 	fun `updates previousSession TimeStamp`() {
-		val timeStamp = System.currentTimeMillis()
+		val timeStamp = currentTimeStampInSeconds()
 		storage.updatePreviousSessionTimeStamp(timeStamp)
 
 		assertEquals(timeStamp, storage.readPreviousSessionTimeStamp())
