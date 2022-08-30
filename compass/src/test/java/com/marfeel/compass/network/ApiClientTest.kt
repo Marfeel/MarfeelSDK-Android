@@ -32,7 +32,8 @@ class ApiClientTest {
         firsVisitTimeStamp = 3456L,
         previousSessionTimeStamp = null,
         timeOnPage = 7980L,
-        pageStartTimeStamp = 1234L
+        pageStartTimeStamp = 1234L,
+		conversions = "someone@email.com"
     )
 
     private val anyRfvRequest = RfvRequest(
@@ -91,6 +92,7 @@ class ApiClientTest {
         assertEquals("3456", formParams["fv"])
         assertEquals("null", formParams["lv"])
         assertEquals("4", formParams["pageType"])
+        assertEquals("someone@email.com", formParams["conv"])
     }
 
     @Test

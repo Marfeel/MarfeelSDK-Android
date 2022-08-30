@@ -13,6 +13,7 @@ internal class Memory(private val storage: Storage) : CompassKoinComponent {
 	private var session: Session? = null
 	private var page: Page? = null
 	private var previousUrl: String? = null
+	private var pendingConversions: MutableList<String> = mutableListOf()
 
 	fun updateAccountId(id: String) {
 		accountId = id
@@ -46,5 +47,16 @@ internal class Memory(private val storage: Storage) : CompassKoinComponent {
 
 	private fun updatePreviousUrl(url: String) {
 		previousUrl = url
+	}
+
+	fun addPendingConversion(conversion: String) {
+		pendingConversions.add(conversion)
+	}
+
+	fun readPendingConversions(): List<String> =
+		pendingConversions.toList()
+
+	fun clearPendingConversions() {
+		pendingConversions.clear()
 	}
 }
