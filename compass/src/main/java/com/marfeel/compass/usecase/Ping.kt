@@ -33,14 +33,23 @@ internal class Ping(
 			firsVisitTimeStamp = storage.readFirstSessionTimeStamp(),
 			previousSessionTimeStamp = storage.readPreviousSessionTimeStamp(),
 			timeOnPage = memory.readPage()?.timeOnPage(System.currentTimeMillis()) ?: 0L,
-			pageStartTimeStamp = memory.readPage()?.startTimeStamp ?: 0L
+			pageStartTimeStamp = memory.readPage()?.startTimeStamp ?: 0L,
+			conversions = memory.readPendingConversions().join()
 		)
 		api.ping(pingRequest)
-
+		memory.clearPendingConversions()
 		Log.d("Compass", "ping \n scrollPercentage: ${pingEmitterState?.scrollPercent} \n")
 	}
 }
 
 private fun Page.timeOnPage(currentTimeMillis: Long): Long =
 	(currentTimeMillis - startTimeStamp) / 1000
+
+private fun List<String>.join(): String? =
+	if (isEmpty()) {
+		null
+	} else {
+		this.joinToString(",")
+	}
+
 

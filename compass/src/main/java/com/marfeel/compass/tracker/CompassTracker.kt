@@ -28,6 +28,7 @@ interface CompassTracking {
 	fun setUserType(userType: UserType)
 	fun getRFV(): String?
 	fun getRFV(response: (String?) -> Unit)
+	fun trackConversion(conversion: String)
 
 	companion object {
 		internal var accountId: String? = null
@@ -100,5 +101,9 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
 			val response = getRFV()
 			rfv(response)
 		}
+	}
+
+	override fun trackConversion(conversion: String) {
+		memory.addPendingConversion(conversion)
 	}
 }

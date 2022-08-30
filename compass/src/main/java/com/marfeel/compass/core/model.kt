@@ -20,7 +20,8 @@ internal data class PingRequest(
 	val firsVisitTimeStamp: Long,
 	val previousSessionTimeStamp: Long?,
 	val timeOnPage: Long,
-	val pageStartTimeStamp: Long
+	val pageStartTimeStamp: Long,
+	val conversions: String?
 )
 
 sealed class UserType(open val numericValue: Int) {
