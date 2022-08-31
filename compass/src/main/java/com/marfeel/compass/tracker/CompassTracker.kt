@@ -43,7 +43,6 @@ interface CompassTracking {
 internal object CompassTracker : CompassTracking, CompassKoinComponent {
 
 	private val pingEmitter: PingEmitter by inject()
-	private val backgroundWatcher: BackgroundWatcher by inject()
 	private val storage: Storage by inject()
 	private val memory: Memory by inject()
 	private val getRFV: GetRFV by inject()
@@ -51,7 +50,6 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
 
 	override fun startPageView(url: String) {
 		requireNotNull(CompassTracking.accountId)
-		backgroundWatcher.initialize()
 		memory.updatePage(Page(url))
 		pingEmitter.start(url)
 	}
