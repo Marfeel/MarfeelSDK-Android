@@ -60,9 +60,23 @@ internal class StorageTest {
 	}
 
 	@Test
-	fun `readUserId returns random id if not set previously`() {
-		val returnedUserId = storage.readUserId()
+	fun `readGuestUserId returns random id if not set previously`() {
+		val returnedUserId = storage.readGuestUserId()
 		assertNotNull(returnedUserId)
+	}
+
+	@Test
+	fun `readUserId returns registeredUserId if has been set`() {
+		val newUserId = "NewUserID"
+		storage.updateUserId(newUserId)
+		val returnedUserId = storage.readUserId()
+		assertEquals(newUserId, returnedUserId)
+	}
+
+	@Test
+	fun `readRegisteredUserId returns null id if not set previously`() {
+		val returnedUserId = storage.readRegisteredUserId()
+		assertEquals(null, returnedUserId)
 	}
 
 	@Test
