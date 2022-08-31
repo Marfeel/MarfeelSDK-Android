@@ -46,7 +46,6 @@ internal class PingEmitter(
     fun stop() {
         Log.d("xtest", "pingStop")
         job.cancel()
-        //job.cancelChildren()
         pingEmitterState = null
     }
 
