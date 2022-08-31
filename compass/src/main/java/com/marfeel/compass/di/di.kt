@@ -20,7 +20,6 @@ import org.koin.dsl.module
 
 private val compassModule = module {
 	single { PingEmitter(get()) }
-	single { BackgroundWatcher(get()) }
 	single { Storage(androidContext(), Dispatchers.IO) }
 	single {
 		val logging = HttpLoggingInterceptor()
