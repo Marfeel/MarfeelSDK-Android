@@ -134,6 +134,6 @@ internal class Storage(
 			UserType.Anonymous.numericValue -> UserType.Anonymous
 			UserType.Logged.numericValue -> UserType.Logged
 			UserType.Paid.numericValue -> UserType.Paid
-			else -> UserType.CustomUserJourney(type)
+			else -> UserType.Custom(type)
 		}
 }
