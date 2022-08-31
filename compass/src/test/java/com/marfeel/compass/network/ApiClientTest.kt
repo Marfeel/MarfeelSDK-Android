@@ -21,7 +21,7 @@ class ApiClientTest {
         url = "url",
         previousUrl = "previousUrl",
         pageId = "pageId",
-        userId = "userId",
+        originalUserId = "userId",
         sessionId = "sessionId",
         pingCounter = 5678L,
         currentTimeStamp = 9012L,

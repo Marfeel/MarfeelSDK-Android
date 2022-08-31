@@ -19,7 +19,7 @@ internal class Storage(
 ) {
 	companion object {
 		private const val storageName = "EncryptedStorage"
-		private const val guestUserIdKey = "guestUserId_key"
+		private const val originalUserIdKey = "originalUserId_key"
 		private const val registeredUserIdKey = "registeredUserId_key"
 		private const val userTypeKey = "userType_key"
 		private const val firstSessionTimeStampKey = "firstSessionTimeStamp_key"
@@ -93,7 +93,7 @@ internal class Storage(
 
 	fun readUserId(): String =
 		runBlocking(storageScope.coroutineContext) {
-			getRegisteredUserId() ?: getGuestUserId()
+			getRegisteredUserId() ?: getOriginalUserId()
 		}
 
 	fun readRegisteredUserId(): String? =
@@ -101,9 +101,9 @@ internal class Storage(
 			getRegisteredUserId()
 		}
 
-	fun readGuestUserId(): String =
+	fun readOriginalUserId(): String =
 		runBlocking(storageScope.coroutineContext) {
-			getGuestUserId()
+			getOriginalUserId()
 		}
 
 	private fun getRegisteredUserId(): String? =
@@ -115,20 +115,20 @@ internal class Storage(
 		}
 	}
 
-	private fun getGuestUserId(): String {
-		val guestUserId = preferences.getString(guestUserIdKey, null)
-		return if (guestUserId != null) {
-			guestUserId
+	private fun getOriginalUserId(): String {
+		val originalUserId = preferences.getString(originalUserIdKey, null)
+		return if (originalUserId != null) {
+			originalUserId
 		} else {
 			val newId = UUID.randomUUID().toString()
-			setGuestUserId(newId)
+			setOriginalUserId(newId)
 			newId
 		}
 	}
 
-	private fun setGuestUserId(userId: String) {
+	private fun setOriginalUserId(userId: String) {
 		preferences.edit {
-			putString(guestUserIdKey, userId)
+			putString(originalUserIdKey, userId)
 		}
 	}
 

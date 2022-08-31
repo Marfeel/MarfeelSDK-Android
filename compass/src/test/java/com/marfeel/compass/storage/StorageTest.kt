@@ -60,8 +60,8 @@ internal class StorageTest {
 	}
 
 	@Test
-	fun `readGuestUserId returns random id if not set previously`() {
-		val returnedUserId = storage.readGuestUserId()
+	fun `readOriginalUserId returns random id if not set previously`() {
+		val returnedUserId = storage.readOriginalUserId()
 		assertNotNull(returnedUserId)
 	}
 
