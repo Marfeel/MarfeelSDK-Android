@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.core.widget.NestedScrollView
 import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.PingEmitter
+import com.marfeel.compass.core.Session
 import com.marfeel.compass.core.UserType
 import com.marfeel.compass.di.CompassKoinComponent
 import com.marfeel.compass.di.addAndroidContextToDiApplication
@@ -51,6 +52,7 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
 
     internal fun initialize(accountId: String) {
         memory.updateAccountId(accountId)
+		memory.updateSession()
     }
 
     override fun startPageView(url: String) {
