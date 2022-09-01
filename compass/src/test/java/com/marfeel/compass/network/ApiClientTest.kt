@@ -36,7 +36,8 @@ class ApiClientTest {
 
     private val anyRfvData = RfvData(
         accountId = "accountId",
-        userId = "userId",
+		registeredUserId = "userId",
+        originalUserId = "SGIJSPDGIJSDPG",
     )
 
     @After
@@ -120,7 +121,8 @@ class ApiClientTest {
                 parts[0] to parts[1]
             }
         assertEquals("accountId", formParams["ac"])
-        assertEquals("userId", formParams["u"])
+        assertEquals("SGIJSPDGIJSDPG", formParams["u"])
+        assertEquals("userId", formParams["sui"])
     }
 
     @Test

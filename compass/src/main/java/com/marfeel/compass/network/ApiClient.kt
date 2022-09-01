@@ -5,20 +5,15 @@ import com.google.gson.Gson
 import com.marfeel.compass.BuildConfig
 import com.marfeel.compass.core.PingData
 import com.marfeel.compass.core.RfvData
-import kotlinx.serialization.json.Json
-import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 private const val pingPath = "ingest.php"
 private const val rfvPath = "data.php"
-private const val apiVersion = "0.2"
-private const val pageType = "4"
+private const val pageType = 4
 
 internal class ApiClient(
 	private val httpClient: OkHttpClient,
@@ -71,7 +66,9 @@ private fun PingData.toPingRequest() =
 		lv = previousSessionTimeStamp,
 		l = timeOnPage,
 		ps = pageStartTimeStamp,
-		conv = conversions
+		conv = conversions,
+		pageType = pageType,
+		v = "" //TODO: Cannot do it using BuildConfig.VERSION_NAME
 )
 
 private fun RfvData.toRfvRequest() =

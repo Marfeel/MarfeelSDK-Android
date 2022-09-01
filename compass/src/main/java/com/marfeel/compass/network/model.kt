@@ -18,11 +18,13 @@ internal data class PingRequest(
 	val lv: Long?,
 	val l: Int,
 	val ps: Long,
-	val conv: String?
+	val conv: String?,
+	val pageType: Int,
+	val v:String
 )
 
 internal data class RfvRequest(
 	val ac: String,
 	val u: String,
-	val sui: String,
+	val sui: String?,
 )

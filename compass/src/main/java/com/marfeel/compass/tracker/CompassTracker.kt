@@ -2,7 +2,6 @@ package com.marfeel.compass.tracker
 
 import android.content.Context
 import androidx.core.widget.NestedScrollView
-import com.marfeel.compass.BackgroundWatcher
 import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.PingEmitter
 import com.marfeel.compass.core.UserType
@@ -20,24 +19,23 @@ private const val compassNotInitializedErrorMessage =
     "Compass not initialized. Make sure CompassTracking::initialize has been called"
 
 interface CompassTracking {
-	fun startPageView(url: String)
-	fun startPageView(url: String, scrollView: NestedScrollView)
-	fun stopTracking()
-	fun setUserId(userId: String)
-	fun setUserType(userType: UserType)
-	fun getRFV(): String?
-	fun getRFV(response: (String?) -> Unit)
-	fun trackConversion(conversion: String)
+    fun startPageView(url: String)
+    fun startPageView(url: String, scrollView: NestedScrollView)
+    fun stopTracking()
+    fun setUserId(userId: String)
+    fun setUserType(userType: UserType)
+    fun getRFV(): String?
+    fun getRFV(onResult: (String?) -> Unit)
+    fun trackConversion(conversion: String)
 
-	companion object {
-		internal var accountId: String? = null
-		fun initialize(context: Context, accountId: String) {
-			addAndroidContextToDiApplication(context)
-			this.accountId = accountId
-		}
+    companion object {
+        fun initialize(context: Context, accountId: String) {
+            addAndroidContextToDiApplication(context)
+            CompassTracker.initialize(accountId)
+        }
 
-		fun getInstance(): CompassTracking = CompassTracker
-	}
+        fun getInstance(): CompassTracking = CompassTracker
+    }
 }
 
 internal object CompassTracker : CompassTracking, CompassKoinComponent {
@@ -48,15 +46,21 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
 	private val getRFV: GetRFV by inject()
 	private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
-	override fun startPageView(url: String) {
-		requireNotNull(CompassTracking.accountId)
-		memory.updatePage(Page(url))
-		pingEmitter.start(url)
-	}
+    private val initialized: Boolean
+        get() = memory.readAccountId() != null
+
+    internal fun initialize(accountId: String) {
+        memory.updateAccountId(accountId)
+    }
+
+    override fun startPageView(url: String) {
+        check(initialized) { compassNotInitializedErrorMessage }
+        memory.updatePage(Page(url))
+        pingEmitter.start(url)
+    }
 
     override fun startPageView(url: String, scrollView: NestedScrollView) {
-        check(CompassTracking.accountId != null) { compassNotInitializedErrorMessage }
-
+        check(initialized) { compassNotInitializedErrorMessage }
         scrollView.setOnScrollChangeListener(
             NestedScrollView.OnScrollChangeListener { view, _, scrollY, _, _ ->
                 val scrollViewHeight: Double =
@@ -69,44 +73,47 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
         startPageView(url)
     }
 
-	internal fun Double.toScrollPercentage(): Int {
-		val range = 0..100
-		return when {
-			this > range.last -> range.last
-			else -> this.toInt()
-		}
-	}
+    internal fun Double.toScrollPercentage(): Int {
+        val range = 0..100
+        return when {
+            this > range.last -> range.last
+            else -> this.toInt()
+        }
+    }
 
-	override fun stopTracking() {
-		check(CompassTracking.accountId != null) { compassNotInitializedErrorMessage }
-		pingEmitter.stop()
-	}
+    override fun stopTracking() {
+        check(initialized) { compassNotInitializedErrorMessage }
+        pingEmitter.stop()
+    }
 
-	override fun setUserId(userId: String) {
-		check(CompassTracking.accountId != null) { compassNotInitializedErrorMessage }
-		storage.updateUserId(userId)
-	}
+    override fun setUserId(userId: String) {
+        check(initialized) { compassNotInitializedErrorMessage }
+        storage.updateUserId(userId)
+    }
 
-	override fun setUserType(userType: UserType) {
-		requireNotNull(CompassTracking.accountId)
-		storage.updateUserType(userType)
-	}
+    override fun setUserType(userType: UserType) {
+        check(initialized) { compassNotInitializedErrorMessage }
+        storage.updateUserType(userType)
+    }
 
     internal fun updateScrollPercentage(scrollPosition: Int) {
+        check(initialized) { compassNotInitializedErrorMessage }
         pingEmitter.updateScrollPercentage(scrollPosition)
     }
 
-	override fun getRFV(): String? =
-		getRFV.invoke()
+    override fun getRFV(): String? =
+        getRFV.invoke()
 
-	override fun getRFV(rfv: (String?) -> Unit) {
-		coroutineScope.launch {
-			val response = getRFV()
-			rfv(response)
-		}
-	}
+    override fun getRFV(onResult: (String?) -> Unit) {
+        check(initialized) { compassNotInitializedErrorMessage }
+        coroutineScope.launch {
+            val response = getRFV()
+            onResult(response)
+        }
+    }
 
-	override fun trackConversion(conversion: String) {
-		memory.addPendingConversion(conversion)
-	}
+    override fun trackConversion(conversion: String) {
+        check(initialized) { compassNotInitializedErrorMessage }
+        memory.addPendingConversion(conversion)
+    }
 }
