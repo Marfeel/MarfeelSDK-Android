@@ -9,7 +9,7 @@ internal data class PingRequest(
 	val url: String,
 	val previousUrl: String,
 	val pageId: String,
-	val userId: String,
+	val originalUserId: String,
 	val sessionId: String,
 	val pingCounter: Long,
 	val currentTimeStamp: Long,
