@@ -2,24 +2,22 @@ package com.marfeel.compass.core
 
 import java.util.*
 
-internal data class PingRequest(
+internal data class PingData(
 	val accountId: String,
 	val sessionTimeStamp: Long,
-	val referralUrl: String?,
 	val url: String,
 	val previousUrl: String,
 	val pageId: String,
 	val originalUserId: String,
 	val sessionId: String,
-	val pingCounter: Long,
+	val pingCounter: Int,
 	val currentTimeStamp: Long,
 	val userType: UserType,
 	val registeredUserId: String,
-	val cookiesAllowed: Boolean,
 	val scrollPercent: Int,
 	val firsVisitTimeStamp: Long,
 	val previousSessionTimeStamp: Long?,
-	val timeOnPage: Long,
+	val timeOnPage: Int,
 	val pageStartTimeStamp: Long,
 	val conversions: String?
 )
@@ -31,9 +29,10 @@ sealed class UserType(open val numericValue: Int) {
 	data class CustomUserJourney(override val numericValue: Int) : UserType(numericValue)
 }
 
-internal data class RfvRequest(
+internal data class RfvData(
 	val accountId: String,
-	val userId: String,
+	val registeredUserId: String?,
+	val originalUserId: String
 )
 
 internal data class Session(

@@ -1,7 +1,7 @@
 package com.marfeel.compass.network
 
-import com.marfeel.compass.core.PingRequest
-import com.marfeel.compass.core.RfvRequest
+import com.marfeel.compass.core.PingData
+import com.marfeel.compass.core.RfvData
 import com.marfeel.compass.core.UserType
 import junit.framework.TestCase.assertEquals
 import okhttp3.OkHttpClient
@@ -14,29 +14,27 @@ class ApiClientTest {
     private val server: MockWebServer = MockWebServer()
     private val baseUrl = server.url("/").toString()
 
-    private val anyPingRequest = PingRequest(
+    private val anyPingData = PingData(
         accountId = "accountId",
         sessionTimeStamp = 1234L,
-        referralUrl = "referralUrl",
         url = "url",
         previousUrl = "previousUrl",
         pageId = "pageId",
         originalUserId = "userId",
         sessionId = "sessionId",
-        pingCounter = 5678L,
+        pingCounter = 5678,
         currentTimeStamp = 9012L,
         userType = UserType.Anonymous,
         registeredUserId = "registeredUserId",
-        cookiesAllowed = false,
         scrollPercent = 5,
         firsVisitTimeStamp = 3456L,
         previousSessionTimeStamp = null,
-        timeOnPage = 7980L,
+        timeOnPage = 7980,
         pageStartTimeStamp = 1234L,
 		conversions = "someone@email.com"
     )
 
-    private val anyRfvRequest = RfvRequest(
+    private val anyRfvData = RfvData(
         accountId = "accountId",
         userId = "userId",
     )
@@ -49,14 +47,14 @@ class ApiClientTest {
     @Test
     fun sendsPingRequestWithTheExpectedVerb() {
         enqueueApiResponse(200)
-        givenAnApiClient().ping(anyPingRequest)
+        givenAnApiClient().ping(anyPingData)
         assertEquals("POST", server.takeRequest().method)
     }
 
     @Test
     fun sendsPingRequestWithTheExpectedHeaders() {
         enqueueApiResponse(200)
-        givenAnApiClient().ping(anyPingRequest)
+        givenAnApiClient().ping(anyPingData)
         assertEquals(
             "application/x-www-form-urlencoded",
             server.takeRequest().headers["content-type"]
@@ -66,7 +64,7 @@ class ApiClientTest {
     @Test
     fun sendsPingRequestParametersWithProperNamesAndValues() {
         enqueueApiResponse(200)
-        givenAnApiClient().ping(anyPingRequest)
+        givenAnApiClient().ping(anyPingData)
         val formParams: Map<String, String> =
             server.takeRequest().body.readUtf8().split("&").associate { field ->
                 val parts = field.split("=")
@@ -98,14 +96,14 @@ class ApiClientTest {
     @Test
     fun sendsRfvRequestWithTheExpectedVerb() {
         enqueueApiResponse(200)
-        givenAnApiClient().getRfv(anyRfvRequest)
+        givenAnApiClient().getRfv(anyRfvData)
         assertEquals("POST", server.takeRequest().method)
     }
 
     @Test
     fun sendsRfvRequestWithTheExpectedHeaders() {
         enqueueApiResponse(200)
-        givenAnApiClient().getRfv(anyRfvRequest)
+        givenAnApiClient().getRfv(anyRfvData)
         assertEquals(
             "application/x-www-form-urlencoded",
             server.takeRequest().headers["content-type"]
@@ -115,7 +113,7 @@ class ApiClientTest {
     @Test
     fun sendsRfvRequestParametersWithProperNamesAndValues() {
         enqueueApiResponse(200)
-        givenAnApiClient().getRfv(anyRfvRequest)
+        givenAnApiClient().getRfv(anyRfvData)
         val formParams: Map<String, String> =
             server.takeRequest().body.readUtf8().split("&").associate { field ->
                 val parts = field.split("=")
@@ -129,7 +127,7 @@ class ApiClientTest {
     fun returnsRfvResponseBodyIfApiCallSucceeds() {
         val responseBody = "response-body"
         enqueueApiResponse(200, responseBody)
-        val response = givenAnApiClient().getRfv(anyRfvRequest)
+        val response = givenAnApiClient().getRfv(anyRfvData)
         val expected = Result.success(responseBody)
         assertEquals(expected, response)
     }
