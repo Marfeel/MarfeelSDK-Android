@@ -22,6 +22,7 @@ internal class Ping(
 			accountId = memory.readAccountId() ?: "",
 			sessionTimeStamp = currentSession.timeStamp,
 			url = pingEmitterState.url,
+			canonicalUrl = pingEmitterState.url,
 			previousUrl = memory.readPreviousUrl() ?: "",
 			pageId = memory.readPage()?.pageId ?: "",
 			originalUserId = storage.readOriginalUserId(),
@@ -35,7 +36,8 @@ internal class Ping(
 			previousSessionTimeStamp = storage.readPreviousSessionLastPingTimeStamp(),
 			timeOnPage = pingEmitterState.activeTimeOnPage.toInt(),
 			pageStartTimeStamp = memory.readPage()?.startTimeStamp ?: 0L,
-			conversions = conversions.join()
+			conversions = conversions.join(),
+			version = ""
 		)
 		api.ping(pingData).also {
 			memory.clearTrackedConversions(conversions)

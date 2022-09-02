@@ -1,25 +1,47 @@
 package com.marfeel.compass.core
 
-import java.util.*
+import com.google.gson.annotations.SerializedName
+import java.util.UUID
 
 internal data class PingData(
+	@SerializedName("ac")
 	val accountId: String,
+	@SerializedName("t")
 	val sessionTimeStamp: Long,
+	@SerializedName("url")
 	val url: String,
+	@SerializedName("c")
+	val canonicalUrl: String,
+	@SerializedName("pp")
 	val previousUrl: String,
+	@SerializedName("p")
 	val pageId: String,
+	@SerializedName("u")
 	val originalUserId: String,
+	@SerializedName("s")
 	val sessionId: String,
+	@SerializedName("a")
 	val pingCounter: Int,
+	@SerializedName("n")
 	val currentTimeStamp: Long,
+	@SerializedName("ut")
 	val userType: UserType,
+	@SerializedName("sui")
 	val registeredUserId: String,
+	@SerializedName("sc")
 	val scrollPercent: Int,
+	@SerializedName("fv")
 	val firsVisitTimeStamp: Long,
+	@SerializedName("lv")
 	val previousSessionTimeStamp: Long?,
+	@SerializedName("l")
 	val timeOnPage: Int,
+	@SerializedName("ps")
 	val pageStartTimeStamp: Long,
-	val conversions: String?
+	@SerializedName("conv")
+	val conversions: String?,
+	@SerializedName("v")
+	val version: String
 )
 
 sealed class UserType(open val numericValue: Int) {
@@ -30,8 +52,11 @@ sealed class UserType(open val numericValue: Int) {
 }
 
 internal data class RfvData(
+	@SerializedName("ac")
 	val accountId: String,
+	@SerializedName("sui")
 	val registeredUserId: String?,
+	@SerializedName("u")
 	val originalUserId: String
 )
 
