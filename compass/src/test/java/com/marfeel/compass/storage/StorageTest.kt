@@ -46,18 +46,18 @@ internal class StorageTest {
 		assertEquals(timeStamp, storage.readFirstSessionTimeStamp())
 	}
 
-	@Test
-	fun `previousSession TimeStamp is null if not set`() {
-		assertEquals(null, storage.readPreviousSessionTimeStamp())
-	}
-
-	@Test
-	fun `updates previousSession TimeStamp`() {
-		val timeStamp = currentTimeStampInSeconds()
-		storage.updatePreviousSessionTimeStamp(timeStamp)
-
-		assertEquals(timeStamp, storage.readPreviousSessionTimeStamp())
-	}
+//	@Test
+//	fun `previousSession TimeStamp is null if not set`() {
+//		assertEquals(null, storage.readPreviousSessionTimeStamp())
+//	}
+//
+//	@Test
+//	fun `updates previousSession TimeStamp`() {
+//		val timeStamp = currentTimeStampInSeconds()
+//		storage.updatePreviousSessionTimeStamp(timeStamp)
+//
+//		assertEquals(timeStamp, storage.readPreviousSessionTimeStamp())
+//	}
 
 	@Test
 	fun `readOriginalUserId returns random id if not set previously`() {
@@ -114,9 +114,9 @@ internal class StorageTest {
 	fun `updates previous session last timeStamp when new session timestamp is greater than last ping timestamp`() {
 		val lastPingTimeStamp = currentTimeStampInSeconds()
 		storage.updateLastPingTimeStamp(lastPingTimeStamp)
-
-		storage.updateCurrentSessionTimeStamp(currentTimeStampInSeconds())
+		storage.updateCurrentSessionTimeStamp(currentTimeStampInSeconds() + 10L)
 
 		assertEquals(storage.readPreviousSessionLastPingTimeStamp(), lastPingTimeStamp)
+
 	}
 }
