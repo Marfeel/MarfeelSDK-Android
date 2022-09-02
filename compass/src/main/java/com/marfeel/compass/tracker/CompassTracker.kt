@@ -20,9 +20,8 @@ private const val compassNotInitializedErrorMessage =
 
 /**
  * CompassTracking is the entry point for all interactions with the library.
- * To access to CompassTracking just retrieve its singleton instance by calling CompassTracking.getInstance.
+ * To access to CompassTracking just retrieve its singleton instance by calling [CompassTracking.getInstance].
  *
- * @see CompassTracking.Companion.getInstance
  */
 interface CompassTracking {
     /**
