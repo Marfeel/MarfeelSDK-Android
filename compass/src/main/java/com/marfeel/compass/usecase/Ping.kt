@@ -1,6 +1,7 @@
 package com.marfeel.compass.usecase
 
 import android.util.Log
+import com.marfeel.compass.BuildConfig
 import com.marfeel.compass.core.PingData
 import com.marfeel.compass.core.PingEmitterState
 import com.marfeel.compass.core.UseCase
@@ -37,7 +38,7 @@ internal class Ping(
 			timeOnPage = pingEmitterState.activeTimeOnPage.toInt(),
 			pageStartTimeStamp = memory.readPage()?.startTimeStamp ?: 0L,
 			conversions = conversions.join(),
-			version = ""
+			version = BuildConfig.VERSION
 		)
 		api.ping(pingData).also {
 			memory.clearTrackedConversions(conversions)
