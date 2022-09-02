@@ -13,7 +13,6 @@ import java.io.IOException
 
 private const val pingPath = "ingest.php"
 private const val rfvPath = "data.php"
-private const val pageType = 4
 
 internal class ApiClient(
 	private val httpClient: OkHttpClient,

@@ -3,6 +3,8 @@ package com.marfeel.compass.core
 import com.google.gson.annotations.SerializedName
 import java.util.UUID
 
+private const val androidPageType = 4
+
 internal data class PingData(
 	@SerializedName("ac")
 	val accountId: String,
@@ -41,7 +43,9 @@ internal data class PingData(
 	@SerializedName("conv")
 	val conversions: String?,
 	@SerializedName("v")
-	val version: String
+	val version: String,
+	@SerializedName("pageType")
+	val pageType: Int = androidPageType
 )
 
 sealed class UserType(open val numericValue: Int) {

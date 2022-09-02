@@ -52,6 +52,22 @@ internal class MemoryTest {
 		assertEquals(savedSession, retrievedSession)
 	}
 
+//	@Test
+//	fun `updatesSession calls to storage updatePreviousSessionLastPingTimeStamp if there was a previous ping`() {
+//		val currentTimeStamp = currentTimeStampInSeconds()
+//		val newSession = Session(
+//			id = UUID.randomUUID().toString(),
+//			timeStamp = currentTimeStamp
+//		)
+//		val lastTimeStampFromPreviousSession = currentTimeStamp - 10
+//		runBlocking {
+//			storage.updatePreviousSessionLastPingTimeStamp(lastTimeStampFromPreviousSession)
+//			memory.updateSession(newSession)
+//		}
+//
+//		verify { storage.updatePreviousSessionLastPingTimeStamp(lastTimeStampFromPreviousSession) }
+//	}
+
 
 	@Test
 	fun `readPage returns null if not set previously`() {
