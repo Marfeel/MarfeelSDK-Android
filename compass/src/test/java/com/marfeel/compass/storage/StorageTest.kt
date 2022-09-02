@@ -109,14 +109,4 @@ internal class StorageTest {
 
 		assertEquals(savedUserType, retrievedUserType)
 	}
-
-	@Test
-	fun `updates previous session last timeStamp when new session timestamp is greater than last ping timestamp`() {
-		val lastPingTimeStamp = currentTimeStampInSeconds()
-		storage.updateLastPingTimeStamp(lastPingTimeStamp)
-		storage.updateCurrentSessionTimeStamp(currentTimeStampInSeconds() + 10L)
-
-		assertEquals(storage.readPreviousSessionLastPingTimeStamp(), lastPingTimeStamp)
-
-	}
 }

@@ -23,7 +23,6 @@ internal class Storage(
 		private const val registeredUserIdKey = "registeredUserId_key"
 		private const val userTypeKey = "userType_key"
 		private const val firstSessionTimeStampKey = "firstSessionTimeStamp_key"
-		private const val currentSessionTimeStampKey = "currentSessionTimestampTimeStamp_key"
 		private const val previousSessionLastPingTimeStampKey =
 			"previousSessionLastPingTimeStamp_key"
 		private const val lastPingTimeStampKey = "lastPingTimeStamp_key"
@@ -142,24 +141,6 @@ internal class Storage(
 			else -> UserType.CustomUserJourney(type)
 		}
 
-	fun updateCurrentSessionTimeStamp(newSessionTimeStamp: Long) {
-		storageScope.launch {
-			val lastPingTimeStamp = getLastPingTimeStamp()
-
-			setCurrentSessionTimeStamp(newSessionTimeStamp)
-
-			if (newSessionTimeStamp > lastPingTimeStamp) {
-				setPreviousSessionLastPingTimeStamp(lastPingTimeStamp)
-			}
-		}
-	}
-
-	private fun setCurrentSessionTimeStamp(timeStamp: Long) {
-		preferences.edit {
-			putLong(currentSessionTimeStampKey, timeStamp)
-		}
-	}
-
 	fun updateLastPingTimeStamp(timeStamp: Long) {
 		storageScope.launch {
 			setLastPingTimeStamp(timeStamp)
@@ -171,8 +152,24 @@ internal class Storage(
 			putLong(lastPingTimeStampKey, timeStamp)
 		}
 
+	fun readLastPingTimeStamp(): Long? =
+		runBlocking {
+			val lastPingTimeStamp = getLastPingTimeStamp()
+			if (lastPingTimeStamp == 0L) {
+				null
+			} else {
+				lastPingTimeStamp
+			}
+		}
+
 	private fun getLastPingTimeStamp(): Long =
 		preferences.getLong(lastPingTimeStampKey, 0L)
+
+
+	fun updatePreviousSessionLastPingTimeStamp(timeStamp: Long) =
+		storageScope.launch {
+			setPreviousSessionLastPingTimeStamp(timeStamp)
+		}
 
 	private fun setPreviousSessionLastPingTimeStamp(timeStamp: Long) =
 		preferences.edit {
