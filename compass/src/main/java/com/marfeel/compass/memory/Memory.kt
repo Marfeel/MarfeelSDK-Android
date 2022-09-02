@@ -28,10 +28,11 @@ internal class Memory(private val storage: Storage) : CompassKoinComponent {
 	private fun newSession(): Session =
 		Session(UUID.randomUUID().toString(), currentTimeStampInSeconds())
 
-	fun updateSession(newSession: Session) {
-		val currentSession = session
-		currentSession?.run {
-			storage.updatePreviousSessionTimeStamp(timeStamp)
+	fun updateSession(newSession: Session = newSession()) {
+		storage.readLastPingTimeStamp()?.let {
+			if (newSession.timeStamp > it) {
+				storage.updatePreviousSessionLastPingTimeStamp(it)
+			}
 		}
 		session = newSession
 	}

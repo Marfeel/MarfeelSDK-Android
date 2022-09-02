@@ -76,7 +76,7 @@ internal class PingEmitter(
 
 internal data class PingEmitterState(
     val url: String,
-    val pingCounter: Long,
+    val pingCounter: Int,
     val scrollPercent: Int?,
     val pageStartTimeStamp: Long,
     val timeOnBackground: Long,

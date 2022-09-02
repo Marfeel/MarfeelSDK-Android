@@ -1,27 +1,51 @@
 package com.marfeel.compass.core
 
-import java.util.*
+import com.google.gson.annotations.SerializedName
+import java.util.UUID
 
-internal data class PingRequest(
+private const val androidPageType = 4
+
+internal data class PingData(
+	@SerializedName("ac")
 	val accountId: String,
+	@SerializedName("t")
 	val sessionTimeStamp: Long,
-	val referralUrl: String?,
+	@SerializedName("url")
 	val url: String,
+	@SerializedName("c")
+	val canonicalUrl: String,
+	@SerializedName("pp")
 	val previousUrl: String,
+	@SerializedName("p")
 	val pageId: String,
+	@SerializedName("u")
 	val originalUserId: String,
+	@SerializedName("s")
 	val sessionId: String,
-	val pingCounter: Long,
+	@SerializedName("a")
+	val pingCounter: Int,
+	@SerializedName("n")
 	val currentTimeStamp: Long,
+	@SerializedName("ut")
 	val userType: UserType,
+	@SerializedName("sui")
 	val registeredUserId: String,
-	val cookiesAllowed: Boolean,
+	@SerializedName("sc")
 	val scrollPercent: Int,
+	@SerializedName("fv")
 	val firsVisitTimeStamp: Long,
+	@SerializedName("lv")
 	val previousSessionTimeStamp: Long?,
-	val timeOnPage: Long,
+	@SerializedName("l")
+	val timeOnPage: Int,
+	@SerializedName("ps")
 	val pageStartTimeStamp: Long,
-	val conversions: String?
+	@SerializedName("conv")
+	val conversions: String?,
+	@SerializedName("v")
+	val version: String,
+	@SerializedName("pageType")
+	val pageType: Int = androidPageType
 )
 
 sealed class UserType(open val numericValue: Int) {
@@ -31,9 +55,13 @@ sealed class UserType(open val numericValue: Int) {
 	data class CustomUserJourney(override val numericValue: Int) : UserType(numericValue)
 }
 
-internal data class RfvRequest(
+internal data class RfvData(
+	@SerializedName("ac")
 	val accountId: String,
-	val userId: String,
+	@SerializedName("sui")
+	val registeredUserId: String?,
+	@SerializedName("u")
+	val originalUserId: String
 )
 
 internal data class Session(
