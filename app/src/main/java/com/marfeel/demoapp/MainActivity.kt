@@ -2,6 +2,7 @@ package com.marfeel.demoapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.compose.material.MaterialTheme
 import androidx.fragment.app.FragmentActivity
@@ -14,7 +15,6 @@ class MainActivity : FragmentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		CompassTracking.initialize(this, "accountId")
-		tracker.setUserId("UserId")
 
 		setContent {
 			MaterialTheme {
@@ -26,10 +26,6 @@ class MainActivity : FragmentActivity() {
 					},
 					navigateToComposeNews = {
 						val intent = Intent(this, NewsComposeActivity::class.java)
-						startActivity(intent)
-					},
-					navigateToSettings = {
-						val intent = Intent(this, SettingsActivity::class.java)
 						startActivity(intent)
 					}
 				)
