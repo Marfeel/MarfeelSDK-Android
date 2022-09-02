@@ -192,7 +192,9 @@ fun MainScreen(
 			}
 
 			Row(
-				modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(top = 32.dp),
 				horizontalArrangement = Arrangement.SpaceEvenly
 			) {
 				FloatingActionButton(

@@ -47,15 +47,7 @@ class NewsComposeActivity : FragmentActivity() {
 		Scaffold(
 			Modifier
 				.fillMaxSize()
-				.background(Color.White),
-			floatingActionButton = {
-				FloatingActionButton(
-					onClick = {
-						tracker.trackConversion("conversion@email.com")
-					}) {
-					Text(text = "Conversion", color = Color.White)
-				}
-			}
+				.background(Color.White)
 		) {
 			Column(
 				Modifier
