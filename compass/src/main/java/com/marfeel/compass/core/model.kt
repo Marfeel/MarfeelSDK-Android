@@ -48,11 +48,16 @@ internal data class PingData(
 	val pageType: Int = androidPageType
 )
 
+/**
+ *  Possible types of users.
+ *
+ * @property numericValue numeric representation of the user type. Values 1, 2, and 3 are reserved for the [Anonymous], [Logged], and [Paid] types.
+ */
 sealed class UserType(open val numericValue: Int) {
 	object Anonymous : UserType(1)
 	object Logged : UserType(2)
 	object Paid : UserType(3)
-	data class CustomUserJourney(override val numericValue: Int) : UserType(numericValue)
+	data class Custom(override val numericValue: Int) : UserType(numericValue)
 }
 
 internal data class RfvData(
@@ -75,4 +80,4 @@ internal data class Page(
 	val startTimeStamp: Long = currentTimeStampInSeconds()
 )
 
-fun currentTimeStampInSeconds() = System.currentTimeMillis() / 1000
+internal fun currentTimeStampInSeconds() = System.currentTimeMillis() / 1000
