@@ -22,7 +22,7 @@ internal class ApiClient(
 	private val mediaType = "application/json; charset=utf-8".toMediaType()
 
 	fun ping(pingData: PingData) {
-		val jsonRequest = Gson().toJson(pingData.toPingRequest())
+		val jsonRequest = Gson().toJson(pingData)
 		val request = Request.Builder()
 			.url("$baseUrl/$pingPath")
 			.post(jsonRequest.toRequestBody(mediaType))
@@ -33,7 +33,7 @@ internal class ApiClient(
 	}
 
 	fun getRfv(rfvData: RfvData): Result<String?> {
-		val jsonRequest = Gson().toJson(rfvData.toRfvRequest())
+		val jsonRequest = Gson().toJson(rfvData)
 		val request = Request.Builder()
 			.url("$baseUrl/$rfvPath")
 			.post(jsonRequest.toRequestBody(mediaType))
@@ -46,34 +46,3 @@ internal class ApiClient(
 		}
 	}
 }
-
-private fun PingData.toPingRequest() =
-	PingRequest(
-		ac = accountId,
-		t = sessionTimeStamp,
-		url = url,
-		c = url,
-		pp = previousUrl,
-		p = pageId,
-		u = originalUserId,
-		s = sessionId,
-		a = pingCounter,
-		n = currentTimeStamp,
-		ut = userType.numericValue,
-		sui = registeredUserId,
-		sc = scrollPercent,
-		fv = firsVisitTimeStamp,
-		lv = previousSessionTimeStamp,
-		l = timeOnPage,
-		ps = pageStartTimeStamp,
-		conv = conversions,
-		pageType = pageType,
-		v = "" //TODO: Cannot do it using BuildConfig.VERSION_NAME
-)
-
-private fun RfvData.toRfvRequest() =
-	RfvRequest(
-		ac = accountId,
-		u = originalUserId,
-		sui = registeredUserId
-	)

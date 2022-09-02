@@ -1,8 +1,8 @@
 package com.marfeel.compass.usecase
 
 import android.util.Log
-import com.marfeel.compass.core.PingEmitterState
 import com.marfeel.compass.core.PingData
+import com.marfeel.compass.core.PingEmitterState
 import com.marfeel.compass.core.UseCase
 import com.marfeel.compass.core.currentTimeStampInSeconds
 import com.marfeel.compass.memory.Memory
@@ -20,6 +20,7 @@ internal class Ping(
 			accountId = memory.readAccountId() ?: "",
 			sessionTimeStamp = memory.readSession().timeStamp,
 			url = pingEmitterState.url,
+			canonicalUrl = pingEmitterState.url,
 			previousUrl = memory.readPreviousUrl() ?: "",
 			pageId = memory.readPage()?.pageId ?: "",
 			originalUserId = storage.readOriginalUserId(),
@@ -33,7 +34,8 @@ internal class Ping(
 			previousSessionTimeStamp = storage.readPreviousSessionTimeStamp(),
 			timeOnPage = pingEmitterState.activeTimeOnPage.toInt(),
 			pageStartTimeStamp = memory.readPage()?.startTimeStamp ?: 0L,
-			conversions = conversions.join()
+			conversions = conversions.join(),
+			version = ""
 		)
 		api.ping(pingData)
 		memory.clearTrackedConversions(conversions)
