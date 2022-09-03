@@ -46,7 +46,7 @@ tracker.stopTracking()
 
 ### Control del scroll
 
-Si quiere que el sistema registre el porcentaje de scroll que el usuario ha hecho en la página, indique la functión startPageView el NestedScrollView en el que se está mostrando el contenido al usuario.
+Si quiere que el sistema registre el porcentaje de scroll que el usuario ha hecho en la página, indique en la función startPageView el NestedScrollView en el que se está mostrando el contenido al usuario.
 
 ```kotlin
 tracker.startPageView(url: String, scrollView: NestedScrollView)
