@@ -51,7 +51,7 @@ internal class PingEmitter(
 
     fun stop() {
         stopBackgroundWatcher()
-        job.cancel()
+        job.cancelChildren()
         pingEmitterState = null
     }
 

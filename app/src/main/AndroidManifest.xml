@@ -18,6 +18,7 @@
         <activity
             android:name=".NewsXMLActivity"
             android:exported="false"
+			android:windowSoftInputMode="adjustResize"
             android:label="@string/title_activity_news_xmlactivity"
             android:theme="@style/Theme.CompassSDK.NoActionBar" />
         <activity
@@ -32,9 +33,6 @@
         </activity>
         <activity
             android:name=".NewsComposeActivity"
-            android:exported="true" />
-        <activity
-            android:name=".SettingsActivity"
             android:exported="true" />
     </application>
 

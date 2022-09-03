@@ -44,7 +44,6 @@ internal class Ping(
 			memory.clearTrackedConversions(conversions)
 			storage.updateLastPingTimeStamp(currentTimeStamp)
 		}
-		Log.d("Compass", "ping \n scrollPercentage: ${pingEmitterState.scrollPercent} \n")
 	}
 }
 
