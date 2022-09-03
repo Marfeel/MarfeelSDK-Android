@@ -82,8 +82,10 @@ interface CompassTracking {
          * @param accountId Compass account id.
          */
         fun initialize(context: Context, accountId: String) {
-            addAndroidContextToDiApplication(context)
-            CompassTracker.initialize(accountId)
+            if (!CompassTracker.initialized){
+                addAndroidContextToDiApplication(context)
+                CompassTracker.initialize(accountId)
+            }
         }
 
         /**
@@ -102,7 +104,7 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
     private val getRFV: GetRFV by inject()
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
-    private val initialized: Boolean
+    internal val initialized: Boolean
         get() = memory.readAccountId() != null
 
     internal fun initialize(accountId: String) {
