@@ -66,7 +66,7 @@ Para asociar al usuario de la aplicación con los registros generados por la lib
 setUserId(userId: String)
 ```
 
-Adicionalmente, puede indicar el tipo de usuario, actualmente la librería permite los tipos Anonymous (para usuarios sin sesión), LOGGED (para usuarios registrados), PAID (para usuarios de pago) y CUSTOM. Para indicar el tipo de usuario use el método setUserType.
+Adicionalmente, puede indicar el tipo de usuario, actualmente la librería permite los tipos ANONYMOUS (para usuarios sin sesión), LOGGED (para usuarios registrados), PAID (para usuarios de pago) y CUSTOM. Para indicar el tipo de usuario use el método setUserType.
 
 ```kotlin
 tracker.setUserType(UserType.Anonymous)
