@@ -15,8 +15,9 @@ internal class GetRFV(
 		val request = RfvData(
 			accountId = memory.readAccountId() ?: "",
 			originalUserId = storage.readOriginalUserId(),
-			registeredUserId = storage.readRegisteredUserId()
-		)
+			registeredUserId = storage.readRegisteredUserId(),
+			previousSessionTimeStamp = storage.readPreviousSessionLastPingTimeStamp()
+			)
 		return api.getRfv(request).getOrNull()
 	}
 }
