@@ -66,7 +66,9 @@ internal data class RfvData(
 	@SerializedName("sui")
 	val registeredUserId: String?,
 	@SerializedName("u")
-	val originalUserId: String
+	val originalUserId: String,
+	@SerializedName("lv")
+	val previousSessionTimeStamp: Long?
 )
 
 internal data class Session(

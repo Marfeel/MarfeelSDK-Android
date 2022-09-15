@@ -12,18 +12,19 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 
 private const val pingPath = "ingest.php"
-private const val rfvPath = "data.php"
+private const val rfvPath = "/rfv.php"
 
 internal class ApiClient(
 	private val httpClient: OkHttpClient,
-	private val baseUrl: String = BuildConfig.COMPASS_BASE_URL
+	private val pingBaseUrl: String = BuildConfig.COMPASS_PING_BASE_URL,
+	private val rfvBaseUrl: String = BuildConfig.COMPASS_RFV_BASE_URL
 ) {
 	private val mediaType = "application/json; charset=utf-8".toMediaType()
 
 	fun ping(pingData: PingData) {
 		val jsonRequest = Gson().toJson(pingData)
 		val request = Request.Builder()
-			.url("$baseUrl/$pingPath")
+			.url("$pingBaseUrl/$pingPath")
 			.post(jsonRequest.toRequestBody(mediaType))
 			.build()
 		httpClient.newCall(request).execute().use {
@@ -34,7 +35,7 @@ internal class ApiClient(
 	fun getRfv(rfvData: RfvData): Result<String?> {
 		val jsonRequest = Gson().toJson(rfvData)
 		val request = Request.Builder()
-			.url("$baseUrl/$rfvPath")
+			.url("$rfvBaseUrl/$rfvPath")
 			.post(jsonRequest.toRequestBody(mediaType))
 			.build()
 		return try {
