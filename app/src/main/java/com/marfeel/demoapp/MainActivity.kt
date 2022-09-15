@@ -14,7 +14,7 @@ class MainActivity : FragmentActivity() {
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		CompassTracking.initialize(this, "accountId")
+		CompassTracking.initialize(this, "1988")
 
 		setContent {
 			MaterialTheme {

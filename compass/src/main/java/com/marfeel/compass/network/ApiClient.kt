@@ -8,6 +8,7 @@ import com.marfeel.compass.core.RfvData
 import com.marfeel.compass.core.androidPageType
 import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -21,18 +22,20 @@ internal class ApiClient(
 	private val pingBaseUrl: String = BuildConfig.COMPASS_PING_BASE_URL,
 	private val rfvBaseUrl: String = BuildConfig.COMPASS_RFV_BASE_URL
 ) {
-	private val mediaType = "application/json; charset=utf-8".toMediaType()
+	private val mediaType = "multipart/form-data; charset=utf-8".toMediaType()
 
 	fun ping(pingData: PingData) {
-		val formBody = FormBody.Builder()
+		val formBody = MultipartBody.Builder()
+			.setType(MultipartBody.FORM)
 			.addPingRequest(pingData)
 			.build()
 		val request = Request.Builder()
+			.addHeader("Content-Type", "multipart/form-data; boundary=----WebKitFormBoundaryaqu94JiryTqymdqO")
 			.url("$pingBaseUrl/$pingPath")
 			.post(formBody)
 			.build()
 
-		val jsonRequest = Gson().toJson(pingData)
+//		val jsonRequest = Gson().toJson(pingData)
 //		val request = Request.Builder()
 //			.url("$pingBaseUrl/$pingPath")
 //			.post(jsonRequest.toRequestBody(mediaType))
@@ -57,24 +60,24 @@ internal class ApiClient(
 	}
 }
 
-private fun FormBody.Builder.addPingRequest(ping: PingData): FormBody.Builder =
-	this.addEncoded("ac", ping.accountId)
-		.addEncoded("t", ping.sessionTimeStamp.toString())
-		.addEncoded("url", ping.url)
-		.addEncoded("c", ping.url)
-		.addEncoded("pp", ping.previousUrl)
-		.addEncoded("p", ping.pageId)
-		.addEncoded("u", ping.originalUserId)
-		.addEncoded("s", ping.sessionId)
-		.addEncoded("a", ping.pingCounter.toString())
-		.addEncoded("n", ping.currentTimeStamp.toString())
-		.addEncoded("ut", ping.userType.numericValue.toString())
-		.addEncoded("sui", ping.registeredUserId)
-		.addEncoded("sc", ping.scrollPercent.toString())
-		.addEncoded("fv", ping.firsVisitTimeStamp.toString())
-		.addEncoded("lv", ping.previousSessionTimeStamp?.toString() ?: "null")
-		.addEncoded("l", ping.timeOnPage.toString())
-		.addEncoded("ps", ping.pageStartTimeStamp.toString())
-		.addEncoded("conv", ping.conversions ?: "")
-		.addEncoded("v", BuildConfig.VERSION)
-		.addEncoded("pageType", androidPageType.toString())
+private fun MultipartBody.Builder.addPingRequest(ping: PingData): MultipartBody.Builder =
+	this.addFormDataPart("ac", ping.accountId)
+		.addFormDataPart("t", ping.sessionTimeStamp.toString())
+		.addFormDataPart("url", ping.url)
+		.addFormDataPart("c", ping.url)
+		.addFormDataPart("pp", ping.previousUrl)
+		.addFormDataPart("p", ping.pageId)
+		.addFormDataPart("u", ping.originalUserId)
+		.addFormDataPart("s", ping.sessionId)
+		.addFormDataPart("a", ping.pingCounter.toString())
+		.addFormDataPart("n", ping.currentTimeStamp.toString())
+		.addFormDataPart("ut", ping.userType.numericValue.toString())
+		.addFormDataPart("sui", ping.registeredUserId)
+		.addFormDataPart("sc", ping.scrollPercent.toString())
+		.addFormDataPart("fv", ping.firsVisitTimeStamp.toString())
+		.addFormDataPart("lv", ping.previousSessionTimeStamp?.toString() ?: "null")
+		.addFormDataPart("l", ping.timeOnPage.toString())
+		.addFormDataPart("ps", ping.pageStartTimeStamp.toString())
+		.addFormDataPart("conv", ping.conversions ?: "")
+		.addFormDataPart("v", BuildConfig.VERSION)
+		.addFormDataPart("pageType", androidPageType.toString())
