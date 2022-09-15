@@ -37,7 +37,7 @@ internal class ApiClient(
     private fun PingData.toFormBody() = FormBody.Builder()
         .add("ac", accountId)
         .add("t", sessionTimeStamp.toString())
-        .addEncoded("url", url)
+        .add("url", url)
         .add("c", canonicalUrl)
         .add("pp", previousUrl)
         .add("p", pageId)
