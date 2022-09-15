@@ -82,8 +82,8 @@ interface CompassTracking {
          * @param accountId Compass account id.
          */
         fun initialize(context: Context, accountId: String) {
+            addAndroidContextToDiApplication(context)
             if (!CompassTracker.initialized){
-                addAndroidContextToDiApplication(context)
                 CompassTracker.initialize(accountId)
             }
         }
