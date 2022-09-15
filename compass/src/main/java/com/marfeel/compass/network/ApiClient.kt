@@ -35,11 +35,6 @@ internal class ApiClient(
 			.post(formBody)
 			.build()
 
-//		val jsonRequest = Gson().toJson(pingData)
-//		val request = Request.Builder()
-//			.url("$pingBaseUrl/$pingPath")
-//			.post(jsonRequest.toRequestBody(mediaType))
-//			.build()
 		httpClient.newCall(request).execute().use {
 			if (it.isSuccessful) Log.d("Compass", "ping emmited")
 		}
