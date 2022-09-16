@@ -23,14 +23,12 @@ internal class ApiClient(
 	private val mediaType = "text/plain".toMediaType()
 
 	fun ping(pingData: PingData) {
-		val boundary = "--401c9ccd-19db-4759-8da6-bd3a82e49867--"
-		val formBody = MultipartBody.Builder(boundary)
+		val formBody = MultipartBody.Builder()
 			.setType(MultipartBody.FORM)
 			.addPingRequest(pingData)
 			.build()
 		formBody.contentType()
 		val request = Request.Builder()
-			.addHeader("Content-Type", "multipart/form-data; boundary=$boundary")
 			.url("$pingBaseUrl/$pingPath")
 			.post(formBody)
 			.build()
