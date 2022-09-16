@@ -1,12 +1,10 @@
 package com.marfeel.compass.network
 
-import android.util.Log
 import com.google.gson.Gson
 import com.marfeel.compass.BuildConfig
 import com.marfeel.compass.core.PingData
 import com.marfeel.compass.core.RfvData
 import com.marfeel.compass.core.androidPageType
-import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -22,22 +20,22 @@ internal class ApiClient(
 	private val pingBaseUrl: String = BuildConfig.COMPASS_PING_BASE_URL,
 	private val rfvBaseUrl: String = BuildConfig.COMPASS_RFV_BASE_URL
 ) {
-	private val mediaType = "multipart/form-data; charset=utf-8".toMediaType()
+	private val mediaType = "text/plain".toMediaType()
 
 	fun ping(pingData: PingData) {
-		val formBody = MultipartBody.Builder()
+		val boundary = "--401c9ccd-19db-4759-8da6-bd3a82e49867--"
+		val formBody = MultipartBody.Builder(boundary)
 			.setType(MultipartBody.FORM)
 			.addPingRequest(pingData)
 			.build()
+		formBody.contentType()
 		val request = Request.Builder()
-			.addHeader("Content-Type", "multipart/form-data; boundary=----WebKitFormBoundaryaqu94JiryTqymdqO")
+			.addHeader("Content-Type", "multipart/form-data; boundary=$boundary")
 			.url("$pingBaseUrl/$pingPath")
 			.post(formBody)
 			.build()
 
-		httpClient.newCall(request).execute().use {
-			if (it.isSuccessful) Log.d("Compass", "ping emmited")
-		}
+		httpClient.newCall(request).execute()
 	}
 
 	fun getRfv(rfvData: RfvData): Result<String?> {

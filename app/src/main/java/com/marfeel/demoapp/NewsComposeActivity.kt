@@ -31,7 +31,7 @@ class NewsComposeActivity : FragmentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		tracker.startPageView("NewsActivity - Compose")
+		tracker.startPageView("https://newsactivitycompose.com")
 		setContent {
 			MaterialTheme {
 				NewsScreen()
