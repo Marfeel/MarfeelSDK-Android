@@ -1,7 +1,7 @@
 package com.marfeel.compass.di
 
 import android.content.Context
-import com.marfeel.compass.BackgroundWatcher
+import com.marfeel.compass.BuildConfig
 import com.marfeel.compass.core.PingEmitter
 import com.marfeel.compass.memory.Memory
 import com.marfeel.compass.network.ApiClient
@@ -25,7 +25,16 @@ private val compassModule = module {
 		val logging = HttpLoggingInterceptor()
 		logging.level = (HttpLoggingInterceptor.Level.BODY)
 		ApiClient(
-			OkHttpClient.Builder().addInterceptor(logging).build()
+			OkHttpClient.Builder()
+				.addNetworkInterceptor { chain ->
+					chain.proceed(
+						chain.request()
+							.newBuilder()
+							.header("User-Agent", "CompassAndroidSDK/${BuildConfig.VERSION}")
+							.build()
+					)
+				}
+				.addInterceptor(logging).build()
 		)
 	}
 	single { Memory(get()) }
