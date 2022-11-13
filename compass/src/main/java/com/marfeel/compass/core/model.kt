@@ -3,7 +3,7 @@ package com.marfeel.compass.core
 import com.google.gson.annotations.SerializedName
 import java.util.UUID
 
-private const val androidPageType = 4
+internal const val androidPageType = 4
 
 internal data class PingData(
 	@SerializedName("ac")

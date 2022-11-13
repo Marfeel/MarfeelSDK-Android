@@ -14,7 +14,7 @@ class NewsXMLActivity : AppCompatActivity() {
 		super.onCreate(savedInstanceState)
 		binding = ActivityNewsXmlactivityBinding.inflate(layoutInflater)
 		val scrollView = binding.root
-		tracker.startPageView("NewsActivity - XML", scrollView)
+		tracker.startPageView("https://newsactivityxml.com", scrollView)
 		setContentView(binding.root)
 	}
 }

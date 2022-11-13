@@ -81,7 +81,7 @@ fun MainScreen(
 					.background(Color(0xFF1231D1))
 					.clickable {
 						showExtendedItem = !showExtendedItem
-						if (showExtendedItem) tracker.startPageView("expansible-new.com")
+						if (showExtendedItem) tracker.startPageView("https://expansiblenew.com")
 					}
 			) {
 				Column {
