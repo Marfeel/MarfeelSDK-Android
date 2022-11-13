@@ -46,19 +46,6 @@ internal class StorageTest {
 		assertEquals(timeStamp, storage.readFirstSessionTimeStamp())
 	}
 
-//	@Test
-//	fun `previousSession TimeStamp is null if not set`() {
-//		assertEquals(null, storage.readPreviousSessionTimeStamp())
-//	}
-//
-//	@Test
-//	fun `updates previousSession TimeStamp`() {
-//		val timeStamp = currentTimeStampInSeconds()
-//		storage.updatePreviousSessionTimeStamp(timeStamp)
-//
-//		assertEquals(timeStamp, storage.readPreviousSessionTimeStamp())
-//	}
-
 	@Test
 	fun `readOriginalUserId returns random id if not set previously`() {
 		val returnedUserId = storage.readOriginalUserId()

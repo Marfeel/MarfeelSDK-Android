@@ -40,6 +40,7 @@ class ApiClientTest {
 		accountId = "accountId",
 		registeredUserId = "userId",
 		originalUserId = "SGIJSPDGIJSDPG",
+		previousSessionTimeStamp = null
 	)
 
 	@After
@@ -55,16 +56,6 @@ class ApiClientTest {
 	}
 
 	@Test
-	fun sendsPingRequestWithTheExpectedHeaders() {
-		enqueueApiResponse(200)
-		givenAnApiClient().ping(anyPingData)
-		assertEquals(
-			"application/x-www-form-urlencoded",
-			server.takeRequest().headers["content-type"]
-		)
-	}
-
-	@Test
 	fun sendsPingRequestParametersWithProperNamesAndValues() {
 		enqueueApiResponse(200)
 		givenAnApiClient().ping(anyPingData)
@@ -75,25 +66,23 @@ class ApiClientTest {
 			}
 		assertEquals("accountId", formParams["ac"])
 		assertEquals("1234", formParams["t"])
-		assertEquals("referralUrl", formParams["r"])
 		assertEquals("url", formParams["url"])
 		assertEquals("url", formParams["c"])
 		assertEquals("previousUrl", formParams["pp"])
 		assertEquals("pageId", formParams["p"])
 		assertEquals("userId", formParams["u"])
 		assertEquals("sessionId", formParams["s"])
-		assertEquals("0.2", formParams["v"])
+		assertEquals("0.1", formParams["v"])
 		assertEquals("5678", formParams["a"])
 		assertEquals("9012", formParams["n"])
 		assertEquals("7980", formParams["l"])
 		assertEquals("1234", formParams["ps"])
 		assertEquals("1", formParams["ut"])
-		assertEquals("false", formParams["uc"])
 		assertEquals("5", formParams["sc"])
 		assertEquals("3456", formParams["fv"])
 		assertEquals("null", formParams["lv"])
 		assertEquals("4", formParams["pageType"])
-		assertEquals("someone@email.com", formParams["conv"])
+		assertEquals("someone%40email.com", formParams["conv"])
 	}
 
 	@Test
@@ -101,16 +90,6 @@ class ApiClientTest {
 		enqueueApiResponse(200)
 		givenAnApiClient().getRfv(anyRfvData)
 		assertEquals("POST", server.takeRequest().method)
-	}
-
-	@Test
-	fun sendsRfvRequestWithTheExpectedHeaders() {
-		enqueueApiResponse(200)
-		givenAnApiClient().getRfv(anyRfvData)
-		assertEquals(
-			"application/x-www-form-urlencoded",
-			server.takeRequest().headers["content-type"]
-		)
 	}
 
 	@Test
@@ -129,7 +108,7 @@ class ApiClientTest {
 
 	@Test
 	fun returnsRfvResponseBodyIfApiCallSucceeds() {
-		val responseBody = "response-body"
+		val responseBody = "{\"rfv\":1}"
 		enqueueApiResponse(200, responseBody)
 		val response = givenAnApiClient().getRfv(anyRfvData)
 		val expected = Result.success(responseBody)

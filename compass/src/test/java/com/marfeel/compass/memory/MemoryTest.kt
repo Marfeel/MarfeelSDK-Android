@@ -4,6 +4,7 @@ import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.Session
 import com.marfeel.compass.core.currentTimeStampInSeconds
 import com.marfeel.compass.storage.Storage
+import io.mockk.every
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
 import org.junit.Before
@@ -42,6 +43,7 @@ internal class MemoryTest {
 
 	@Test
 	fun `updates session`() {
+		givenNoPreviousSessionStored()
 		val savedSession = Session(
 			id = UUID.randomUUID().toString(),
 			timeStamp = currentTimeStampInSeconds()
@@ -52,25 +54,9 @@ internal class MemoryTest {
 		assertEquals(savedSession, retrievedSession)
 	}
 
-//	@Test
-//	fun `updatesSession calls to storage updatePreviousSessionLastPingTimeStamp if there was a previous ping`() {
-//		val currentTimeStamp = currentTimeStampInSeconds()
-//		val newSession = Session(
-//			id = UUID.randomUUID().toString(),
-//			timeStamp = currentTimeStamp
-//		)
-//		val lastTimeStampFromPreviousSession = currentTimeStamp - 10
-//		runBlocking {
-//			storage.updatePreviousSessionLastPingTimeStamp(lastTimeStampFromPreviousSession)
-//			memory.updateSession(newSession)
-//		}
-//
-//		verify { storage.updatePreviousSessionLastPingTimeStamp(lastTimeStampFromPreviousSession) }
-//	}
-
-
 	@Test
 	fun `readPage returns null if not set previously`() {
+		givenNoPreviousSessionStored()
 		assertEquals(null, memory.readPage())
 	}
 
@@ -122,5 +108,9 @@ internal class MemoryTest {
 		memory.clearTrackedConversions(trackedConversions)
 		assertEquals(1, memory.readPendingConversions().size)
 		assertEquals(notTrackedConversion, memory.readPendingConversions().first())
+	}
+
+	private fun givenNoPreviousSessionStored() {
+		every { storage.readLastPingTimeStamp() } returns null
 	}
 }
