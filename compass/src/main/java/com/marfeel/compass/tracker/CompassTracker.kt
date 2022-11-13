@@ -4,17 +4,14 @@ import android.content.Context
 import androidx.core.widget.NestedScrollView
 import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.PingEmitter
-import com.marfeel.compass.core.Session
 import com.marfeel.compass.core.UserType
-import com.marfeel.compass.di.CompassKoinComponent
-import com.marfeel.compass.di.addAndroidContextToDiApplication
+import com.marfeel.compass.di.CompassComponent
 import com.marfeel.compass.memory.Memory
 import com.marfeel.compass.storage.Storage
 import com.marfeel.compass.usecase.GetRFV
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.koin.core.component.inject
 
 private const val compassNotInitializedErrorMessage =
     "Compass not initialized. Make sure CompassTracking::initialize has been called"
@@ -82,8 +79,8 @@ interface CompassTracking {
          * @param accountId Compass account id.
          */
         fun initialize(context: Context, accountId: String) {
-            addAndroidContextToDiApplication(context)
-            if (!CompassTracker.initialized){
+            CompassComponent.context = context
+            if (!CompassTracker.initialized) {
                 CompassTracker.initialize(accountId)
             }
         }
@@ -96,12 +93,12 @@ interface CompassTracking {
     }
 }
 
-internal object CompassTracker : CompassTracking, CompassKoinComponent {
+internal object CompassTracker : CompassTracking {
 
-    private val pingEmitter: PingEmitter by inject()
-    private val storage: Storage by inject()
-    private val memory: Memory by inject()
-    private val getRFV: GetRFV by inject()
+    private val pingEmitter: PingEmitter by lazy { CompassComponent.pingEmitter }
+    private val storage: Storage by lazy { CompassComponent.storage }
+    private val memory: Memory by lazy { CompassComponent.memory }
+    private val getRFV: GetRFV by lazy { CompassComponent.getRFV() }
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
     internal val initialized: Boolean
@@ -109,7 +106,7 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
 
     internal fun initialize(accountId: String) {
         memory.updateAccountId(accountId)
-		memory.updateSession()
+        memory.updateSession()
     }
 
     override fun startPageView(url: String) {
