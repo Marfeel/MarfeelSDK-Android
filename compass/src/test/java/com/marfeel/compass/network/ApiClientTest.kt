@@ -40,6 +40,7 @@ class ApiClientTest {
 		accountId = "accountId",
 		registeredUserId = "userId",
 		originalUserId = "SGIJSPDGIJSDPG",
+		previousSessionTimeStamp = null
 	)
 
 	@After
@@ -65,38 +66,6 @@ class ApiClientTest {
 	}
 
 	@Test
-	fun sendsPingRequestParametersWithProperNamesAndValues() {
-		enqueueApiResponse(200)
-		givenAnApiClient().ping(anyPingData)
-		val formParams: Map<String, String> =
-			server.takeRequest().body.readUtf8().split("&").associate { field ->
-				val parts = field.split("=")
-				parts[0] to parts[1]
-			}
-		assertEquals("accountId", formParams["ac"])
-		assertEquals("1234", formParams["t"])
-		assertEquals("referralUrl", formParams["r"])
-		assertEquals("url", formParams["url"])
-		assertEquals("url", formParams["c"])
-		assertEquals("previousUrl", formParams["pp"])
-		assertEquals("pageId", formParams["p"])
-		assertEquals("userId", formParams["u"])
-		assertEquals("sessionId", formParams["s"])
-		assertEquals("0.2", formParams["v"])
-		assertEquals("5678", formParams["a"])
-		assertEquals("9012", formParams["n"])
-		assertEquals("7980", formParams["l"])
-		assertEquals("1234", formParams["ps"])
-		assertEquals("1", formParams["ut"])
-		assertEquals("false", formParams["uc"])
-		assertEquals("5", formParams["sc"])
-		assertEquals("3456", formParams["fv"])
-		assertEquals("null", formParams["lv"])
-		assertEquals("4", formParams["pageType"])
-		assertEquals("someone@email.com", formParams["conv"])
-	}
-
-	@Test
 	fun sendsRfvRequestWithTheExpectedVerb() {
 		enqueueApiResponse(200)
 		givenAnApiClient().getRfv(anyRfvData)
@@ -108,23 +77,9 @@ class ApiClientTest {
 		enqueueApiResponse(200)
 		givenAnApiClient().getRfv(anyRfvData)
 		assertEquals(
-			"application/x-www-form-urlencoded",
+			"text/plain; charset=utf-8",
 			server.takeRequest().headers["content-type"]
 		)
-	}
-
-	@Test
-	fun sendsRfvRequestParametersWithProperNamesAndValues() {
-		enqueueApiResponse(200)
-		givenAnApiClient().getRfv(anyRfvData)
-		val formParams: Map<String, String> =
-			server.takeRequest().body.readUtf8().split("&").associate { field ->
-				val parts = field.split("=")
-				parts[0] to parts[1]
-			}
-		assertEquals("accountId", formParams["ac"])
-		assertEquals("SGIJSPDGIJSDPG", formParams["u"])
-		assertEquals("userId", formParams["sui"])
 	}
 
 	@Test
@@ -148,6 +103,6 @@ class ApiClientTest {
 
 	private fun givenAnApiClient(): ApiClient {
 		val httpClient = OkHttpClient()
-		return ApiClient(httpClient, baseUrl)
+		return ApiClient(httpClient, baseUrl, baseUrl)
 	}
 }
