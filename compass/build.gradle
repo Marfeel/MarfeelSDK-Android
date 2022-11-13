@@ -10,8 +10,6 @@ android {
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 32
-        versionCode 1
-        versionName "0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -41,14 +39,17 @@ android {
         }
         composeUi {
             dimension "ui"
-            buildFeatures {
-                compose true
-            }
         }
     }
 
     composeOptions {
         kotlinCompilerExtensionVersion = "1.1.0"
+    }
+
+    if (gradle.startParameter.taskNames.any { "composeUi" in it || "ComposeUi" in it }){
+        buildFeatures {
+            compose = true
+        }
     }
 
 	dokkaHtml {

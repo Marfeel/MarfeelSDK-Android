@@ -3,9 +3,10 @@ package com.marfeel.compass.storage
 import androidx.test.core.app.ApplicationProvider
 import com.marfeel.compass.core.UserType
 import com.marfeel.compass.core.currentTimeStampInSeconds
-import junit.framework.Assert.assertEquals
-import junit.framework.Assert.assertNotNull
+
 import kotlinx.coroutines.Dispatchers
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
