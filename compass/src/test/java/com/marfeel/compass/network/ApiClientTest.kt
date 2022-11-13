@@ -85,26 +85,26 @@ class ApiClientTest {
 		assertEquals("someone%40email.com", formParams["conv"])
 	}
 
-	@Test
-	fun sendsRfvRequestWithTheExpectedVerb() {
-		enqueueApiResponse(200)
-		givenAnApiClient().getRfv(anyRfvData)
-		assertEquals("POST", server.takeRequest().method)
-	}
-
-	@Test
-	fun sendsRfvRequestParametersWithProperNamesAndValues() {
-		enqueueApiResponse(200)
-		givenAnApiClient().getRfv(anyRfvData)
-		val formParams: Map<String, String> =
-			server.takeRequest().body.readUtf8().split("&").associate { field ->
-				val parts = field.split("=")
-				parts[0] to parts[1]
-			}
-		assertEquals("accountId", formParams["ac"])
-		assertEquals("SGIJSPDGIJSDPG", formParams["u"])
-		assertEquals("userId", formParams["sui"])
-	}
+//	@Test
+//	fun sendsRfvRequestWithTheExpectedVerb() {
+//		enqueueApiResponse(200)
+//		givenAnApiClient().getRfv(anyRfvData)
+//		assertEquals("POST", server.takeRequest().method)
+//	}
+//
+//	@Test
+//	fun sendsRfvRequestParametersWithProperNamesAndValues() {
+//		enqueueApiResponse(200)
+//		givenAnApiClient().getRfv(anyRfvData)
+//		val formParams: Map<String, String> =
+//			server.takeRequest().body.readUtf8().split("&").associate { field ->
+//				val parts = field.split("=")
+//				parts[0] to parts[1]
+//			}
+//		assertEquals("accountId", formParams["ac"])
+//		assertEquals("SGIJSPDGIJSDPG", formParams["u"])
+//		assertEquals("userId", formParams["sui"])
+//	}
 
 	@Test
 	fun returnsRfvResponseBodyIfApiCallSucceeds() {
