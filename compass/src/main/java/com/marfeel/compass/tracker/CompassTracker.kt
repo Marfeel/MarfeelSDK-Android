@@ -79,7 +79,7 @@ interface CompassTracking {
          * @param accountId Compass account id.
          */
         fun initialize(context: Context, accountId: String) {
-            CompassComponent.context = context
+            CompassComponent.context = context.applicationContext
             if (!CompassTracker.initialized) {
                 CompassTracker.initialize(accountId)
             }
