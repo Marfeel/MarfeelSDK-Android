@@ -3,11 +3,10 @@ package com.marfeel.compass.memory
 import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.Session
 import com.marfeel.compass.core.currentTimeStampInSeconds
-import com.marfeel.compass.di.CompassKoinComponent
 import com.marfeel.compass.storage.Storage
 import java.util.*
 
-internal class Memory(private val storage: Storage) : CompassKoinComponent {
+internal class Memory(private val storage: Storage) {
 
 	private var accountId: String? = null
 	private var session: Session? = null
