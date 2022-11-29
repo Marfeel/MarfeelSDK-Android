@@ -41,6 +41,9 @@ android {
         }
         composeUi {
             dimension "ui"
+			buildFeatures {
+				compose true
+			}
         }
     }
 
