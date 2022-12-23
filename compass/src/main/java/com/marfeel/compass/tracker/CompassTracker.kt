@@ -1,6 +1,9 @@
 package com.marfeel.compass.tracker
 
 import android.content.Context
+import android.util.Log
+import android.view.View
+import android.widget.ScrollView
 import androidx.core.widget.NestedScrollView
 import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.PingEmitter
@@ -35,7 +38,7 @@ interface CompassTracking {
      * @param url the url of the page being tracked.
      * @param scrollView view showing the url content.
      */
-    fun startPageView(url: String, scrollView: NestedScrollView)
+    fun startPageView(url: String, scrollView: ScrollView)
 
     /**
      * Stops the tracking.
@@ -115,17 +118,20 @@ internal object CompassTracker : CompassTracking {
         pingEmitter.start(url)
     }
 
-    override fun startPageView(url: String, scrollView: NestedScrollView) {
+    override fun startPageView(url: String, scrollView: ScrollView) {
         check(initialized) { compassNotInitializedErrorMessage }
-        scrollView.setOnScrollChangeListener(
-            NestedScrollView.OnScrollChangeListener { view, _, scrollY, _, _ ->
-                val scrollViewHeight: Double =
-                    (view.getChildAt(0).bottom - scrollView.height).toDouble()
-                val scrollPosition = scrollY.toDouble() / scrollViewHeight * 100
-                (scrollView.getChildAt(0).bottom - scrollView.height).toDouble()
-                pingEmitter.updateScrollPercentage(scrollPosition.toScrollPercentage())
+        scrollView.setOnScrollChangeListener(object: View.OnScrollChangeListener {
+            override fun onScrollChange(view: View?, scrollX: Int, scrollY: Int, oldScrollX: Int, oldScrollY: Int) {
+                view?.let {
+                    val scrollViewHeight: Double = (view.bottom - scrollView.height).toDouble()
+                    val scrollPosition = scrollY.toDouble() / scrollViewHeight * 100
+                    (scrollView.getChildAt(0).bottom - scrollView.height).toDouble()
+                    pingEmitter.updateScrollPercentage(scrollPosition.toScrollPercentage())
+                    val scrollFinal = scrollPosition.toScrollPercentage();
+                    Log.d("Compass scroll", "$scrollFinal")
+                }
             }
-        )
+        })
         startPageView(url)
     }
 
