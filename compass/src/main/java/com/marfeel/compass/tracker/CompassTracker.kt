@@ -219,18 +219,15 @@ internal object CompassTracker : CompassTracking {
         scrollMeasurer: (view: T, scrollY: Int, oldScrollY: Int) -> Double)
     where T: ViewGroup {
         check(initialized) { compassNotInitializedErrorMessage }
-        scrollView.setOnScrollChangeListener(object: View.OnScrollChangeListener {
-            override fun onScrollChange(view: View?, scrollX: Int, scrollY: Int, oldScrollX: Int, oldScrollY: Int) {
-                view?.let {
-                    @Suppress("UNCHECKED_CAST")
-                    val scrollPosition = scrollMeasurer(view as T, scrollY, oldScrollY).toScrollPercentage()
+        scrollView.setOnScrollChangeListener { view, _, scrollY, _, oldScrollY ->
+            view?.let {
+                @Suppress("UNCHECKED_CAST")
+                val scrollPosition =
+                    scrollMeasurer(view as T, scrollY, oldScrollY).toScrollPercentage()
 
-                    pingEmitter.updateScrollPercentage(scrollPosition)
-
-                    Log.d("Compass scroll", "$scrollPosition")
-                }
+                pingEmitter.updateScrollPercentage(scrollPosition)
             }
-        })
+        }
 
         trackNewPage(url)
     }
