@@ -32,13 +32,13 @@ val tracker = CompassTracking.getInstance()
 
 ### Tracking de páginas
 
-CompassTracker se encarga automáticamente de controlar el tiempo que el usuario se mantiene en una página. Para indicar que comience el tracking de una página concreta use la función startPageView, indicando la url de la página.
+CompassTracker se encarga automáticamente de controlar el tiempo que el usuario se mantiene en una página. Para indicar que comience el tracking de una página concreta use la función trackNewPage, indicando la url de la página.
 
 ```kotlin
-tracker.startPageView(url: String)
+tracker.trackNewPage(url: String)
 ```
 
-CompassTracker continuará registrando el tiempo de permanencia en la página hasta que se llame de nuevo a startPageView con una url diferente. O bien si el desarrollador lo indica mediante el método stopTracking()
+CompassTracker continuará registrando el tiempo de permanencia en la página hasta que se llame de nuevo a trackNewPage con una url diferente. O bien si el desarrollador lo indica mediante el método stopTracking()
 
 ```kotlin
 tracker.stopTracking()
@@ -46,13 +46,15 @@ tracker.stopTracking()
 
 ### Control del scroll
 
-Si quiere que el sistema registre el porcentaje de scroll que el usuario ha hecho en la página, indique en la función startPageView el NestedScrollView en el que se está mostrando el contenido al usuario.
+Si quiere que el sistema registre el porcentaje de scroll que el usuario ha hecho en la página, indique en la función trackNewPage el NestedScrollView en el que se está mostrando el contenido al usuario.
 
 ```kotlin
-tracker.startPageView(url: String, scrollView: NestedScrollView)
+tracker.trackNewPage(url: String, scrollView: ScrollView)
+tracker.trackNewPage(url: String, scrollView: RecyclerView)
+tracker.trackNewPage(url: String, scrollView: ScrollingView)
 ```
 
-En el caso de usar [Jetpack Compose](https://developer.android.com/jetpack/compose) se debe usar la función `startTracking(url: String)` junto con la función componible
+En el caso de usar [Jetpack Compose](https://developer.android.com/jetpack/compose) se debe usar la función `trackNewPage(url: String)` junto con la función componible
 
 ```kotlin
 CompassScrollTrackerEffect(scrollState: ScrollState)

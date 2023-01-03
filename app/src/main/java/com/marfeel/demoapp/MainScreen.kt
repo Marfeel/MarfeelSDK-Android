@@ -82,7 +82,7 @@ fun MainScreen(
 					.background(Color(0xFF1231D1))
 					.clickable {
 						showExtendedItem = !showExtendedItem
-						if (showExtendedItem) tracker.startPageView("https://expansiblenew.com")
+						if (showExtendedItem) tracker.trackNewPage("https://expansiblenew.com")
 					}
 			) {
 				Column {
@@ -205,7 +205,7 @@ fun MainScreen(
 						Icon(
 							imageVector = Icons.Rounded.Send,
 							contentDescription = "Send",
-							Modifier.clickable { tracker.setUserId(userId) })
+							Modifier.clickable { tracker.setSiteUserId(userId) })
 					}
 				)
 			}

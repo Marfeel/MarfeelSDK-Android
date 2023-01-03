@@ -29,6 +29,6 @@ class RecyclerViewActivity : AppCompatActivity() {
 
 		recyclerview.adapter = adapter
 
-		tracker.startPageView("https://newsactivityxml-recycler-view.com", recyclerview)
+		tracker.trackNewPage("https://newsactivityxml-recycler-view.com", recyclerview)
 	}
 }
