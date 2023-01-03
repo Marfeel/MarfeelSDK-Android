@@ -1,15 +1,12 @@
 package com.marfeel.compass.tracker
 
 import android.content.Context
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.ListView
 import android.widget.ScrollView
 import androidx.core.view.ScrollingView
-import androidx.core.widget.NestedScrollView
 import androidx.recyclerview.widget.RecyclerView
 import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.PingEmitter
@@ -46,6 +43,7 @@ interface CompassTracking {
      */
     fun<T> startPageView(url: String, scrollView: T) where T: FrameLayout, T: ScrollingView
     fun startPageView(url: String, scrollView: RecyclerView)
+    fun startPageView(url: String, scrollView: ScrollView)
 
     /**
      * Stops the tracking.
@@ -126,6 +124,14 @@ internal object CompassTracker : CompassTracking {
     }
 
     override fun<T> startPageView(url: String, scrollView: T) where T: FrameLayout, T: ScrollingView {
+        startFrameLayoutPageView(url, scrollView)
+    }
+
+    override fun startPageView(url: String, scrollView: ScrollView) {
+        startFrameLayoutPageView(url, scrollView)
+    }
+
+    private fun<T> startFrameLayoutPageView(url: String, scrollView: T) where T: FrameLayout {
         startPageView(url, scrollView, fun(view: T, scroll: Int, _: Int): Double {
             val scrollViewHeight = (view.getChildAt(0).bottom - scrollView.height).toDouble()
 
@@ -134,7 +140,7 @@ internal object CompassTracker : CompassTracking {
     }
 
     override fun startPageView(url: String, scrollView: RecyclerView) {
-        var currentScroll = 0;
+        var currentScroll = 0
 
         startPageView(url, scrollView, fun(view: RecyclerView, scroll: Int, oldScroll: Int): Double {
                 val scrollViewHeight =
@@ -151,14 +157,15 @@ internal object CompassTracker : CompassTracking {
         url: String,
         scrollView: T,
         scrollMeasurer: (view: T, scrollY: Int, oldScrollY: Int) -> Double)
-    where T: ViewGroup, T: ScrollingView {
+    where T: ViewGroup {
         check(initialized) { compassNotInitializedErrorMessage }
         scrollView.setOnScrollChangeListener(object: View.OnScrollChangeListener {
             override fun onScrollChange(view: View?, scrollX: Int, scrollY: Int, oldScrollX: Int, oldScrollY: Int) {
                 view?.let {
-                    val scrollPosition = scrollMeasurer(view as T, scrollY, oldScrollY).toScrollPercentage();
+                    @Suppress("UNCHECKED_CAST")
+                    val scrollPosition = scrollMeasurer(view as T, scrollY, oldScrollY).toScrollPercentage()
 
-                    pingEmitter.updateScrollPercentage(scrollPosition);
+                    pingEmitter.updateScrollPercentage(scrollPosition)
 
                     Log.d("Compass scroll", "$scrollPosition")
                 }
