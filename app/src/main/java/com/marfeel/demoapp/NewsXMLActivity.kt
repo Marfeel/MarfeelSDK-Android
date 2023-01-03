@@ -1,9 +1,12 @@
 package com.marfeel.demoapp
 
+import android.app.Activity
 import android.os.Bundle
+import android.util.DisplayMetrics
 import androidx.appcompat.app.AppCompatActivity
 import com.marfeel.compass.tracker.CompassTracking
 import com.marfeel.demoapp.databinding.ActivityNewsXmlactivityBinding
+import java.security.AccessController.getContext
 
 
 class NewsXMLActivity : AppCompatActivity() {

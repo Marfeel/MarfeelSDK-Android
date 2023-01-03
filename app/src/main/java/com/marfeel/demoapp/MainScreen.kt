@@ -48,6 +48,7 @@ fun MainScreen(
 	tracker: CompassTracking,
 	navigateToComposeNews: () -> Unit,
 	navigateToXmlNews: () -> Unit,
+	navigateToXmlNewsRecyclerView: () -> Unit,
 ) {
 	val scaffoldState = rememberScaffoldState()
 	val backgroundColor = Color.White
@@ -124,7 +125,7 @@ fun MainScreen(
 					.fillMaxWidth()
 					.padding(top = 32.dp)
 					.clip(RoundedCornerShape(4.dp))
-					.background(Color(0xFFCCAA44))
+					.background(Color(0xFFE06581))
 					.clickable {
 						navigateToXmlNews()
 					}
@@ -132,6 +133,24 @@ fun MainScreen(
 				Text(
 					text = "Noticia XML",
 					color = Color.White,
+					style = titleStyle,
+					modifier = Modifier.padding(16.dp)
+				)
+			}
+
+			Box(
+				Modifier
+					.fillMaxWidth()
+					.padding(top = 32.dp)
+					.clip(RoundedCornerShape(4.dp))
+					.background(Color(0xFF00FF00))
+					.clickable {
+						navigateToXmlNewsRecyclerView()
+					}
+			) {
+				Text(
+					text = "Noticia XML using Recycler view",
+					color = Color.Black,
 					style = titleStyle,
 					modifier = Modifier.padding(16.dp)
 				)
@@ -222,6 +241,6 @@ fun MainScreen(
 @Composable
 fun MainScreenPreview() {
 	MaterialTheme {
-		MainScreen(CompassTracking.getInstance(), {}, {})
+		MainScreen(CompassTracking.getInstance(), {}, {}, {})
 	}
 }

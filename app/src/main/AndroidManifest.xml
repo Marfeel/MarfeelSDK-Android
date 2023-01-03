@@ -23,6 +23,12 @@
             android:label="@string/title_activity_news_xmlactivity"
             android:theme="@style/Theme.CompassSDK.NoActionBar" />
         <activity
+            android:name=".RecyclerViewActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"
+            android:label="@string/title_activity_news_xmlactivity"
+            android:theme="@style/Theme.CompassSDK.NoActionBar" />
+        <activity
             android:name=".MainActivity"
             android:exported="true" >
             <intent-filter>

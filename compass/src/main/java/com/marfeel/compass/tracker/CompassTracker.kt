@@ -1,10 +1,16 @@
 package com.marfeel.compass.tracker
 
 import android.content.Context
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.ListView
 import android.widget.ScrollView
+import androidx.core.view.ScrollingView
 import androidx.core.widget.NestedScrollView
+import androidx.recyclerview.widget.RecyclerView
 import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.PingEmitter
 import com.marfeel.compass.core.UserType
@@ -38,7 +44,8 @@ interface CompassTracking {
      * @param url the url of the page being tracked.
      * @param scrollView view showing the url content.
      */
-    fun startPageView(url: String, scrollView: ScrollView)
+    fun<T> startPageView(url: String, scrollView: T) where T: FrameLayout, T: ScrollingView
+    fun startPageView(url: String, scrollView: RecyclerView)
 
     /**
      * Stops the tracking.
@@ -118,20 +125,46 @@ internal object CompassTracker : CompassTracking {
         pingEmitter.start(url)
     }
 
-    override fun startPageView(url: String, scrollView: ScrollView) {
+    override fun<T> startPageView(url: String, scrollView: T) where T: FrameLayout, T: ScrollingView {
+        startPageView(url, scrollView, fun(view: T, scroll: Int, _: Int): Double {
+            val scrollViewHeight = (view.getChildAt(0).bottom - scrollView.height).toDouble()
+
+            return scroll.toDouble() / scrollViewHeight * 100
+        })
+    }
+
+    override fun startPageView(url: String, scrollView: RecyclerView) {
+        var currentScroll = 0;
+
+        startPageView(url, scrollView, fun(view: RecyclerView, scroll: Int, oldScroll: Int): Double {
+                val scrollViewHeight =
+                    (view.computeVerticalScrollRange() - view.computeVerticalScrollExtent()).toDouble()
+                val dScroll = scroll - oldScroll
+                currentScroll += dScroll
+
+                return currentScroll / scrollViewHeight * 100
+            }
+        )
+    }
+
+    private fun<T> startPageView(
+        url: String,
+        scrollView: T,
+        scrollMeasurer: (view: T, scrollY: Int, oldScrollY: Int) -> Double)
+    where T: ViewGroup, T: ScrollingView {
         check(initialized) { compassNotInitializedErrorMessage }
         scrollView.setOnScrollChangeListener(object: View.OnScrollChangeListener {
             override fun onScrollChange(view: View?, scrollX: Int, scrollY: Int, oldScrollX: Int, oldScrollY: Int) {
                 view?.let {
-                    val scrollViewHeight: Double = (view.bottom - scrollView.height).toDouble()
-                    val scrollPosition = scrollY.toDouble() / scrollViewHeight * 100
-                    (scrollView.getChildAt(0).bottom - scrollView.height).toDouble()
-                    pingEmitter.updateScrollPercentage(scrollPosition.toScrollPercentage())
-                    val scrollFinal = scrollPosition.toScrollPercentage();
-                    Log.d("Compass scroll", "$scrollFinal")
+                    val scrollPosition = scrollMeasurer(view as T, scrollY, oldScrollY).toScrollPercentage();
+
+                    pingEmitter.updateScrollPercentage(scrollPosition);
+
+                    Log.d("Compass scroll", "$scrollPosition")
                 }
             }
         })
+
         startPageView(url)
     }
 
