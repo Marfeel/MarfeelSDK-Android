@@ -39,9 +39,9 @@ android {
 }
 
 dependencies {
-	implementation project(":compass")
+	// implementation project(":compass")
 
-    //implementation 'com.marfeel.compass:compose:1.0'
+    implementation 'com.marfeel.compass:compose:1.0'
     //implementation 'com.marfeel.compass:views:1.0'
 
     implementation 'androidx.appcompat:appcompat:1.5.0'
