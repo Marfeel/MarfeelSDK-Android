@@ -2,7 +2,6 @@ package com.marfeel.demoapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.compose.material.MaterialTheme
 import androidx.fragment.app.FragmentActivity
@@ -27,7 +26,11 @@ class MainActivity : FragmentActivity() {
 					navigateToComposeNews = {
 						val intent = Intent(this, NewsComposeActivity::class.java)
 						startActivity(intent)
-					}
+					},
+					navigateToXmlNewsRecyclerView = {
+						val intent = Intent(this, RecyclerViewActivity::class.java)
+						startActivity(intent)
+					},
 				)
 			}
 		}
