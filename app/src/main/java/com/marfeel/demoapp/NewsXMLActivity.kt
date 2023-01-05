@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.marfeel.compass.tracker.CompassTracking
 import com.marfeel.demoapp.databinding.ActivityNewsXmlactivityBinding
 
-
 class NewsXMLActivity : AppCompatActivity() {
 
 	private lateinit var binding: ActivityNewsXmlactivityBinding
@@ -14,7 +13,7 @@ class NewsXMLActivity : AppCompatActivity() {
 		super.onCreate(savedInstanceState)
 		binding = ActivityNewsXmlactivityBinding.inflate(layoutInflater)
 		val scrollView = binding.root
-		tracker.startPageView("https://newsactivityxml.com", scrollView)
+		tracker.trackNewPage("https://newsactivityxml.com", scrollView)
 		setContentView(binding.root)
 	}
 }
