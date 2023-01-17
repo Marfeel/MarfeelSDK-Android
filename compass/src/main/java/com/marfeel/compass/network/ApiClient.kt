@@ -32,10 +32,15 @@ internal class ApiClient(
 			.post(formBody)
 			.build()
 
-		httpClient.newCall(request).execute().use { response ->
-			if (!response.isSuccessful) throw IOException("Unexpected code $response")
+		try {
+			httpClient.newCall(request).execute().use { response ->
+				if (!response.isSuccessful) throw IOException("Unexpected code $response")
 
-			println(response.body!!.string())
+				println(response.body!!.string())
+			}
+		} catch (exception: IOException) {
+			// TODO: track server errors, discarding connection errors
+			println(exception.toString());
 		}
 	}
 
