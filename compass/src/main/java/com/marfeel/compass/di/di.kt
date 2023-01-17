@@ -11,6 +11,7 @@ import com.marfeel.compass.usecase.GetRFV
 import com.marfeel.compass.usecase.Ping
 import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.logging.HttpLoggingInterceptor
 
 @SuppressLint("StaticFieldLeak")
@@ -27,6 +28,7 @@ internal object CompassComponent : CompassServiceLocator {
         logging.level = (HttpLoggingInterceptor.Level.BODY)
         ApiClient(
             OkHttpClient.Builder()
+                .protocols(listOf(Protocol.HTTP_1_1))
                 .addNetworkInterceptor { chain ->
                     chain.proceed(
                         chain.request()
