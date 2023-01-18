@@ -52,7 +52,6 @@ internal class Storage(
 	private fun setFirstSessionTimeStamp(firstSessionTimeStamp: Long) =
 		preferences.edit {
 			putString(firstSessionTimeStampKey, firstSessionTimeStamp.toString())
-			apply()
 		}
 
 	private fun getFirstSessionTimeStamp(): String? =
@@ -85,7 +84,6 @@ internal class Storage(
 	private fun setRegisteredUserId(userId: String) {
 		preferences.edit {
 			putString(registeredUserIdKey, userId)
-			apply()
 		}
 	}
 
@@ -103,7 +101,6 @@ internal class Storage(
 	private fun setOriginalUserId(userId: String) {
 		preferences.edit {
 			putString(originalUserIdKey, userId)
-			apply()
 		}
 	}
 
@@ -116,7 +113,6 @@ internal class Storage(
 	private fun setUserType(userType: UserType) {
 		preferences.edit {
 			putString(userTypeKey, userType.numericValue.toString())
-			apply()
 		}
 	}
 
@@ -143,7 +139,6 @@ internal class Storage(
 	private fun setLastPingTimeStamp(timeStamp: Long) =
 		preferences.edit {
 			putLong(lastPingTimeStampKey, timeStamp)
-			apply()
 		}
 
 	fun readLastPingTimeStamp(): Long? =
@@ -168,7 +163,6 @@ internal class Storage(
 	private fun setPreviousSessionLastPingTimeStamp(timeStamp: Long) =
 		preferences.edit {
 			putLong(previousSessionLastPingTimeStampKey, timeStamp)
-			apply()
 		}
 
 	fun readPreviousSessionLastPingTimeStamp(): Long? =
