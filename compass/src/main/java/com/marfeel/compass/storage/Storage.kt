@@ -18,7 +18,8 @@ internal class Storage(
 	coroutineContext: CoroutineContext
 ) {
 	companion object {
-		private const val storageName = "EncryptedStorage"
+		private const val encryptedStorageName = "EncryptedStorage"
+		private const val fallbackStorageName = "FallbackStorage"
 		private const val originalUserIdKey = "originalUserId_key"
 		private const val registeredUserIdKey = "registeredUserId_key"
 		private const val userTypeKey = "userType_key"
@@ -30,17 +31,26 @@ internal class Storage(
 
 	private val storageScope: CoroutineScope = CoroutineScope(coroutineContext)
 
+	/**
+	 * EncryptedSharedPreferences support is kind of buggy, some devices do not implement properly
+	 * KeyStore. Applying fallback to plain text when encryption explodes, same strategy applied by
+	 * google: https://github.com/google/tink/blob/master/java_src/src/main/java/com/google/crypto/tink/integration/android/AndroidKeysetManager.java#L101.
+	 */
 	private val preferences: SharedPreferences by lazy {
-		val masterKey = MasterKey.Builder(context)
-			.setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-			.build()
-		EncryptedSharedPreferences.create(
-			context,
-			storageName,
-			masterKey,
-			EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-			EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-		)
+		try {
+			val masterKey = MasterKey.Builder(context)
+				.setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+				.build()
+			EncryptedSharedPreferences.create(
+				context,
+				encryptedStorageName,
+				masterKey,
+				EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+				EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+			)
+		} catch (_: Exception) {
+			context.getSharedPreferences(fallbackStorageName, Context.MODE_PRIVATE)
+		}
 	}
 
 	fun updateFirstSessionTimeStamp(firstSessionTimeStamp: Long) {
