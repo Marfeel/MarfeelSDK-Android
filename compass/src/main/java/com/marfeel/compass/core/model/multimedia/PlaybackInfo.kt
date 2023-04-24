@@ -2,6 +2,7 @@ package com.marfeel.compass.core.model.multimedia
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 internal data class PlaybackInfo(

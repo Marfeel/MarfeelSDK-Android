@@ -120,8 +120,7 @@ private fun FormBody.Builder.addPingRequest(ping: IngestPingData): FormBody.Buil
 private fun FormBody.Builder.addPingRequest(ping: MultimediaPingData): FormBody.Builder {
 	val format = Json { encodeDefaults = true }
 
-	this.add("ac", ping.accountId)
-		.add("n", ping.currentTimeStamp.toString())
+	this.add("n", ping.currentTimeStamp.toString())
 		.add("v", BuildConfig.VERSION)
 		.add("pageType", androidPageType.toString())
 		.add("imp", ping.item.imp)
