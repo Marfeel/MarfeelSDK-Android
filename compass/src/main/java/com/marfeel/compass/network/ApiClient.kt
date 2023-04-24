@@ -38,7 +38,7 @@ internal class ApiClient(
 			.build()
 
 		val request = Request.Builder()
-			.url("$pingBaseUrl/$path")
+			.url("$pingBaseUrl/${path.path}")
 			.post(formBody)
 			.build()
 
