@@ -68,7 +68,7 @@ class NewsXMLActivity : AppCompatActivity() {
 				}
 			}
 			override fun onCurrentSecond(youTubePlayer: YouTubePlayer, second: Float) {
-				//multimediaTracker.registerEvent(tracker.videoId!!, Event.UPDATE_CURRENT_TIME, tracker.currentSecond.toInt())
+				multimediaTracker.registerEvent(tracker.videoId!!, Event.UPDATE_CURRENT_TIME, tracker.currentSecond.toInt())
 			}
 		})
 	}
