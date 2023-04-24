@@ -1,21 +1,22 @@
 package com.marfeel.compass.core.model.multimedia
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+
 data class MultimediaMetadata(
-    @SerializedName("m_il")
+    @SerialName("m_il")
     val isLive: Boolean? = false,
-    @SerializedName("m_ti")
+    @SerialName("m_ti")
     val title: String? = null,
-    @SerializedName("m_d")
+    @SerialName("m_d")
     val description: String? = null,
-    @SerializedName("m_u")
+    @SerialName("m_u")
     val url: String? = null,
-    @SerializedName("m_th")
+    @SerialName("m_th")
     val thumbnail: String? = null,
-    @SerializedName("m_a")
+    @SerialName("m_a")
     val authors: String? = null,
-    @SerializedName("m_pt")
+    @SerialName("m_pt")
     val publishTime: Int? = null,
-    @SerializedName("m_l")
+    @SerialName("m_l")
     val duration: Int? = null
 )

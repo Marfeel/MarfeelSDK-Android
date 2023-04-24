@@ -1,7 +1,7 @@
 package com.marfeel.compass.core.model.compass
 
-import com.google.gson.annotations.SerializedName
 import com.marfeel.compass.core.model.PingData
+import kotlinx.serialization.SerialName
 import java.util.UUID
 
 internal const val androidPageType = 4
@@ -19,18 +19,18 @@ internal data class IngestPingData(
 	override val currentTimeStamp: Long,
 	override val userType: UserType,
 	override val registeredUserId: String,
-	@SerializedName("sc")
+	@SerialName("sc")
 	val scrollPercent: Int,
 	override val firsVisitTimeStamp: Long,
 	override val previousSessionTimeStamp: Long?,
-	@SerializedName("l")
+	@SerialName("l")
 	val timeOnPage: Int,
-	@SerializedName("ps")
+	@SerialName("ps")
 	val pageStartTimeStamp: Long,
-	@SerializedName("conv")
+	@SerialName("conv")
 	val conversions: String?,
 	override val version: String,
-	@SerializedName("pageType")
+	@SerialName("pageType")
 	val pageType: Int = androidPageType
 ): PingData(
 	accountId,
@@ -63,13 +63,13 @@ sealed class UserType(open val numericValue: Int) {
 }
 
 internal data class RfvPayloadData(
-	@SerializedName("ac")
+	@SerialName("ac")
 	val accountId: String,
-	@SerializedName("sui")
+	@SerialName("sui")
 	val registeredUserId: String?,
-	@SerializedName("u")
+	@SerialName("u")
 	val originalUserId: String,
-	@SerializedName("lv")
+	@SerialName("lv")
 	val previousSessionTimeStamp: Long?
 )
 

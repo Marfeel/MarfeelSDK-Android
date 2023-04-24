@@ -129,6 +129,15 @@ private fun FormBody.Builder.addPingRequest(ping: MultimediaPingData): FormBody.
 		.add("m_pi", ping.item.providerId)
 		.add("m_t", ping.item.type.id)
 		.add("m", format.encodeToString(ping.item.playbackInfo))
+		.add("m_il", ping.item.metadata.isLive.toString())
+		.add("m_ti", ping.item.metadata.title ?: "" )
+		.add("m_d", ping.item.metadata.description ?: "")
+		.add("m_u", ping.item.metadata.url ?: "")
+		.add("m_th", ping.item.metadata.thumbnail ?: "")
+		.add("m_a", ping.item.metadata.authors ?: "")
+		.add("m_pt", ping.item.metadata.publishTime.toString())
+		.add("m_l", ping.item.metadata.duration.toString())
+
 
 	ping.rfv?.let {
 		this.add("rfv", it.rfv.toString())
