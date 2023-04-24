@@ -6,18 +6,22 @@ import android.widget.FrameLayout
 import android.widget.ScrollView
 import androidx.core.view.ScrollingView
 import androidx.recyclerview.widget.RecyclerView
-import com.marfeel.compass.core.Page
-import com.marfeel.compass.core.PingEmitter
-import com.marfeel.compass.core.UserType
+import com.marfeel.compass.core.model.compass.Page
+import com.marfeel.compass.core.model.compass.UserType
+import com.marfeel.compass.core.ping.IngestPingEmitter
 import com.marfeel.compass.di.CompassComponent
 import com.marfeel.compass.memory.Memory
 import com.marfeel.compass.storage.Storage
+import com.marfeel.compass.tracker.multimedia.MultimediaTracker
+import com.marfeel.compass.tracker.multimedia.MultimediaTracking
 import com.marfeel.compass.usecase.GetRFV
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
-private const val compassNotInitializedErrorMessage =
+internal const val compassNotInitializedErrorMessage =
     "Compass not initialized. Make sure CompassTracking::initialize has been called"
 
 /**
@@ -136,16 +140,24 @@ interface CompassTracking {
          * @return The singleton instance of the CompassTracking interface
          */
         fun getInstance(): CompassTracking = CompassTracker
+
+        /**
+         *
+         * @return If compass instance has been initialized properly or not
+         */
+        internal val initialized: Boolean
+            get() = CompassTracker.initialized
     }
 }
 
 internal object CompassTracker : CompassTracking {
 
-    private val pingEmitter: PingEmitter by lazy { CompassComponent.pingEmitter }
+    private val pingEmitter: IngestPingEmitter by lazy { CompassComponent.ingestPingEmitter }
     private val storage: Storage by lazy { CompassComponent.storage }
     private val memory: Memory by lazy { CompassComponent.memory }
     private val getRFV: GetRFV by lazy { CompassComponent.getRFV() }
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
+
 
     internal val initialized: Boolean
         get() = memory.readAccountId() != null
@@ -228,6 +240,7 @@ internal object CompassTracker : CompassTracking {
         }
 
         trackNewPage(url)
+        MultimediaTracking.reset()
     }
 
     internal fun Double.toScrollPercentage(): Int {
@@ -264,7 +277,7 @@ internal object CompassTracker : CompassTracking {
     }
 
     override fun getRFV(): String? =
-        getRFV.invoke()
+        Json.encodeToString(getRFV.invoke())
 
     override fun getRFV(onResult: (String?) -> Unit) {
         check(initialized) { compassNotInitializedErrorMessage }

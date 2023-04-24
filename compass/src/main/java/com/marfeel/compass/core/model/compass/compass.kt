@@ -1,51 +1,53 @@
-package com.marfeel.compass.core
+package com.marfeel.compass.core.model.compass
 
 import com.google.gson.annotations.SerializedName
+import com.marfeel.compass.core.model.PingData
 import java.util.UUID
 
 internal const val androidPageType = 4
 
-internal data class PingData(
-	@SerializedName("ac")
-	val accountId: String,
-	@SerializedName("t")
-	val sessionTimeStamp: Long,
-	@SerializedName("url")
-	val url: String,
-	@SerializedName("c")
-	val canonicalUrl: String,
-	@SerializedName("pp")
-	val previousUrl: String,
-	@SerializedName("p")
-	val pageId: String,
-	@SerializedName("u")
-	val originalUserId: String,
-	@SerializedName("s")
-	val sessionId: String,
-	@SerializedName("a")
-	val pingCounter: Int,
-	@SerializedName("n")
-	val currentTimeStamp: Long,
-	@SerializedName("ut")
-	val userType: UserType,
-	@SerializedName("sui")
-	val registeredUserId: String,
+internal data class IngestPingData(
+	override val accountId: String,
+	override val sessionTimeStamp: Long,
+	override val url: String,
+	override val canonicalUrl: String,
+	override val previousUrl: String,
+	override val pageId: String,
+	override val originalUserId: String,
+	override val sessionId: String,
+	override val pingCounter: Int,
+	override val currentTimeStamp: Long,
+	override val userType: UserType,
+	override val registeredUserId: String,
 	@SerializedName("sc")
 	val scrollPercent: Int,
-	@SerializedName("fv")
-	val firsVisitTimeStamp: Long,
-	@SerializedName("lv")
-	val previousSessionTimeStamp: Long?,
+	override val firsVisitTimeStamp: Long,
+	override val previousSessionTimeStamp: Long?,
 	@SerializedName("l")
 	val timeOnPage: Int,
 	@SerializedName("ps")
 	val pageStartTimeStamp: Long,
 	@SerializedName("conv")
 	val conversions: String?,
-	@SerializedName("v")
-	val version: String,
+	override val version: String,
 	@SerializedName("pageType")
 	val pageType: Int = androidPageType
+): PingData(
+	accountId,
+	sessionTimeStamp,
+	url,
+	canonicalUrl,
+	previousUrl,
+	pageId,
+	originalUserId,
+	sessionId,
+	userType,
+	registeredUserId,
+	firsVisitTimeStamp,
+	previousSessionTimeStamp,
+	version,
+	currentTimeStamp,
+	pingCounter
 )
 
 /**
@@ -60,7 +62,7 @@ sealed class UserType(open val numericValue: Int) {
 	data class Custom(override val numericValue: Int) : UserType(numericValue)
 }
 
-internal data class RfvData(
+internal data class RfvPayloadData(
 	@SerializedName("ac")
 	val accountId: String,
 	@SerializedName("sui")
@@ -70,6 +72,15 @@ internal data class RfvData(
 	@SerializedName("lv")
 	val previousSessionTimeStamp: Long?
 )
+
+internal data class RFV(
+	val rfv: Float,
+	val r: Float,
+	val f: Float,
+	val v: Float
+) {
+	constructor() : this(0f, 0f, 0f, 0f)
+}
 
 internal data class Session(
 	val id: String,

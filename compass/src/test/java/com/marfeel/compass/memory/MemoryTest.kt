@@ -1,8 +1,8 @@
 package com.marfeel.compass.memory
 
-import com.marfeel.compass.core.Page
-import com.marfeel.compass.core.Session
-import com.marfeel.compass.core.currentTimeStampInSeconds
+import com.marfeel.compass.core.model.compass.Page
+import com.marfeel.compass.core.model.compass.Session
+import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
 import com.marfeel.compass.storage.Storage
 import io.mockk.every
 import io.mockk.mockk
@@ -10,7 +10,7 @@ import junit.framework.TestCase.assertEquals
 import org.junit.Before
 import org.junit.Test
 import java.util.*
-import kotlin.test.assertNotNull
+import junit.framework.TestCase.assertNotNull
 
 internal class MemoryTest {
 

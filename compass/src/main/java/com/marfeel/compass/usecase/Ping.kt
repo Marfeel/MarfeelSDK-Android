@@ -1,56 +1,47 @@
 package com.marfeel.compass.usecase
 
+import androidx.annotation.WorkerThread
 import com.marfeel.compass.BuildConfig
-import com.marfeel.compass.core.PingData
-import com.marfeel.compass.core.PingEmitterState
 import com.marfeel.compass.core.UseCase
-import com.marfeel.compass.core.currentTimeStampInSeconds
+import com.marfeel.compass.core.model.PingData
+import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
 import com.marfeel.compass.memory.Memory
 import com.marfeel.compass.network.ApiClient
 import com.marfeel.compass.storage.Storage
 
-internal class Ping(
-	private val api: ApiClient,
-	private val memory: Memory,
-	private val storage: Storage,
-) : UseCase<PingEmitterState, Unit> {
-	override fun invoke(input: PingEmitterState) {
-		val conversions = memory.readPendingConversions()
-		val currentTimeStamp = currentTimeStampInSeconds()
-		val currentSession = memory.readSession()
-		val pingData = PingData(
-			accountId = memory.readAccountId() ?: "",
-			sessionTimeStamp = currentSession.timeStamp,
-			url = input.url,
-			canonicalUrl = input.url,
-			previousUrl = memory.readPreviousUrl() ?: "",
-			pageId = memory.readPage()?.pageId ?: "",
-			originalUserId = storage.readOriginalUserId(),
-			sessionId = currentSession.id,
-			pingCounter = input.pingCounter,
-			currentTimeStamp = currentTimeStamp,
-			userType = storage.readUserType(),
-			registeredUserId = storage.readRegisteredUserId() ?: "",
-			scrollPercent = input.scrollPercent ?: 0,
-			firsVisitTimeStamp = storage.readFirstSessionTimeStamp(),
-			previousSessionTimeStamp = storage.readPreviousSessionLastPingTimeStamp(),
-			timeOnPage = input.activeTimeOnPage.toInt(),
-			pageStartTimeStamp = memory.readPage()?.startTimeStamp ?: 0L,
-			conversions = conversions.join(),
-			version = BuildConfig.VERSION
-		)
-		api.ping(pingData).also {
-			memory.clearTrackedConversions(conversions)
-			storage.updateLastPingTimeStamp(currentTimeStamp)
-		}
-	}
+internal abstract class Ping<T, Y: PingData>(open val api: ApiClient, open val memory: Memory, open val storage: Storage) : UseCase<T, Unit> {
+    override fun invoke(input: T) {
+        getData(input)?.let {
+            invoke(it)
+        }
+    }
+
+    @WorkerThread
+    abstract operator fun invoke(input: Y)
+
+    abstract fun getData(input: T): Y?
+
+    fun getData(): PingData? {
+        val currentTimeStamp = currentTimeStampInSeconds()
+        val currentSession = memory.readSession()
+        val page = memory.readPage() ?: return null
+
+        return PingData(
+            accountId = memory.readAccountId() ?: "",
+            sessionTimeStamp = currentSession.timeStamp,
+            url = page.url,
+            canonicalUrl = page.url,
+            previousUrl = memory.readPreviousUrl() ?: "",
+            pageId = memory.readPage()?.pageId ?: "",
+            originalUserId = storage.readOriginalUserId(),
+            sessionId = currentSession.id,
+            currentTimeStamp = currentTimeStamp,
+            userType = storage.readUserType(),
+            registeredUserId = storage.readRegisteredUserId() ?: "",
+            firsVisitTimeStamp = storage.readFirstSessionTimeStamp(),
+            previousSessionTimeStamp = storage.readPreviousSessionLastPingTimeStamp(),
+            version = BuildConfig.VERSION
+        )
+    }
 }
-
-private fun List<String>.join(): String? =
-	if (isEmpty()) {
-		null
-	} else {
-		this.joinToString(",")
-	}
-
 

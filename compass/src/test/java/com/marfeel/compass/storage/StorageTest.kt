@@ -1,8 +1,8 @@
 package com.marfeel.compass.storage
 
 import androidx.test.core.app.ApplicationProvider
-import com.marfeel.compass.core.UserType
-import com.marfeel.compass.core.currentTimeStampInSeconds
+import com.marfeel.compass.core.model.compass.UserType
+import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
 
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -46,19 +46,6 @@ internal class StorageTest {
 
 		assertEquals(timeStamp, storage.readFirstSessionTimeStamp())
 	}
-
-//	@Test
-//	fun `previousSession TimeStamp is null if not set`() {
-//		assertEquals(null, storage.readPreviousSessionTimeStamp())
-//	}
-//
-//	@Test
-//	fun `updates previousSession TimeStamp`() {
-//		val timeStamp = currentTimeStampInSeconds()
-//		storage.updatePreviousSessionTimeStamp(timeStamp)
-//
-//		assertEquals(timeStamp, storage.readPreviousSessionTimeStamp())
-//	}
 
 	@Test
 	fun `readOriginalUserId returns random id if not set previously`() {

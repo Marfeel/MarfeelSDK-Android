@@ -1,8 +1,9 @@
 package com.marfeel.compass.network
 
-import com.marfeel.compass.core.PingData
-import com.marfeel.compass.core.RfvData
-import com.marfeel.compass.core.UserType
+import com.marfeel.compass.core.model.PingData
+import com.marfeel.compass.core.model.compass.RFV
+import com.marfeel.compass.core.model.compass.RfvPayloadData
+import com.marfeel.compass.core.model.compass.UserType
 import junit.framework.TestCase.assertEquals
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
@@ -27,16 +28,12 @@ class ApiClientTest {
 		currentTimeStamp = 9012L,
 		userType = UserType.Anonymous,
 		registeredUserId = "registeredUserId",
-		scrollPercent = 5,
 		firsVisitTimeStamp = 3456L,
 		previousSessionTimeStamp = null,
-		timeOnPage = 7980,
-		pageStartTimeStamp = 1234L,
-		conversions = "someone@email.com",
 		version = "1.0"
 	)
 
-	private val anyRfvData = RfvData(
+	private val anyRfvPayloadData = RfvPayloadData(
 		accountId = "accountId",
 		registeredUserId = "userId",
 		originalUserId = "SGIJSPDGIJSDPG",
@@ -51,14 +48,14 @@ class ApiClientTest {
 	@Test
 	fun sendsPingRequestWithTheExpectedVerb() {
 		enqueueApiResponse(200)
-		givenAnApiClient().ping(anyPingData)
+		givenAnApiClient().ping(PingPaths.INGEST, anyPingData)
 		assertEquals("POST", server.takeRequest().method)
 	}
 
 	@Test
 	fun sendsPingRequestWithTheExpectedHeaders() {
 		enqueueApiResponse(200)
-		givenAnApiClient().ping(anyPingData)
+		givenAnApiClient().ping(PingPaths.INGEST, anyPingData)
 		assertEquals(
 			"application/x-www-form-urlencoded",
 			server.takeRequest().headers["content-type"]
@@ -68,14 +65,14 @@ class ApiClientTest {
 	@Test
 	fun sendsRfvRequestWithTheExpectedVerb() {
 		enqueueApiResponse(200)
-		givenAnApiClient().getRfv(anyRfvData)
+		givenAnApiClient().getRfv(anyRfvPayloadData)
 		assertEquals("POST", server.takeRequest().method)
 	}
 
 	@Test
 	fun sendsRfvRequestWithTheExpectedHeaders() {
 		enqueueApiResponse(200)
-		givenAnApiClient().getRfv(anyRfvData)
+		givenAnApiClient().getRfv(anyRfvPayloadData)
 		assertEquals(
 			"text/plain; charset=utf-8",
 			server.takeRequest().headers["content-type"]
@@ -84,10 +81,11 @@ class ApiClientTest {
 
 	@Test
 	fun returnsRfvResponseBodyIfApiCallSucceeds() {
-		val responseBody = "response-body"
+		val responseBody = "{\"rfv\": 0, \"r\": 0, \"f\": 0, \"v\": 0}"
 		enqueueApiResponse(200, responseBody)
-		val response = givenAnApiClient().getRfv(anyRfvData)
-		val expected = Result.success(responseBody)
+		val response = givenAnApiClient().getRfv(anyRfvPayloadData)
+		val expected = Result.success(RFV(0f, 0f, 0f, 0f))
+
 		assertEquals(expected, response)
 	}
 
