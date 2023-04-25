@@ -1,40 +1,37 @@
 package com.marfeel.compass.core.model.multimedia
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
+import com.google.gson.annotations.SerializedName
 
-@Serializable
 internal data class PlaybackInfo(
-    @SerialName("ads")
+    @SerializedName("ads")
     val ads: MutableList<Int> = mutableListOf(),
-    @SerialName("mp")
+    @SerializedName("mp")
     var maxPlayTime: Int = 0,
-    @SerialName("play")
+    @SerializedName("play")
     val play: MutableList<Int> = mutableListOf(),
-    @SerialName("pause")
+    @SerializedName("pause")
     val pause: MutableList<Int> = mutableListOf(),
-    @SerialName("mute")
+    @SerializedName("mute")
     val mute: MutableList<Int> = mutableListOf(),
-    @SerialName("unmute")
+    @SerializedName("unmute")
     val unmute: MutableList<Int> = mutableListOf(),
-    @SerialName("bscr")
+    @SerializedName("bscr")
     val backScreen: MutableList<Int> = mutableListOf(),
-    @SerialName("fscr")
+    @SerializedName("fscr")
     val fullScreen: MutableList<Int> = mutableListOf(),
     @Transient
     var inViewport: Boolean = false,
-    @SerialName("e")
+    @SerializedName("e")
     var ended: Boolean = false
 ) {
     /* kotlin does not serialize computed values https://github.com/Kotlin/kotlinx.serialization/issues/805, so,
      * it needs to be updated by hand instead of via getter
      * */
-    @SerialName("s")
+    @SerializedName("s")
     var started = false
-    @SerialName("a")
+    @SerializedName("a")
     var adsStarted = false
-    @SerialName("ap")
+    @SerializedName("ap")
     var adsLength = 0
     fun addEvent(event: Event, time: Int) {
         when (event) {

@@ -2,6 +2,7 @@ package com.marfeel.compass.network
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.marfeel.compass.BuildConfig
 import com.marfeel.compass.core.model.PingData
 import com.marfeel.compass.core.model.compass.IngestPingData
@@ -9,14 +10,14 @@ import com.marfeel.compass.core.model.compass.RFV
 import com.marfeel.compass.core.model.compass.RfvPayloadData
 import com.marfeel.compass.core.model.compass.androidPageType
 import com.marfeel.compass.core.model.multimedia.MultimediaPingData
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import okhttp3.FormBody
+import kotlinx.serialization.json.*
+import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 import java.io.IOException
+
 
 private const val rfvPath = "rfv.php"
 
@@ -33,13 +34,9 @@ internal class ApiClient(
 	private val mediaType = "text/plain".toMediaType()
 
 	fun ping(path: PingPaths, pingData: PingData) {
-		val formBody = FormBody.Builder()
-			.addPingRequest(pingData)
-			.build()
-
 		val request = Request.Builder()
 			.url("$pingBaseUrl/${path.path}")
-			.post(formBody)
+			.ping(pingData)
 			.build()
 
 		try {
@@ -64,6 +61,7 @@ internal class ApiClient(
 
 	fun getRfv(rfvPayloadData: RfvPayloadData): Result<RFV?> {
 		val jsonRequest = Gson().toJson(rfvPayloadData)
+
 		val request = Request.Builder()
 			.url("$rfvBaseUrl/$rfvPath")
 			.post(jsonRequest.toRequestBody(mediaType))
@@ -85,65 +83,126 @@ internal class ApiClient(
 	}
 }
 
-private fun FormBody.Builder.addPingRequest(ping: PingData): FormBody.Builder {
-	this.add("ac", ping.accountId)
-		.add("t", ping.sessionTimeStamp.toString())
-		.add("url", ping.url)
-		.add("c", ping.url)
-		.add("pp", ping.previousUrl)
-		.add("p", ping.pageId)
-		.add("u", ping.originalUserId)
-		.add("s", ping.sessionId)
-		.add("n", ping.currentTimeStamp.toString())
-		.add("ut", ping.userType.numericValue.toString())
-		.add("sui", ping.registeredUserId)
-		.add("fv", ping.firsVisitTimeStamp.toString())
-		.add("lv", ping.previousSessionTimeStamp?.toString() ?: "null")
-		.add("v", BuildConfig.VERSION)
-		.add("pageType", androidPageType.toString())
-		.add("a", ping.pingCounter.toString())
+private fun getData(ping: PingData): Map<String, Any?> {
 	if (ping is IngestPingData) {
-		return this.addPingRequest(ping)
+		return getData(ping)
 	} else if (ping is MultimediaPingData) {
-		return this.addPingRequest(ping)
+		return getData(ping)
+	}
+
+	return getCommonData(ping)
+}
+
+private fun getData(ping: IngestPingData): Map<String, Any?> {
+	return mapOf(
+		"sc" to ping.scrollPercent.toString(),
+		"l" to ping.timeOnPage.toString(),
+		"ps" to ping.pageStartTimeStamp.toString(),
+		"conv" to (ping.conversions ?: "")
+	) + getCommonData(ping)
+}
+
+private fun getData(ping: MultimediaPingData): Map<String, Any?> {
+	val gsonMapper = GsonBuilder().serializeNulls().create()
+	val format = Json { encodeDefaults = true }
+	/*val rfv = if(ping.rfv != null) format.encodeToJsonElement(ping.rfv).jsonObject.toPrimitivesMap() else mapOf()
+	val item = format.encodeToJsonElement(ping.item).jsonObject.toPrimitivesMap()*/
+	val rfv = if(ping.rfv != null) gsonMapper.fromJson(gsonMapper.toJson(ping.rfv), Map::class.java) as Map<String, Any> else mapOf()
+	val item = gsonMapper.fromJson(gsonMapper.toJson(ping.item), Map::class.java) as Map<String, Any>
+	/*return mapOf(
+		"n" to ping.currentTimeStamp.toString(),
+		"pageType" to androidPageType.toString(),
+		"imp" to ping.item.imp,
+		"m_p" to ping.item.provider,
+		"m_pi" to ping.item.providerId,
+		"m_t" to ping.item.type.id,
+		"m" to format.encodeToJsonElement(ping.item.playbackInfo).jsonObject,
+		"m_il" to ping.item.metadata.isLive.toString(),
+		"m_ti" to (ping.item.metadata.title ?: ""),
+		"m_d" to (ping.item.metadata.description ?: ""),
+		"m_u" to (ping.item.metadata.url ?: ""),
+		"m_th" to (ping.item.metadata.thumbnail ?: ""),
+		"m_a" to (ping.item.metadata.authors ?: ""),
+		"m_pt" to ping.item.metadata.publishTime.toString(),
+		"m_l" to ping.item.metadata.duration.toString()
+	) + getCommonData(ping) + rfv*/
+
+	return getCommonData(ping) + rfv + item
+}
+
+private fun getCommonData(ping: PingData): Map<String, Any> {
+	return mapOf(
+		"ac" to ping.accountId,
+		"t" to ping.sessionTimeStamp.toString(),
+		"url" to ping.url,
+		"c" to ping.url,
+		"pp" to ping.previousUrl,
+		"p" to ping.pageId,
+		"u" to ping.originalUserId,
+		"s" to ping.sessionId,
+		"n" to ping.currentTimeStamp.toString(),
+		"ut" to ping.userType.numericValue.toString(),
+		"sui" to ping.registeredUserId,
+		"fv" to ping.firsVisitTimeStamp.toString(),
+		"lv" to (ping.previousSessionTimeStamp?.toString() ?: ""),
+		"v" to BuildConfig.VERSION,
+		"pageType" to androidPageType.toString(),
+		"a" to ping.pingCounter.toString()
+	)
+}
+
+private fun FormBody.Builder.addPingRequest(ping: PingData): FormBody.Builder {
+	val data = getData(ping)
+
+	for (key in data.keys) {
+		val stringValue = if (data[key] is String) data[key] as String else data[key].toString()
+
+		this.add(key, stringValue)
+	}
+
+	return this
+}
+
+private fun Request.Builder.ping(ping: PingData): Request.Builder {
+	if (ping is IngestPingData) {
+		return this.ping(ping)
+	} else if (ping is MultimediaPingData) {
+		return this.ping(ping)
 	}
 
 	return this;
 }
 
-private fun FormBody.Builder.addPingRequest(ping: IngestPingData): FormBody.Builder =
-	this.add("sc", ping.scrollPercent.toString())
-		.add("l", ping.timeOnPage.toString())
-		.add("ps", ping.pageStartTimeStamp.toString())
-		.add("conv", ping.conversions ?: "")
+private fun Request.Builder.ping(ping: IngestPingData): Request.Builder {
+	val data = FormBody.Builder()
+		.addPingRequest(ping)
+		.build()
 
-private fun FormBody.Builder.addPingRequest(ping: MultimediaPingData): FormBody.Builder {
+	return this.post(data)
+}
+
+private fun Request.Builder.ping(ping: MultimediaPingData): Request.Builder {
+	val data = JSONObject(getData(ping)).toString()
+
+	return this.post(data.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull()))
+}
+
+private inline fun JsonObject.toPrimitivesMap(): Map<String, Any?> {
 	val format = Json { encodeDefaults = true }
 
-	this.add("n", ping.currentTimeStamp.toString())
-		.add("v", BuildConfig.VERSION)
-		.add("pageType", androidPageType.toString())
-		.add("imp", ping.item.imp)
-		.add("m_p", ping.item.provider)
-		.add("m_pi", ping.item.providerId)
-		.add("m_t", ping.item.type.id)
-		.add("m", format.encodeToString(ping.item.playbackInfo))
-		.add("m_il", ping.item.metadata.isLive.toString())
-		.add("m_ti", ping.item.metadata.title ?: "" )
-		.add("m_d", ping.item.metadata.description ?: "")
-		.add("m_u", ping.item.metadata.url ?: "")
-		.add("m_th", ping.item.metadata.thumbnail ?: "")
-		.add("m_a", ping.item.metadata.authors ?: "")
-		.add("m_pt", ping.item.metadata.publishTime.toString())
-		.add("m_l", ping.item.metadata.duration.toString())
-
-
-	ping.rfv?.let {
-		this.add("rfv", it.rfv.toString())
-			.add("rfv_r", it.r.toString())
-			.add("rfv_f", it.f.toString())
-			.add("rfv_v", it.v.toString())
+	return jsonObjectToMap(format.encodeToJsonElement(this).jsonObject)
+}
+private fun jsonObjectToMap(element: JsonObject): Map<String, Any?> {
+	return element.entries.associate {
+		it.key to extractValue(it.value)
 	}
+}
 
-	return this
+private fun extractValue(element: JsonElement): Any? {
+	return when (element) {
+		is JsonNull -> null
+		is JsonPrimitive -> element.content
+		is JsonArray -> element.map { extractValue(it) }
+		is JsonObject -> jsonObjectToMap(element)
+	}
 }

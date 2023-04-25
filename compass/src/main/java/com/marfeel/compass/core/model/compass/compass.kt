@@ -1,7 +1,9 @@
 package com.marfeel.compass.core.model.compass
 
 import com.marfeel.compass.core.model.PingData
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import java.util.UUID
 
 internal const val androidPageType = 4
