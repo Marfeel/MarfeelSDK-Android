@@ -48,7 +48,10 @@ internal class MultimediaPingData(
 
 internal class MultimediaPingDataSerializer : JsonSerializer<MultimediaPingData> {
     private val gson:Gson by lazy {
-        GsonBuilder().registerTypeAdapter(UserType::class.java, UserTypeSerializer()).create()
+        GsonBuilder()
+            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+            .registerTypeAdapter(UserType::class.java, UserTypeSerializer())
+            .create()
     }
 
     private fun <T>toMap(src: T): Map<*, *> = gson.fromJson(gson.toJson(src), Map::class.java)
