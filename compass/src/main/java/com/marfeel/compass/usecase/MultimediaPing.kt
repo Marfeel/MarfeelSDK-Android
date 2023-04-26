@@ -1,6 +1,5 @@
 package com.marfeel.compass.usecase
 
-import com.marfeel.compass.core.model.compass.IngestPingData
 import com.marfeel.compass.core.model.multimedia.MultimediaPingData
 import com.marfeel.compass.core.ping.MultimediaPingEmitterState
 import com.marfeel.compass.memory.Memory

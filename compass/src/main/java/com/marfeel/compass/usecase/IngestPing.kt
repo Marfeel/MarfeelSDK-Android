@@ -1,6 +1,5 @@
 package com.marfeel.compass.usecase
 
-import com.marfeel.compass.BuildConfig
 import com.marfeel.compass.core.ping.IngestPingEmitterState
 import com.marfeel.compass.core.model.compass.IngestPingData
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds

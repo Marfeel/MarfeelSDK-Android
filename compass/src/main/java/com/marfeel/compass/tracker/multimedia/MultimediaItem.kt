@@ -5,8 +5,6 @@ import com.marfeel.compass.core.model.multimedia.Event
 import com.marfeel.compass.core.model.multimedia.MultimediaMetadata
 import com.marfeel.compass.core.model.multimedia.PlaybackInfo
 import com.marfeel.compass.core.model.multimedia.Type
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import java.util.*
 
 private val TIMELESS_EVENTS = arrayOf(Event.LEAVE_VIEWPORT, Event.LEAVE_VIEWPORT)
@@ -19,6 +17,7 @@ internal class MultimediaItem(
     val providerId: String,
     @SerializedName("m_t")
     val type: Type,
+    @Transient
     val metadata: MultimediaMetadata,
 ) {
     @SerializedName("imp")

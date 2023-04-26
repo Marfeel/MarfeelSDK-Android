@@ -1,38 +1,38 @@
 package com.marfeel.compass.core.model.compass
 
+import com.google.gson.*
+import com.google.gson.annotations.SerializedName
 import com.marfeel.compass.core.model.PingData
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import java.lang.reflect.Type
 import java.util.UUID
 
 internal const val androidPageType = 4
 
-internal data class IngestPingData(
-	override val accountId: String,
-	override val sessionTimeStamp: Long,
-	override val url: String,
-	override val canonicalUrl: String,
-	override val previousUrl: String,
-	override val pageId: String,
-	override val originalUserId: String,
-	override val sessionId: String,
-	override val pingCounter: Int,
-	override val currentTimeStamp: Long,
-	override val userType: UserType,
-	override val registeredUserId: String,
-	@SerialName("sc")
+internal class IngestPingData(
+	accountId: String,
+	sessionTimeStamp: Long,
+	url: String,
+	canonicalUrl: String,
+	previousUrl: String,
+	pageId: String,
+	originalUserId: String,
+	sessionId: String,
+	pingCounter: Int,
+	currentTimeStamp: Long,
+	userType: UserType,
+	registeredUserId: String,
+	@SerializedName("sc")
 	val scrollPercent: Int,
-	override val firsVisitTimeStamp: Long,
-	override val previousSessionTimeStamp: Long?,
-	@SerialName("l")
+	firsVisitTimeStamp: Long,
+	previousSessionTimeStamp: Long?,
+	@SerializedName("l")
 	val timeOnPage: Int,
-	@SerialName("ps")
+	@SerializedName("ps")
 	val pageStartTimeStamp: Long,
-	@SerialName("conv")
+	@SerializedName("conv")
 	val conversions: String?,
-	override val version: String,
-	@SerialName("pageType")
+	version: String,
+	@SerializedName("pageType")
 	val pageType: Int = androidPageType
 ): PingData(
 	accountId,
@@ -64,21 +64,30 @@ sealed class UserType(open val numericValue: Int) {
 	data class Custom(override val numericValue: Int) : UserType(numericValue)
 }
 
+internal class UserTypeSerializer : JsonSerializer<UserType> {
+	override fun serialize(src: UserType, typeOfSrc: Type, context: JsonSerializationContext?): JsonElement {
+		return JsonPrimitive(src.numericValue.toString())
+	}
+}
+
 internal data class RfvPayloadData(
-	@SerialName("ac")
+	@SerializedName("ac")
 	val accountId: String,
-	@SerialName("sui")
+	@SerializedName("sui")
 	val registeredUserId: String?,
-	@SerialName("u")
+	@SerializedName("u")
 	val originalUserId: String,
-	@SerialName("lv")
+	@SerializedName("lv")
 	val previousSessionTimeStamp: Long?
 )
 
 internal data class RFV(
 	val rfv: Float,
+	@SerializedName(value = "rfv_r", alternate = ["r"])
 	val r: Float,
+	@SerializedName(value = "rfv_f", alternate = ["f"])
 	val f: Float,
+	@SerializedName(value = "rfv_v", alternate = ["v"])
 	val v: Float
 ) {
 	constructor() : this(0f, 0f, 0f, 0f)

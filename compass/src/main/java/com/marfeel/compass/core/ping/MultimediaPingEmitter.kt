@@ -38,10 +38,10 @@ internal class MultimediaPingEmitter(private val doPing: MultimediaPing) {
 
     fun ping(item: MultimediaItem) {
         val trackingFn:PingFn = { d, onFinish ->
-            rfv = rfv ?: getRFV()
+            d.rfv = rfv ?: getRFV()
 
-            doPing(d.copy(rfv = rfv))
-            onFinish();
+            doPing(d)
+            onFinish()
         }
         val pingState = pingRegistry[item.id]
         val batchedPing = pingState?.second ?: throttle(pingFrequencyInMs, trackingFn)

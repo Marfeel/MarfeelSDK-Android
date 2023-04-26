@@ -1,8 +1,6 @@
 package com.marfeel.compass.core.model.multimedia
 
 import com.google.gson.annotations.SerializedName
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 
 data class MultimediaMetadata(
     @SerializedName("m_il")

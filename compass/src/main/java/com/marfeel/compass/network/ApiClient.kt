@@ -1,21 +1,20 @@
 package com.marfeel.compass.network
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
 import com.marfeel.compass.BuildConfig
 import com.marfeel.compass.core.model.PingData
+import com.marfeel.compass.core.model.compass.*
 import com.marfeel.compass.core.model.compass.IngestPingData
 import com.marfeel.compass.core.model.compass.RFV
 import com.marfeel.compass.core.model.compass.RfvPayloadData
-import com.marfeel.compass.core.model.compass.androidPageType
+import com.marfeel.compass.core.model.compass.UserTypeSerializer
 import com.marfeel.compass.core.model.multimedia.MultimediaPingData
-import kotlinx.serialization.json.*
+import com.marfeel.compass.core.model.multimedia.MultimediaPingDataSerializer
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
 import java.io.IOException
 
 
@@ -26,17 +25,31 @@ internal enum class PingPaths(val path: String) {
 	MULTIMEDIA("multimedia.php")
 }
 
+internal enum class ContentType(val type: String) {
+	JSON("application/json; charset=utf-8"),
+	TEXT("text/plain"),
+	FORM_DATA("application/x-www-form-urlencoded")
+}
+
 internal class ApiClient(
 	private val httpClient: OkHttpClient,
 	private val pingBaseUrl: String = BuildConfig.COMPASS_PING_BASE_URL,
 	private val rfvBaseUrl: String = BuildConfig.COMPASS_RFV_BASE_URL
 ) {
-	private val mediaType = "text/plain".toMediaType()
+	private val mediaType = ContentType.TEXT.type.toMediaType()
+	private val gson:Gson by lazy {
+		GsonBuilder()
+			.registerTypeAdapter(MultimediaPingData::class.java, MultimediaPingDataSerializer())
+			.registerTypeAdapter(UserType::class.java, UserTypeSerializer())
+			.create()
+	}
 
 	fun ping(path: PingPaths, pingData: PingData) {
+		val contentType = if(path == PingPaths.INGEST) ContentType.FORM_DATA else ContentType.JSON
+
 		val request = Request.Builder()
 			.url("$pingBaseUrl/${path.path}")
-			.ping(pingData)
+			.ping(pingData, contentType)
 			.build()
 
 		try {
@@ -47,7 +60,7 @@ internal class ApiClient(
 			}
 		} catch (exception: IOException) {
 			// TODO: track server errors, discarding connection errors
-			println(exception.toString());
+			println(exception.toString())
 		}
 	}
 
@@ -71,9 +84,7 @@ internal class ApiClient(
 			val rawResponse = response.body?.string()
 
 			rawResponse?.let {
-				val objectMapper = ObjectMapper()
-
-				return Result.success(objectMapper.readValue(it, RFV::class.java))
+				return Result.success(gson.fromJson(rawResponse, RFV::class.java))
 			}
 
 			Result.success(null)
@@ -81,128 +92,37 @@ internal class ApiClient(
 			Result.failure(exception)
 		}
 	}
-}
 
-private fun getData(ping: PingData): Map<String, Any?> {
-	if (ping is IngestPingData) {
-		return getData(ping)
-	} else if (ping is MultimediaPingData) {
-		return getData(ping)
+	private fun Request.Builder.ping(ping: PingData, type: ContentType): Request.Builder {
+		if (type == ContentType.FORM_DATA) {
+			return this.pingFormData(ping)
+		}
+
+		return this.pingJson(ping)
 	}
 
-	return getCommonData(ping)
+	private fun Request.Builder.pingJson(ping: PingData): Request.Builder {
+		val data = gson.toJson(ping)
+
+		return this.post(data.toRequestBody(ContentType.JSON.type.toMediaTypeOrNull()))
+	}
+
+	private fun Request.Builder.pingFormData(ping: PingData): Request.Builder {
+		val data = gson.toJsonTree(ping).asJsonObject
+
+		this.post(
+			FormBody.Builder()
+			.addJson(data)
+			.build()
+		)
+
+		return this
+	}
 }
-
-private fun getData(ping: IngestPingData): Map<String, Any?> {
-	return mapOf(
-		"sc" to ping.scrollPercent.toString(),
-		"l" to ping.timeOnPage.toString(),
-		"ps" to ping.pageStartTimeStamp.toString(),
-		"conv" to (ping.conversions ?: "")
-	) + getCommonData(ping)
-}
-
-private fun getData(ping: MultimediaPingData): Map<String, Any?> {
-	val gsonMapper = GsonBuilder().serializeNulls().create()
-	val format = Json { encodeDefaults = true }
-	/*val rfv = if(ping.rfv != null) format.encodeToJsonElement(ping.rfv).jsonObject.toPrimitivesMap() else mapOf()
-	val item = format.encodeToJsonElement(ping.item).jsonObject.toPrimitivesMap()*/
-	val rfv = if(ping.rfv != null) gsonMapper.fromJson(gsonMapper.toJson(ping.rfv), Map::class.java) as Map<String, Any> else mapOf()
-	val item = gsonMapper.fromJson(gsonMapper.toJson(ping.item), Map::class.java) as Map<String, Any>
-	/*return mapOf(
-		"n" to ping.currentTimeStamp.toString(),
-		"pageType" to androidPageType.toString(),
-		"imp" to ping.item.imp,
-		"m_p" to ping.item.provider,
-		"m_pi" to ping.item.providerId,
-		"m_t" to ping.item.type.id,
-		"m" to format.encodeToJsonElement(ping.item.playbackInfo).jsonObject,
-		"m_il" to ping.item.metadata.isLive.toString(),
-		"m_ti" to (ping.item.metadata.title ?: ""),
-		"m_d" to (ping.item.metadata.description ?: ""),
-		"m_u" to (ping.item.metadata.url ?: ""),
-		"m_th" to (ping.item.metadata.thumbnail ?: ""),
-		"m_a" to (ping.item.metadata.authors ?: ""),
-		"m_pt" to ping.item.metadata.publishTime.toString(),
-		"m_l" to ping.item.metadata.duration.toString()
-	) + getCommonData(ping) + rfv*/
-
-	return getCommonData(ping) + rfv + item
-}
-
-private fun getCommonData(ping: PingData): Map<String, Any> {
-	return mapOf(
-		"ac" to ping.accountId,
-		"t" to ping.sessionTimeStamp.toString(),
-		"url" to ping.url,
-		"c" to ping.url,
-		"pp" to ping.previousUrl,
-		"p" to ping.pageId,
-		"u" to ping.originalUserId,
-		"s" to ping.sessionId,
-		"n" to ping.currentTimeStamp.toString(),
-		"ut" to ping.userType.numericValue.toString(),
-		"sui" to ping.registeredUserId,
-		"fv" to ping.firsVisitTimeStamp.toString(),
-		"lv" to (ping.previousSessionTimeStamp?.toString() ?: ""),
-		"v" to BuildConfig.VERSION,
-		"pageType" to androidPageType.toString(),
-		"a" to ping.pingCounter.toString()
-	)
-}
-
-private fun FormBody.Builder.addPingRequest(ping: PingData): FormBody.Builder {
-	val data = getData(ping)
-
-	for (key in data.keys) {
-		val stringValue = if (data[key] is String) data[key] as String else data[key].toString()
-
-		this.add(key, stringValue)
+private fun FormBody.Builder.addJson(json: JsonObject): FormBody.Builder {
+	for ((key, value) in json.entrySet()) {
+		this.add(key, value.asString)
 	}
 
 	return this
-}
-
-private fun Request.Builder.ping(ping: PingData): Request.Builder {
-	if (ping is IngestPingData) {
-		return this.ping(ping)
-	} else if (ping is MultimediaPingData) {
-		return this.ping(ping)
-	}
-
-	return this;
-}
-
-private fun Request.Builder.ping(ping: IngestPingData): Request.Builder {
-	val data = FormBody.Builder()
-		.addPingRequest(ping)
-		.build()
-
-	return this.post(data)
-}
-
-private fun Request.Builder.ping(ping: MultimediaPingData): Request.Builder {
-	val data = JSONObject(getData(ping)).toString()
-
-	return this.post(data.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull()))
-}
-
-private inline fun JsonObject.toPrimitivesMap(): Map<String, Any?> {
-	val format = Json { encodeDefaults = true }
-
-	return jsonObjectToMap(format.encodeToJsonElement(this).jsonObject)
-}
-private fun jsonObjectToMap(element: JsonObject): Map<String, Any?> {
-	return element.entries.associate {
-		it.key to extractValue(it.value)
-	}
-}
-
-private fun extractValue(element: JsonElement): Any? {
-	return when (element) {
-		is JsonNull -> null
-		is JsonPrimitive -> element.content
-		is JsonArray -> element.map { extractValue(it) }
-		is JsonObject -> jsonObjectToMap(element)
-	}
 }

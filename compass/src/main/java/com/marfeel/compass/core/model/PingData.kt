@@ -3,8 +3,6 @@ package com.marfeel.compass.core.model
 import com.google.gson.*
 import com.google.gson.annotations.SerializedName
 import com.marfeel.compass.core.model.compass.UserType
-import java.lang.reflect.Type
-
 
 internal open class PingData(
     @SerializedName("ac")

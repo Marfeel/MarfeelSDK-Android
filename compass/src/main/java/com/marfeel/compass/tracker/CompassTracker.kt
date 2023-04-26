@@ -6,20 +6,18 @@ import android.widget.FrameLayout
 import android.widget.ScrollView
 import androidx.core.view.ScrollingView
 import androidx.recyclerview.widget.RecyclerView
+import com.google.gson.Gson
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.core.ping.IngestPingEmitter
 import com.marfeel.compass.di.CompassComponent
 import com.marfeel.compass.memory.Memory
 import com.marfeel.compass.storage.Storage
-import com.marfeel.compass.tracker.multimedia.MultimediaTracker
 import com.marfeel.compass.tracker.multimedia.MultimediaTracking
 import com.marfeel.compass.usecase.GetRFV
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 internal const val compassNotInitializedErrorMessage =
     "Compass not initialized. Make sure CompassTracking::initialize has been called"
@@ -277,7 +275,7 @@ internal object CompassTracker : CompassTracking {
     }
 
     override fun getRFV(): String? =
-        Json.encodeToString(getRFV.invoke())
+        Gson().toJson(getRFV.invoke())
 
     override fun getRFV(onResult: (String?) -> Unit) {
         check(initialized) { compassNotInitializedErrorMessage }
