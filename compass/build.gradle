@@ -16,7 +16,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
 
-        buildConfigField "String", "COMPASS_PING_BASE_URL", "\"http:/172.23.241.254:8080\""
+        buildConfigField "String", "COMPASS_PING_BASE_URL", "\"https:/events.newsroom.bi\""
         buildConfigField "String", "COMPASS_RFV_BASE_URL", "\"https://compassdata.mrf.io\""
         buildConfigField "String", "VERSION", "\"$compassVersion\""
     }
