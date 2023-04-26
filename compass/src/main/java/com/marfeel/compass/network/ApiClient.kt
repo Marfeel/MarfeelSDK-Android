@@ -1,5 +1,6 @@
 package com.marfeel.compass.network
 
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.marfeel.compass.BuildConfig
