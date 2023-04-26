@@ -32,9 +32,7 @@ internal class IngestPingData(
 	val pageStartTimeStamp: Long,
 	@SerializedName("conv")
 	val conversions: String?,
-	version: String,
-	@SerializedName("pageType")
-	val pageType: Int = androidPageType
+	version: String
 ): PingData(
 	accountId,
 	sessionTimeStamp,

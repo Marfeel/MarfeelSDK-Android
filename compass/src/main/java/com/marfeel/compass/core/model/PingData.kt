@@ -3,36 +3,39 @@ package com.marfeel.compass.core.model
 import com.google.gson.*
 import com.google.gson.annotations.SerializedName
 import com.marfeel.compass.core.model.compass.UserType
+import com.marfeel.compass.core.model.compass.androidPageType
 
 internal open class PingData(
     @SerializedName("ac")
-    open val accountId: String,
+    val accountId: String,
     @SerializedName("t") 
-    open val sessionTimeStamp: Long,
+    val sessionTimeStamp: Long,
     @SerializedName("url")
-    open val url: String,
+    val url: String,
     @SerializedName("c")
-    open val canonicalUrl: String,
+    val canonicalUrl: String,
     @SerializedName("pp")
-    open val previousUrl: String,
+    val previousUrl: String,
     @SerializedName("p")
-    open val pageId: String,
+    val pageId: String,
     @SerializedName("u")
-    open val originalUserId: String,
+    val originalUserId: String,
     @SerializedName("s")
-    open val sessionId: String,
+    val sessionId: String,
     @SerializedName("ut")
-    open val userType: UserType,
+    val userType: UserType,
     @SerializedName("sui")
-    open val registeredUserId: String,
+    val registeredUserId: String,
     @SerializedName("fv")
-    open val firsVisitTimeStamp: Long,
+    val firsVisitTimeStamp: Long,
     @SerializedName("lv")
-    open val previousSessionTimeStamp: Long?,
+    val previousSessionTimeStamp: Long?,
     @SerializedName("v")
-    open val version: String,
+    val version: String,
     @SerializedName("n")
-    open val currentTimeStamp: Long,
+    val currentTimeStamp: Long,
     @SerializedName("a")
-    open val pingCounter: Int? = 0
+    val pingCounter: Int? = 0,
+    @SerializedName("pageType")
+    val pageType: Int = androidPageType
 )
