@@ -38,8 +38,8 @@ internal class MultimediaPingEmitter(private val doPing: MultimediaPing) {
 
     fun ping(item: MultimediaItem) {
         val trackingFn:PingFn = { d, onFinish ->
-            d.rfv = rfv ?: getRFV()
-
+            rfv = rfv ?: getRFV()
+            d.rfv = rfv
             doPing(d)
             onFinish()
         }

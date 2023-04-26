@@ -6,7 +6,6 @@ import android.widget.FrameLayout
 import android.widget.ScrollView
 import androidx.core.view.ScrollingView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.gson.Gson
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.core.ping.IngestPingEmitter
@@ -275,7 +274,7 @@ internal object CompassTracker : CompassTracking {
     }
 
     override fun getRFV(): String? =
-        Gson().toJson(getRFV.invoke())
+        getRFV.invoke()?.toString()
 
     override fun getRFV(onResult: (String?) -> Unit) {
         check(initialized) { compassNotInitializedErrorMessage }

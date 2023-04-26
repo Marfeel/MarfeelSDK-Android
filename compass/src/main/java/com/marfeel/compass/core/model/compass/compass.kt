@@ -3,6 +3,7 @@ package com.marfeel.compass.core.model.compass
 import com.google.gson.*
 import com.google.gson.annotations.SerializedName
 import com.marfeel.compass.core.model.PingData
+import org.json.JSONObject
 import java.lang.reflect.Type
 import java.util.UUID
 
@@ -84,13 +85,24 @@ internal data class RfvPayloadData(
 internal data class RFV(
 	val rfv: Float,
 	@SerializedName(value = "rfv_r", alternate = ["r"])
-	val r: Float,
+	val r: Int,
 	@SerializedName(value = "rfv_f", alternate = ["f"])
-	val f: Float,
+	val f: Int,
 	@SerializedName(value = "rfv_v", alternate = ["v"])
-	val v: Float
+	val v: Int
 ) {
-	constructor() : this(0f, 0f, 0f, 0f)
+	constructor() : this(0f, 0, 0, 0)
+
+	override fun toString(): String {
+		val json = JSONObject()
+
+		json.put("rfv", this.rfv)
+		json.put("r", this.r)
+		json.put("f", this.f)
+		json.put("v", this.v)
+
+		return json.toString()
+	}
 }
 
 internal data class Session(

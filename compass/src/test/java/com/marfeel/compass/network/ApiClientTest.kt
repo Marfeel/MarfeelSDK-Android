@@ -84,7 +84,7 @@ class ApiClientTest {
 		val responseBody = "{\"rfv\": 0, \"r\": 0, \"f\": 0, \"v\": 0}"
 		enqueueApiResponse(200, responseBody)
 		val response = givenAnApiClient().getRfv(anyRfvPayloadData)
-		val expected = Result.success(RFV(0f, 0f, 0f, 0f))
+		val expected = Result.success(RFV(0f, 0, 0, 0))
 
 		assertEquals(expected, response)
 	}
