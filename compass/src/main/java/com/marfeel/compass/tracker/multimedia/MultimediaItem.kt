@@ -10,6 +10,7 @@ import java.util.*
 private val TIMELESS_EVENTS = arrayOf(Event.LEAVE_VIEWPORT, Event.LEAVE_VIEWPORT)
 
 internal class MultimediaItem(
+    @Transient
     val id: String,
     @SerializedName("m_p")
     val provider: String,

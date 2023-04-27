@@ -55,7 +55,7 @@ class NewsXMLActivity : AppCompatActivity() {
 									"hutmbnail",
 									"authors",
 									1234,
-									if (tracker.videoDuration.toInt() == 0) 1000000 else tracker.videoDuration.toInt()
+									if (tracker.videoDuration.toInt() == 0) 234 else tracker.videoDuration.toInt()
 								)
 							)
 							isItemDefined = true
