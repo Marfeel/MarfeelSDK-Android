@@ -4,6 +4,7 @@ import com.google.gson.*
 import com.google.gson.annotations.SerializedName
 import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.core.model.compass.androidPageType
+import java.lang.reflect.Type
 
 internal open class PingData(
     @SerializedName("ac")
@@ -39,3 +40,22 @@ internal open class PingData(
     @SerializedName("pageType")
     val pageType: Int = androidPageType
 )
+
+internal class UserTypeSerializer : JsonSerializer<UserType> {
+    override fun serialize(src: UserType, typeOfSrc: Type, context: JsonSerializationContext?): JsonElement {
+        return JsonPrimitive(src.numericValue.toString())
+    }
+}
+
+internal class PingDataBooleanSerializer : JsonSerializer<Boolean> {
+    override fun serialize(src: Boolean, typeOfSrc: Type, context: JsonSerializationContext?): JsonElement {
+        return JsonPrimitive(if(src) 1 else 0)
+    }
+}
+
+internal fun GsonBuilder.registerPingDataSerializer(): GsonBuilder {
+    return this
+        .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+        .registerTypeAdapter(UserType::class.java, UserTypeSerializer())
+        .registerTypeAdapter(Boolean::class.javaObjectType, PingDataBooleanSerializer())
+}

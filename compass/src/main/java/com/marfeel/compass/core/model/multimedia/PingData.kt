@@ -4,7 +4,7 @@ import com.google.gson.*
 import com.marfeel.compass.core.model.PingData
 import com.marfeel.compass.core.model.compass.RFV
 import com.marfeel.compass.core.model.compass.UserType
-import com.marfeel.compass.core.model.compass.UserTypeSerializer
+import com.marfeel.compass.core.model.registerPingDataSerializer
 import com.marfeel.compass.tracker.multimedia.MultimediaItem
 import java.lang.reflect.Type
 
@@ -49,8 +49,7 @@ internal class MultimediaPingData(
 internal class MultimediaPingDataSerializer : JsonSerializer<MultimediaPingData> {
     private val gson:Gson by lazy {
         GsonBuilder()
-            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-            .registerTypeAdapter(UserType::class.java, UserTypeSerializer())
+            .registerPingDataSerializer()
             .create()
     }
 

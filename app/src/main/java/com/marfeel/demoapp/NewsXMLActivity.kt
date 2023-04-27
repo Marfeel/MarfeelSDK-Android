@@ -28,7 +28,7 @@ class NewsXMLActivity : AppCompatActivity() {
 
 		val scrollView = binding.root
 
-		tracker.trackNewPage("http://dev.marfeel.co/2022/07/29/corrupti-sito-vero-asperiores-ratione-non-velit/", scrollView)
+		tracker.trackNewPage("http://dev.marfeel.co/2022/06/24/rem-provident-voluptates-itaque-quis-beatae-ratione/", scrollView)
 		setContentView(binding.root)
 
 		val youTubePlayerView = findViewById<YouTubePlayerView>(R.id.youtube_player_view)

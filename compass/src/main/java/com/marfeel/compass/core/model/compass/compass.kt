@@ -63,12 +63,6 @@ sealed class UserType(open val numericValue: Int) {
 	data class Custom(override val numericValue: Int) : UserType(numericValue)
 }
 
-internal class UserTypeSerializer : JsonSerializer<UserType> {
-	override fun serialize(src: UserType, typeOfSrc: Type, context: JsonSerializationContext?): JsonElement {
-		return JsonPrimitive(src.numericValue.toString())
-	}
-}
-
 internal data class RfvPayloadData(
 	@SerializedName("ac")
 	val accountId: String,

@@ -3,16 +3,14 @@ package com.marfeel.compass.network
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
-import com.google.gson.ToNumberPolicy
 import com.marfeel.compass.BuildConfig
 import com.marfeel.compass.core.model.PingData
-import com.marfeel.compass.core.model.compass.*
 import com.marfeel.compass.core.model.compass.IngestPingData
 import com.marfeel.compass.core.model.compass.RFV
 import com.marfeel.compass.core.model.compass.RfvPayloadData
-import com.marfeel.compass.core.model.compass.UserTypeSerializer
 import com.marfeel.compass.core.model.multimedia.MultimediaPingData
 import com.marfeel.compass.core.model.multimedia.MultimediaPingDataSerializer
+import com.marfeel.compass.core.model.registerPingDataSerializer
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -41,9 +39,8 @@ internal class ApiClient(
 	private val mediaType = ContentType.TEXT.type.toMediaType()
 	private val gson:Gson by lazy {
 		GsonBuilder()
-			.setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
 			.registerTypeAdapter(MultimediaPingData::class.java, MultimediaPingDataSerializer())
-			.registerTypeAdapter(UserType::class.java, UserTypeSerializer())
+			.registerPingDataSerializer()
 			.create()
 	}
 
