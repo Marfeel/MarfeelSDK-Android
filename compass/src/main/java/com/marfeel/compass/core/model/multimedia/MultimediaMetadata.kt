@@ -16,7 +16,7 @@ data class MultimediaMetadata(
     @SerializedName("m_a")
     val authors: String? = null,
     @SerializedName("m_pt")
-    val publishTime: Int? = null,
+    val publishTime: Long? = null,
     @SerializedName("m_l")
     val duration: Int? = null
 )
