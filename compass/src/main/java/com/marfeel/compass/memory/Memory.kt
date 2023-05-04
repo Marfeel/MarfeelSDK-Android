@@ -1,8 +1,8 @@
 package com.marfeel.compass.memory
 
-import com.marfeel.compass.core.Page
-import com.marfeel.compass.core.Session
-import com.marfeel.compass.core.currentTimeStampInSeconds
+import com.marfeel.compass.core.model.compass.Page
+import com.marfeel.compass.core.model.compass.Session
+import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
 import com.marfeel.compass.storage.Storage
 import java.util.*
 

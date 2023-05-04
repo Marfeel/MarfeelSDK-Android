@@ -1,20 +1,21 @@
-package com.marfeel.compass.core
+package com.marfeel.compass.core.ping
 
 import androidx.lifecycle.LifecycleOwner
 import com.marfeel.compass.BackgroundWatcher
-import com.marfeel.compass.usecase.Ping
+import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
+import com.marfeel.compass.usecase.IngestPing
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
-internal class PingEmitter(
-    private val doPing: Ping,
+internal class IngestPingEmitter(
+    private val doPing: IngestPing,
     coroutineContext: CoroutineContext = Dispatchers.Unconfined
 ) : BackgroundWatcher {
 
     private val pingFrequencyInMs = 10000L
     private val job = SupervisorJob()
     private val scope: CoroutineScope = CoroutineScope(coroutineContext + job)
-    private var pingEmitterState: PingEmitterState? = null
+    private var pingEmitterState: IngestPingEmitterState? = null
 
     override var appOnBackground: Boolean = false
     override var lastBackgroundTimeStamp: Long? = null
@@ -25,7 +26,7 @@ internal class PingEmitter(
     ) {
         lastBackgroundTimeStamp = null
         startBackgroundWatcher()
-        pingEmitterState = PingEmitterState(
+        pingEmitterState = IngestPingEmitterState(
             url = url,
             pingCounter = 0,
             scrollPercent = scrollPosition,
@@ -74,7 +75,7 @@ internal class PingEmitter(
     }
 }
 
-internal data class PingEmitterState(
+internal data class IngestPingEmitterState(
     val url: String,
     val pingCounter: Int,
     val scrollPercent: Int?,
@@ -83,7 +84,7 @@ internal data class PingEmitterState(
 ) {
     val activeTimeOnPage = currentTimeStampInSeconds() - pageStartTimeStamp - timeOnBackground
 
-    fun addTimeOnBackground(timeOnBackground: Long): PingEmitterState {
+    fun addTimeOnBackground(timeOnBackground: Long): IngestPingEmitterState {
         return this.copy(timeOnBackground = this.timeOnBackground + timeOnBackground)
     }
 }

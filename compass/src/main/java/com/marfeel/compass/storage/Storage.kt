@@ -5,8 +5,8 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import com.marfeel.compass.core.UserType
-import com.marfeel.compass.core.currentTimeStampInSeconds
+import com.marfeel.compass.core.model.compass.UserType
+import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
