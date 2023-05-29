@@ -121,7 +121,7 @@ internal class ApiClient(
 }
 private fun FormBody.Builder.addJson(json: JsonObject): FormBody.Builder {
 	for ((key, value) in json.entrySet()) {
-		this.add(key, value.asString)
+		this.add(key, value.toString())
 	}
 
 	return this

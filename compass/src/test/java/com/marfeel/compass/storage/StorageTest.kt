@@ -97,4 +97,12 @@ internal class StorageTest {
 
 		assertEquals(savedUserType, retrievedUserType)
 	}
+
+	@Test
+	fun `reads, sets userVars` () {
+		storage.setUserVar("pepe", "pepa")
+		storage.setUserVar("lolo", "lola")
+
+		assertEquals(mapOf("pepe" to "pepa", "lolo" to "lola"), storage.readUserVars())
+	}
 }

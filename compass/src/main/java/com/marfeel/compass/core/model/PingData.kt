@@ -37,8 +37,14 @@ internal open class PingData(
     val currentTimeStamp: Long,
     @SerializedName("a")
     val pingCounter: Int? = 0,
+    @SerializedName("uvar")
+    val userVars: Map<String, String>,
+    @SerializedName("pvar")
+    val pageVars: Map<String, String>,
+    @SerializedName("svar")
+    val sessionVars: Map<String, String>,
     @SerializedName("pageType")
-    val pageType: Int = androidPageType
+    val pageType: Int = androidPageType,
 )
 
 internal class UserTypeSerializer : JsonSerializer<UserType> {
@@ -53,9 +59,27 @@ internal class PingDataBooleanSerializer : JsonSerializer<Boolean> {
     }
 }
 
+internal class PingDataVarsSerializer : JsonSerializer<Map<String, String>> {
+    override fun serialize(src: Map<String, String>, typeOfSrc: Type, context: JsonSerializationContext?): JsonElement {
+        val vars = src.toList()
+        val res = JsonArray(vars.size)
+
+        for(someVar in vars) {
+            val serializedVar = JsonArray(2)
+
+            serializedVar.add(someVar.first)
+            serializedVar.add(someVar.second)
+            res.add(serializedVar)
+        }
+
+        return res
+    }
+}
+
 internal fun GsonBuilder.registerPingDataSerializer(): GsonBuilder {
     return this
         .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
         .registerTypeAdapter(UserType::class.java, UserTypeSerializer())
         .registerTypeAdapter(Boolean::class.javaObjectType, PingDataBooleanSerializer())
+        .registerTypeAdapter(Map::class.java, PingDataVarsSerializer())
 }

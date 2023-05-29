@@ -13,6 +13,8 @@ internal class Memory(private val storage: Storage) {
 	private var page: Page? = null
 	private var previousUrl: String? = null
 	private var pendingConversions: MutableList<String> = mutableListOf()
+	private var pageVars: MutableMap<String, String> = mutableMapOf()
+	private var sessionVars: MutableMap<String, String> = mutableMapOf()
 
 	fun updateAccountId(id: String) {
 		accountId = id
@@ -58,5 +60,29 @@ internal class Memory(private val storage: Storage) {
 
 	fun clearTrackedConversions(conversions: List<String>) {
 		pendingConversions.removeAll(conversions)
+	}
+
+	fun addPageVar(name: String, value: String) {
+		pageVars[name] = value
+	}
+
+	fun readPageVars(): Map<String, String> {
+		return pageVars.toMap()
+	}
+
+	fun clearPageVars() {
+		pageVars.clear()
+	}
+
+	fun addSessionVar(name: String, value: String) {
+		sessionVars[name] = value
+	}
+
+	fun readSessionVars(): Map<String, String> {
+		return sessionVars.toMap()
+	}
+
+	fun clearSessionVars() {
+		sessionVars.clear()
 	}
 }

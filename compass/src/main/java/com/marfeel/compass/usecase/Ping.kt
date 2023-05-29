@@ -40,7 +40,10 @@ internal abstract class Ping<T, Y: PingData>(open val api: ApiClient, open val m
             registeredUserId = storage.readRegisteredUserId() ?: "",
             firsVisitTimeStamp = storage.readFirstSessionTimeStamp(),
             previousSessionTimeStamp = storage.readPreviousSessionLastPingTimeStamp(),
-            version = BuildConfig.VERSION
+            version = BuildConfig.VERSION,
+            userVars = storage.readUserVars(),
+            pageVars = memory.readPageVars(),
+            sessionVars = memory.readSessionVars()
         )
     }
 }

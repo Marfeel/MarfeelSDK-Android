@@ -5,6 +5,9 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import java.lang.reflect.Type
 import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
 import kotlinx.coroutines.CoroutineScope
@@ -12,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.*
 import kotlin.coroutines.CoroutineContext
+
 
 internal class Storage(
 	private val context: Context,
@@ -27,9 +31,11 @@ internal class Storage(
 		private const val previousSessionLastPingTimeStampKey =
 			"previousSessionLastPingTimeStamp_key"
 		private const val lastPingTimeStampKey = "lastPingTimeStamp_key"
+		private const val userVarsKey = "userVars_key"
 	}
 
 	private val storageScope: CoroutineScope = CoroutineScope(coroutineContext)
+	private val gson:Gson by lazy { Gson() }
 
 	/**
 	 * EncryptedSharedPreferences support is kind of buggy, some devices do not implement properly
@@ -198,4 +204,30 @@ internal class Storage(
 
 	private fun getPreviousSessionLastPingTimeStamp(): Long =
 		preferences.getLong(previousSessionLastPingTimeStampKey, 0L)
+
+	fun setUserVar(name: String, value: String) {
+		val vars = getUserVars().toMutableMap()
+
+		storageScope.launch {
+			vars[name] = value
+			setUserVars(vars)
+		}
+	}
+
+	private fun setUserVars(vars: Map<String, String>) {
+		preferences.edit {
+			putString(userVarsKey, gson.toJson(vars).toString())
+		}
+	}
+
+	fun readUserVars(): Map<String, String> =
+		runBlocking {
+			getUserVars()
+		}
+
+	private fun getUserVars(): Map<String, String> {
+		val mapType: Type = object : TypeToken<Map<String, String>>() {}.type
+
+		return gson.fromJson(preferences.getString(userVarsKey, "{}"), mapType)
+	}
 }

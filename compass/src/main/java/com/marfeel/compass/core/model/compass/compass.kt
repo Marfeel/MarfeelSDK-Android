@@ -4,7 +4,6 @@ import com.google.gson.*
 import com.google.gson.annotations.SerializedName
 import com.marfeel.compass.core.model.PingData
 import org.json.JSONObject
-import java.lang.reflect.Type
 import java.util.UUID
 
 internal const val androidPageType = 4
@@ -22,6 +21,9 @@ internal class IngestPingData(
 	currentTimeStamp: Long,
 	userType: UserType,
 	registeredUserId: String,
+	pageVars: Map<String, String>,
+	sessionVars: Map<String, String>,
+	userVars: Map<String, String>,
 	@SerializedName("sc")
 	val scrollPercent: Int,
 	firsVisitTimeStamp: Long,
@@ -48,7 +50,10 @@ internal class IngestPingData(
 	previousSessionTimeStamp,
 	version,
 	currentTimeStamp,
-	pingCounter
+	pingCounter,
+	userVars,
+	pageVars,
+	sessionVars
 )
 
 /**

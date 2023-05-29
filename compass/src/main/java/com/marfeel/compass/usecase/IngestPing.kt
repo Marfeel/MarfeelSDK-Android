@@ -45,7 +45,10 @@ internal class IngestPing(
 			timeOnPage = input.activeTimeOnPage.toInt(),
 			pageStartTimeStamp = memory.readPage()?.startTimeStamp ?: 0L,
 			conversions = conversions.join(),
-			version = pingData.version
+			version = pingData.version,
+			pageVars = memory.readPageVars(),
+			sessionVars = memory.readSessionVars(),
+			userVars = storage.readUserVars()
 		)
 	}
 }
