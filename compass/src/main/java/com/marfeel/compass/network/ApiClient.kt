@@ -119,9 +119,12 @@ internal class ApiClient(
 		return this
 	}
 }
+
 private fun FormBody.Builder.addJson(json: JsonObject): FormBody.Builder {
-	for ((key, value) in json.entrySet()) {
-		this.add(key, value.toString())
+	for ((key, rawValue) in json.entrySet()) {
+		val value = if (rawValue.isJsonPrimitive) rawValue.asString else rawValue.toString()
+
+		this.add(key, value)
 	}
 
 	return this
