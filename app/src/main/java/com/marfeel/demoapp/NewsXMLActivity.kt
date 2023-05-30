@@ -29,11 +29,12 @@ class NewsXMLActivity : AppCompatActivity() {
 		val scrollView = binding.root
 
 		tracker.trackNewPage("http://dev.marfeel.co/2022/06/24/rem-provident-voluptates-itaque-quis-beatae-ratione/", scrollView)
+		tracker.setPageVar("yop", "yap")
 		setContentView(binding.root)
 
 		val youTubePlayerView = findViewById<YouTubePlayerView>(R.id.youtube_player_view)
 		val tracker = YouTubePlayerTracker()
-		var isItemDefined = false;
+		var isItemDefined = false
 
 		youTubePlayerView.addYouTubePlayerListener(tracker)
 

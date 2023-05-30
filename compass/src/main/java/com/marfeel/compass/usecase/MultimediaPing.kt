@@ -34,7 +34,11 @@ internal class MultimediaPing(
 			firsVisitTimeStamp = pingData.firsVisitTimeStamp,
 			previousSessionTimeStamp = storage.readPreviousSessionLastPingTimeStamp(),
 			version = pingData.version,
-			item = input.item
+			item = input.item,
+			pageVars = memory.readPageVars(),
+			sessionVars = memory.readSessionVars(),
+			userVars = storage.readUserVars(),
+			userSegments = storage.readUserSegments()
 		)
 	}
 }

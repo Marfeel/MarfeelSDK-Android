@@ -30,7 +30,11 @@ class ApiClientTest {
 		registeredUserId = "registeredUserId",
 		firsVisitTimeStamp = 3456L,
 		previousSessionTimeStamp = null,
-		version = "1.0"
+		version = "1.0",
+		pageVars = mapOf("pepe" to "pepa", "lolo" to "lola"),
+		userVars = mapOf("user" to "var"),
+		sessionVars = mapOf("session" to "var"),
+		userSegments = listOf("user", "segment")
 	)
 
 	private val anyRfvPayloadData = RfvPayloadData(

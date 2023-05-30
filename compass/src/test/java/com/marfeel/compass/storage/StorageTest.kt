@@ -97,4 +97,28 @@ internal class StorageTest {
 
 		assertEquals(savedUserType, retrievedUserType)
 	}
+
+	@Test
+	fun `reads, sets userVars` () {
+		storage.setUserVar("pepe", "pepa")
+		storage.setUserVar("lolo", "lola")
+
+		assertEquals(mapOf("pepe" to "pepa", "lolo" to "lola"), storage.readUserVars())
+	}
+
+	@Test
+	fun `reads, sets userSegments` () {
+		storage.setUserSegment("pepe")
+		storage.setUserSegment("pepa")
+
+		assertEquals(listOf("pepe", "pepa"), storage.readUserSegments())
+
+		storage.removeUserSegment("pepe")
+
+		assertEquals(listOf("pepa"), storage.readUserSegments())
+
+		storage.clearUserSegments()
+
+		assertEquals(listOf<String>(), storage.readUserSegments())
+	}
 }

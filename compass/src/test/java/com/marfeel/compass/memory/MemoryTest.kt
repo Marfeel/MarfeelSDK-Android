@@ -109,4 +109,28 @@ internal class MemoryTest {
 		assertEquals(1, memory.readPendingConversions().size)
 		assertEquals(notTrackedConversion, memory.readPendingConversions().first())
 	}
+
+	@Test
+	fun `reading and setting pagevars`() {
+		memory.addPageVar("pepe", "pepa")
+		memory.addPageVar("lolo", "lola")
+
+		assertEquals(mapOf("pepe" to "pepa", "lolo" to "lola"), memory.readPageVars())
+
+		memory.clearPageVars()
+
+		assertEquals(emptyMap<String, String>(), memory.readPageVars())
+	}
+
+	@Test
+	fun `reading and setting session vars`() {
+		memory.addSessionVar("pepe", "pepa")
+		memory.addSessionVar("lolo", "lola")
+
+		assertEquals(mapOf("pepe" to "pepa", "lolo" to "lola"), memory.readSessionVars())
+
+		memory.clearSessionVars()
+
+		assertEquals(emptyMap<String, String>(), memory.readSessionVars())
+	}
 }
