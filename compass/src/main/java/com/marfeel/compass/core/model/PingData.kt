@@ -43,6 +43,8 @@ internal open class PingData(
     val pageVars: Map<String, String>,
     @SerializedName("svar")
     val sessionVars: Map<String, String>,
+    @SerializedName("useg")
+    val userSegments: List<String>,
     @SerializedName("pageType")
     val pageType: Int = androidPageType,
 )

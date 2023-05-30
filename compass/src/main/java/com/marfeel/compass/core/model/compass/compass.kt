@@ -24,6 +24,7 @@ internal class IngestPingData(
 	pageVars: Map<String, String>,
 	sessionVars: Map<String, String>,
 	userVars: Map<String, String>,
+	userSegments: List<String>,
 	@SerializedName("sc")
 	val scrollPercent: Int,
 	firsVisitTimeStamp: Long,
@@ -53,7 +54,8 @@ internal class IngestPingData(
 	pingCounter,
 	userVars,
 	pageVars,
-	sessionVars
+	sessionVars,
+	userSegments
 )
 
 /**

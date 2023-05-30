@@ -141,6 +141,32 @@ interface CompassTracking {
      */
     fun setUserVar(name: String, value: String)
 
+    /**
+     * Sets persistent user segment for the user.
+     *
+     * @param name user segment name
+     */
+    fun setUserSegment(name: String)
+
+    /**
+     * Sets persistent user segments for the user, overriding previous ones.
+     *
+     * @param segments user segments names
+     */
+    fun setUserSegments(segments: List<String>)
+
+    /**
+     * removes user segment for the user.
+     *
+     * @param name user segment name
+     */
+    fun removeUserSegment(name: String)
+
+    /**
+     * Clears all user segments for the user.
+     */
+    fun clearUserSegments()
+
     companion object {
         /**
          * Prepare the Compass SDK to track the pages.
@@ -330,5 +356,21 @@ internal object CompassTracker : CompassTracking {
         check(initialized) { compassNotInitializedErrorMessage }
 
         storage.setUserVar(name, value)
+    }
+
+    override fun setUserSegment(name: String) {
+        storage.setUserSegment(name)
+    }
+
+    override fun setUserSegments(segments: List<String>) {
+        storage.setUserSegment(segments)
+    }
+
+    override fun removeUserSegment(name: String) {
+        storage.removeUserSegment(name)
+    }
+
+    override fun clearUserSegments() {
+        storage.clearUserSegments()
     }
 }

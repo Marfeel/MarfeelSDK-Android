@@ -37,7 +37,8 @@ internal class MultimediaPing(
 			item = input.item,
 			pageVars = memory.readPageVars(),
 			sessionVars = memory.readSessionVars(),
-			userVars = storage.readUserVars()
+			userVars = storage.readUserVars(),
+			userSegments = storage.readUserSegments()
 		)
 	}
 }

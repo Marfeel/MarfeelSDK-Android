@@ -33,7 +33,8 @@ class ApiClientTest {
 		version = "1.0",
 		pageVars = mapOf("pepe" to "pepa", "lolo" to "lola"),
 		userVars = mapOf("user" to "var"),
-		sessionVars = mapOf("session" to "var")
+		sessionVars = mapOf("session" to "var"),
+		userSegments = listOf("user", "segment")
 	)
 
 	private val anyRfvPayloadData = RfvPayloadData(

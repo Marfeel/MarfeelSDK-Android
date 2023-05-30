@@ -105,4 +105,20 @@ internal class StorageTest {
 
 		assertEquals(mapOf("pepe" to "pepa", "lolo" to "lola"), storage.readUserVars())
 	}
+
+	@Test
+	fun `reads, sets userSegments` () {
+		storage.setUserSegment("pepe")
+		storage.setUserSegment("pepa")
+
+		assertEquals(listOf("pepe", "pepa"), storage.readUserSegments())
+
+		storage.removeUserSegment("pepe")
+
+		assertEquals(listOf("pepa"), storage.readUserSegments())
+
+		storage.clearUserSegments()
+
+		assertEquals(listOf<String>(), storage.readUserSegments())
+	}
 }

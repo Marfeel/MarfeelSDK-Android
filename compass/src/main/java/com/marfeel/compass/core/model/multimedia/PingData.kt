@@ -23,6 +23,7 @@ internal class MultimediaPingData(
     pageVars: Map<String, String>,
     sessionVars: Map<String, String>,
     userVars: Map<String, String>,
+    userSegments: List<String>,
     firsVisitTimeStamp: Long,
     previousSessionTimeStamp: Long?,
     version: String,
@@ -49,7 +50,8 @@ internal class MultimediaPingData(
     pingCounter,
     pageVars,
     sessionVars,
-    userVars
+    userVars,
+    userSegments
 )
 
 internal class MultimediaPingDataSerializer : JsonSerializer<MultimediaPingData> {
