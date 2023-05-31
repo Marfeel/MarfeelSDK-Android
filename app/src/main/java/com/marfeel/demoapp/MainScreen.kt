@@ -59,8 +59,9 @@ fun MainScreen(
 	tracker.setSessionVar("pepe", "pepa")
 	tracker.setSessionVar("pepe2", "pepa2")
 	tracker.setUserVar("lolo", "lola")
-	tracker.setUserSegment("segment")
-	tracker.setUserSegment("another-segment")
+	tracker.setUserVar("lolo2", "lola2")
+	tracker.addUserSegment("segment")
+	tracker.addUserSegment("another-segment")
 
 	Scaffold(
 		Modifier
