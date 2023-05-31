@@ -142,11 +142,11 @@ interface CompassTracking {
     fun setUserVar(name: String, value: String)
 
     /**
-     * Sets persistent user segment for the user.
+     * Adds persistent user segment for the user.
      *
      * @param name user segment name
      */
-    fun setUserSegment(name: String)
+    fun addUserSegment(name: String)
 
     /**
      * Sets persistent user segments for the user, overriding previous ones.
@@ -358,7 +358,7 @@ internal object CompassTracker : CompassTracking {
         storage.setUserVar(name, value)
     }
 
-    override fun setUserSegment(name: String) {
+    override fun addUserSegment(name: String) {
         storage.setUserSegment(name)
     }
 

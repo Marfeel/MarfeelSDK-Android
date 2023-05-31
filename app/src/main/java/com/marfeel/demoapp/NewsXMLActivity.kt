@@ -30,6 +30,7 @@ class NewsXMLActivity : AppCompatActivity() {
 
 		tracker.trackNewPage("http://dev.marfeel.co/2022/06/24/rem-provident-voluptates-itaque-quis-beatae-ratione/", scrollView)
 		tracker.setPageVar("yop", "yap")
+		tracker.setPageVar("yop2", "yap2")
 		setContentView(binding.root)
 
 		val youTubePlayerView = findViewById<YouTubePlayerView>(R.id.youtube_player_view)
