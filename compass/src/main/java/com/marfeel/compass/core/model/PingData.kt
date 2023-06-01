@@ -3,7 +3,6 @@ package com.marfeel.compass.core.model
 import com.google.gson.*
 import com.google.gson.annotations.SerializedName
 import com.marfeel.compass.core.model.compass.UserType
-import com.marfeel.compass.core.model.compass.androidPageType
 import java.lang.reflect.Type
 
 internal open class PingData(
@@ -46,7 +45,7 @@ internal open class PingData(
     @SerializedName("useg")
     val userSegments: List<String>,
     @SerializedName("pageType")
-    val pageType: Int = androidPageType,
+    val pageType: Int,
 )
 
 internal class UserTypeSerializer : JsonSerializer<UserType> {

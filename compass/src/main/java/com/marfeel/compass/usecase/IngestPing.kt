@@ -49,7 +49,8 @@ internal class IngestPing(
 			pageVars = memory.readPageVars(),
 			sessionVars = memory.readSessionVars(),
 			userVars = storage.readUserVars(),
-			userSegments = storage.readUserSegments()
+			userSegments = storage.readUserSegments(),
+			pageType = memory.readPageTechnology()
 		)
 	}
 }

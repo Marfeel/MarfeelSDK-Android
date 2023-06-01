@@ -21,6 +21,10 @@ import kotlinx.coroutines.launch
 internal const val compassNotInitializedErrorMessage =
     "Compass not initialized. Make sure CompassTracking::initialize has been called"
 
+internal const val bannedPageTechnologyValue =
+    "Page technology value should be greater than 100"
+
+
 /**
  * CompassTracking is the entry point for all interactions with the library.
  * To access to CompassTracking just retrieve its singleton instance by calling [CompassTracking.getInstance].
@@ -167,11 +171,18 @@ interface CompassTracking {
      */
     fun clearUserSegments()
 
+    /**
+     * Sets custom page technology. Android is used by default.
+     *
+     * @param tech page technology numeric value. Only values greater than 100 are allowed.
+     */
+    fun setPageTechnology(tech: Int)
+
     companion object {
         /**
          * Prepare the Compass SDK to track the pages.
          *
-         * Typically you should initialize the Compass SDK from your Application class.
+         * Typically, you should initialize the Compass SDK from your Application class.
          * @param context The Android Context.
          * @param accountId Compass account id.
          */
@@ -372,5 +383,11 @@ internal object CompassTracker : CompassTracking {
 
     override fun clearUserSegments() {
         storage.clearUserSegments()
+    }
+
+    override fun setPageTechnology(tech: Int) {
+        require(tech > 100) { bannedPageTechnologyValue }
+
+        memory.setPageTechnology(tech)
     }
 }

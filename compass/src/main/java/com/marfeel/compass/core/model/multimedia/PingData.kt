@@ -31,7 +31,8 @@ internal class MultimediaPingData(
     @Transient
     val item: MultimediaItem,
     @Transient
-    var rfv: RFV? = null
+    var rfv: RFV? = null,
+    pageType: Int
 ): PingData(
     accountId,
     sessionTimeStamp,
@@ -51,7 +52,8 @@ internal class MultimediaPingData(
     pageVars,
     sessionVars,
     userVars,
-    userSegments
+    userSegments,
+    pageType = pageType
 )
 
 internal class MultimediaPingDataSerializer : JsonSerializer<MultimediaPingData> {
