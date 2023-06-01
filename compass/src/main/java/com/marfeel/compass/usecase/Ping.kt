@@ -44,7 +44,8 @@ internal abstract class Ping<T, Y: PingData>(open val api: ApiClient, open val m
             userVars = storage.readUserVars(),
             pageVars = memory.readPageVars(),
             sessionVars = memory.readSessionVars(),
-            userSegments = storage.readUserSegments()
+            userSegments = storage.readUserSegments(),
+            pageType = memory.readPageTechnology()
         )
     }
 }

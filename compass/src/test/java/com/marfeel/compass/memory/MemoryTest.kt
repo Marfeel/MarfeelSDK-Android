@@ -133,4 +133,13 @@ internal class MemoryTest {
 
 		assertEquals(emptyMap<String, String>(), memory.readSessionVars())
 	}
+
+	@Test
+	fun `reading and setting page type`() {
+		assertEquals(4, memory.readPageTechnology())
+
+		memory.setPageTechnology(101)
+
+		assertEquals(101, memory.readPageTechnology())
+	}
 }

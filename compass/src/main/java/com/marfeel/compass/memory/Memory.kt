@@ -2,9 +2,13 @@ package com.marfeel.compass.memory
 
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.Session
+import com.marfeel.compass.core.model.compass.androidPageType
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
 import com.marfeel.compass.storage.Storage
 import java.util.*
+
+internal const val bannedPageTechnologyValue =
+	"Page technology value should be greater than 100"
 
 internal class Memory(private val storage: Storage) {
 
@@ -15,6 +19,7 @@ internal class Memory(private val storage: Storage) {
 	private var pendingConversions: MutableList<String> = mutableListOf()
 	private var pageVars: MutableMap<String, String> = mutableMapOf()
 	private var sessionVars: MutableMap<String, String> = mutableMapOf()
+	private var pageTechnology: Int = androidPageType
 
 	fun updateAccountId(id: String) {
 		accountId = id
@@ -85,4 +90,11 @@ internal class Memory(private val storage: Storage) {
 	fun clearSessionVars() {
 		sessionVars.clear()
 	}
+
+	fun setPageTechnology(tech: Int) {
+		pageTechnology = tech
+	}
+
+	fun readPageTechnology(): Int =
+		pageTechnology
 }

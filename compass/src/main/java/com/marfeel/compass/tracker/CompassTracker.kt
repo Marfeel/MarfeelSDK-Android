@@ -11,6 +11,7 @@ import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.core.ping.IngestPingEmitter
 import com.marfeel.compass.di.CompassComponent
 import com.marfeel.compass.memory.Memory
+import com.marfeel.compass.memory.bannedPageTechnologyValue
 import com.marfeel.compass.storage.Storage
 import com.marfeel.compass.tracker.multimedia.MultimediaTracking
 import com.marfeel.compass.usecase.GetRFV
@@ -167,11 +168,18 @@ interface CompassTracking {
      */
     fun clearUserSegments()
 
+    /**
+     * Sets custom page technology. Android is used by default.
+     *
+     * @param tech page technology numeric value. Only values greater than 100 are allowed.
+     */
+    fun setPageTechnology(tech: Int)
+
     companion object {
         /**
          * Prepare the Compass SDK to track the pages.
          *
-         * Typically you should initialize the Compass SDK from your Application class.
+         * Typically, you should initialize the Compass SDK from your Application class.
          * @param context The Android Context.
          * @param accountId Compass account id.
          */
@@ -372,5 +380,11 @@ internal object CompassTracker : CompassTracking {
 
     override fun clearUserSegments() {
         storage.clearUserSegments()
+    }
+
+    override fun setPageTechnology(tech: Int) {
+        require(tech > 100) { bannedPageTechnologyValue }
+
+        memory.setPageTechnology(tech)
     }
 }

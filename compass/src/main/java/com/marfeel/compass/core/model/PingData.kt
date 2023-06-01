@@ -46,7 +46,7 @@ internal open class PingData(
     @SerializedName("useg")
     val userSegments: List<String>,
     @SerializedName("pageType")
-    val pageType: Int = androidPageType,
+    val pageType: Int,
 )
 
 internal class UserTypeSerializer : JsonSerializer<UserType> {
