@@ -11,7 +11,6 @@ import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.core.ping.IngestPingEmitter
 import com.marfeel.compass.di.CompassComponent
 import com.marfeel.compass.memory.Memory
-import com.marfeel.compass.memory.bannedPageTechnologyValue
 import com.marfeel.compass.storage.Storage
 import com.marfeel.compass.tracker.multimedia.MultimediaTracking
 import com.marfeel.compass.usecase.GetRFV
@@ -21,6 +20,10 @@ import kotlinx.coroutines.launch
 
 internal const val compassNotInitializedErrorMessage =
     "Compass not initialized. Make sure CompassTracking::initialize has been called"
+
+internal const val bannedPageTechnologyValue =
+    "Page technology value should be greater than 100"
+
 
 /**
  * CompassTracking is the entry point for all interactions with the library.

@@ -7,9 +7,6 @@ import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
 import com.marfeel.compass.storage.Storage
 import java.util.*
 
-internal const val bannedPageTechnologyValue =
-	"Page technology value should be greater than 100"
-
 internal class Memory(private val storage: Storage) {
 
 	private var accountId: String? = null
