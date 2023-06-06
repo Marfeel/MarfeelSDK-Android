@@ -176,7 +176,7 @@ interface CompassTracking {
      *
      * @param tech page technology numeric value. Only values greater than 100 are allowed.
      */
-    fun setPageTechnology(tech: Int)
+    fun setPageType(tech: Int)
 
     companion object {
         /**
@@ -385,7 +385,7 @@ internal object CompassTracker : CompassTracking {
         storage.clearUserSegments()
     }
 
-    override fun setPageTechnology(tech: Int) {
+    override fun setPageType(tech: Int) {
         require(tech > 100) { bannedPageTechnologyValue }
 
         memory.setPageTechnology(tech)
