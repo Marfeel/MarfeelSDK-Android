@@ -8,6 +8,7 @@ import androidx.core.view.ScrollingView
 import androidx.recyclerview.widget.RecyclerView
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.UserType
+import com.marfeel.compass.core.model.compass.androidPageType
 import com.marfeel.compass.core.ping.IngestPingEmitter
 import com.marfeel.compass.di.CompassComponent
 import com.marfeel.compass.memory.Memory
@@ -171,13 +172,6 @@ interface CompassTracking {
      */
     fun clearUserSegments()
 
-    /**
-     * Sets custom page technology. Android is used by default.
-     *
-     * @param tech page technology numeric value. Only values greater than 100 are allowed.
-     */
-    fun setPageType(tech: Int)
-
     companion object {
         /**
          * Prepare the Compass SDK to track the pages.
@@ -185,11 +179,14 @@ interface CompassTracking {
          * Typically, you should initialize the Compass SDK from your Application class.
          * @param context The Android Context.
          * @param accountId Compass account id.
+         * @param tech PageTechnology. Only values greater than 100 or 4, which represents android, are accepted.
          */
-        fun initialize(context: Context, accountId: String) {
+        fun initialize(context: Context, accountId: String, tech: Int = androidPageType) {
+            require(tech > 100 || tech == androidPageType) { bannedPageTechnologyValue }
+
             CompassComponent.context = context.applicationContext
             if (!CompassTracker.initialized) {
-                CompassTracker.initialize(accountId)
+                CompassTracker.initialize(accountId, tech)
             }
         }
 
@@ -220,8 +217,9 @@ internal object CompassTracker : CompassTracking {
     internal val initialized: Boolean
         get() = memory.readAccountId() != null
 
-    internal fun initialize(accountId: String) {
+    internal fun initialize(accountId: String, tech: Int) {
         memory.updateAccountId(accountId)
+        memory.setPageTechnology(tech)
         memory.updateSession()
     }
 
@@ -383,11 +381,5 @@ internal object CompassTracker : CompassTracking {
 
     override fun clearUserSegments() {
         storage.clearUserSegments()
-    }
-
-    override fun setPageType(tech: Int) {
-        require(tech > 100) { bannedPageTechnologyValue }
-
-        memory.setPageTechnology(tech)
     }
 }

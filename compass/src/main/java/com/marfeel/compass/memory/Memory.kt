@@ -2,7 +2,6 @@ package com.marfeel.compass.memory
 
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.Session
-import com.marfeel.compass.core.model.compass.androidPageType
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
 import com.marfeel.compass.storage.Storage
 import java.util.*
@@ -16,7 +15,7 @@ internal class Memory(private val storage: Storage) {
 	private var pendingConversions: MutableList<String> = mutableListOf()
 	private var pageVars: MutableMap<String, String> = mutableMapOf()
 	private var sessionVars: MutableMap<String, String> = mutableMapOf()
-	private var pageTechnology: Int = androidPageType
+	private var pageTechnology: Int? = null
 
 	fun updateAccountId(id: String) {
 		accountId = id
@@ -92,6 +91,6 @@ internal class Memory(private val storage: Storage) {
 		pageTechnology = tech
 	}
 
-	fun readPageTechnology(): Int =
+	fun readPageTechnology(): Int? =
 		pageTechnology
 }
