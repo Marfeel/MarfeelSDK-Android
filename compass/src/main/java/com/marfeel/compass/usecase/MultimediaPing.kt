@@ -39,7 +39,8 @@ internal class MultimediaPing(
 			sessionVars = memory.readSessionVars(),
 			userVars = storage.readUserVars(),
 			userSegments = storage.readUserSegments(),
-			pageType = memory.readPageTechnology()!!
+			pageType = memory.readPageTechnology()!!,
+			userConsent = storage.readUserConsent()
 		)
 	}
 }

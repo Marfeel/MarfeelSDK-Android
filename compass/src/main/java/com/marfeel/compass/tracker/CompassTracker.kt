@@ -172,6 +172,12 @@ interface CompassTracking {
      */
     fun clearUserSegments()
 
+    /**
+     * Sets user consent value.
+     * @param hasConsent user consent
+     */
+    fun setUserConsent(hasConsent: Boolean)
+
     companion object {
         /**
          * Prepare the Compass SDK to track the pages.
@@ -381,5 +387,9 @@ internal object CompassTracker : CompassTracking {
 
     override fun clearUserSegments() {
         storage.clearUserSegments()
+    }
+
+    override fun setUserConsent(hasConsent: Boolean) {
+        storage.updateUserConsent(hasConsent)
     }
 }

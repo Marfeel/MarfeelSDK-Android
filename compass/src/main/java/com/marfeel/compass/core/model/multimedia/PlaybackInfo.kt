@@ -1,6 +1,9 @@
 package com.marfeel.compass.core.model.multimedia
 
+import com.google.gson.*
 import com.google.gson.annotations.SerializedName
+import com.marfeel.compass.core.model.registerPingDataSerializer
+import java.lang.reflect.Type
 
 internal data class PlaybackInfo(
     @SerializedName("ads")
@@ -64,3 +67,21 @@ internal data class PlaybackInfo(
     }
 }
 
+private class BooleanSerializer : JsonSerializer<Boolean> {
+    override fun serialize(src: Boolean, typeOfSrc: Type, context: JsonSerializationContext?): JsonElement {
+        return JsonPrimitive(if(src) 1 else 0)
+    }
+}
+
+internal class PlaybackInfoSerializer : JsonSerializer<PlaybackInfo> {
+    private val gson: Gson by lazy {
+        GsonBuilder()
+            .registerPingDataSerializer()
+            .registerTypeAdapter(Boolean::class.javaObjectType, BooleanSerializer())
+            .create()
+    }
+
+    override fun serialize(src: PlaybackInfo, typeOfSrc: Type, context: JsonSerializationContext?): JsonElement {
+        return gson.toJsonTree(src)
+    }
+}

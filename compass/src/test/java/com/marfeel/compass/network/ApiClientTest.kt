@@ -35,7 +35,8 @@ class ApiClientTest {
 		userVars = mapOf("user" to "var"),
 		sessionVars = mapOf("session" to "var"),
 		userSegments = listOf("user", "segment"),
-		pageType = 4
+		pageType = 4,
+		userConsent = true
 	)
 
 	private val anyRfvPayloadData = RfvPayloadData(

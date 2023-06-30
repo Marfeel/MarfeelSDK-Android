@@ -33,6 +33,7 @@ internal class Storage(
 		private const val lastPingTimeStampKey = "lastPingTimeStamp_key"
 		private const val userVarsKey = "userVars_key"
 		private const val userSegmentsKey = "userSegments_key"
+		private const val userConsent = "userConsent_key"
 	}
 
 	private val storageScope: CoroutineScope = CoroutineScope(coroutineContext)
@@ -281,4 +282,24 @@ internal class Storage(
 
 		return gson.fromJson(preferences.getString(userSegmentsKey, "[]"), mapType)
 	}
+
+	fun updateUserConsent(hasConsent: Boolean) {
+		storageScope.launch {
+			setUserConsent(hasConsent)
+		}
+	}
+
+	private fun setUserConsent(hasConsent: Boolean) {
+		preferences.edit {
+			putBoolean(userConsent, hasConsent)
+		}
+	}
+
+	fun readUserConsent(): Boolean? =
+		runBlocking {
+			getUserConsent()
+		}
+
+	private fun getUserConsent(): Boolean? =
+		if (preferences.contains(userConsent)) preferences.getBoolean(userConsent, false) else null
 }
