@@ -1,6 +1,7 @@
 package com.marfeel.compass.tracker
 
 import android.content.Context
+import android.net.Uri
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ScrollView
@@ -24,7 +25,6 @@ internal const val compassNotInitializedErrorMessage =
 
 internal const val bannedPageTechnologyValue =
     "Page technology value should be greater than 100"
-
 
 /**
  * CompassTracking is the entry point for all interactions with the library.
@@ -332,7 +332,7 @@ internal object CompassTracker : CompassTracking {
     }
 
     private fun screenUrl(screen: String): String {
-        return "https://marfeelwhois.mrf.io/dynamic/${memory.readAccountId()}/$screen"
+        return "https://marfeelwhois.mrf.io/dynamic/${memory.readAccountId()}/${Uri.encode(screen)}"
     }
 
     override fun trackScreen(screen: String) {
