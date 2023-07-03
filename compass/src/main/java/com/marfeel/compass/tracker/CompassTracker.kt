@@ -83,6 +83,31 @@ interface CompassTracking {
     fun trackNewPage(url: String)
 
     /**
+     * Starts to track the time a user remains on the page given by the [screen] parameter as well as the scroll percentage of the content.
+     *
+     * @param screen the name of the screen being tracked.
+     * @param scrollView view showing the screen content.
+     */
+    fun trackScreen(screen: String, scrollView: ScrollView)
+
+    /**
+     * @see trackScreen(String, ScrollView)
+     */
+    fun trackScreen(screen: String, scrollView: RecyclerView)
+
+    /**
+     * @see trackScreen(String, ScrollView)
+     */
+    fun<T> trackScreen(screen: String, scrollView: T) where T: FrameLayout, T: ScrollingView
+
+    /**
+     * Starts to track the time a user remains on a page given by the [screen] parameter.
+     *
+     * @param screen the name of the screen being tracked.
+     */
+    fun trackScreen(screen: String)
+
+    /**
      * Stops the tracking.
      */
     fun stopTracking()
@@ -304,6 +329,26 @@ internal object CompassTracker : CompassTracking {
 
         trackNewPage(url)
         MultimediaTracking.reset()
+    }
+
+    private fun screenUrl(screen: String): String {
+        return "https://marfeelwhois.mrf.io/dynamic/${memory.readAccountId()}/$screen"
+    }
+
+    override fun trackScreen(screen: String) {
+        trackNewPage(screenUrl(screen))
+    }
+
+    override fun<T> trackScreen(screen: String, scrollView: T) where T: FrameLayout, T: ScrollingView {
+        trackNewPage(screenUrl(screen), scrollView)
+    }
+
+    override fun trackScreen(screen: String, scrollView: ScrollView) {
+        trackNewPage(screenUrl(screen), scrollView)
+    }
+
+    override fun trackScreen(screen: String, scrollView: RecyclerView) {
+        trackNewPage(screenUrl(screen), scrollView)
     }
 
     internal fun Double.toScrollPercentage(): Int {
