@@ -62,6 +62,7 @@ fun MainScreen(
 	tracker.setUserVar("lolo2", "lola2")
 	tracker.addUserSegment("segment")
 	tracker.addUserSegment("another-segment")
+	tracker.setUserConsent(true)
 
 	Scaffold(
 		Modifier

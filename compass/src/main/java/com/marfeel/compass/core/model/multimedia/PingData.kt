@@ -32,7 +32,8 @@ internal class MultimediaPingData(
     val item: MultimediaItem,
     @Transient
     var rfv: RFV? = null,
-    pageType: Int
+    pageType: Int,
+    userConsent: Boolean?
 ): PingData(
     accountId,
     sessionTimeStamp,
@@ -53,13 +54,15 @@ internal class MultimediaPingData(
     sessionVars,
     userVars,
     userSegments,
-    pageType = pageType
+    pageType = pageType,
+    userConsent = userConsent
 )
 
 internal class MultimediaPingDataSerializer : JsonSerializer<MultimediaPingData> {
     private val gson:Gson by lazy {
         GsonBuilder()
             .registerPingDataSerializer()
+            .registerTypeAdapter(PlaybackInfo::class.java, PlaybackInfoSerializer())
             .create()
     }
 

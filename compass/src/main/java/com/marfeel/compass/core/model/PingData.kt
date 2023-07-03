@@ -46,17 +46,13 @@ internal open class PingData(
     val userSegments: List<String>,
     @SerializedName("pageType")
     val pageType: Int,
+    @SerializedName("uc")
+    val userConsent: Boolean?
 )
 
 internal class UserTypeSerializer : JsonSerializer<UserType> {
     override fun serialize(src: UserType, typeOfSrc: Type, context: JsonSerializationContext?): JsonElement {
         return JsonPrimitive(src.numericValue.toString())
-    }
-}
-
-internal class PingDataBooleanSerializer : JsonSerializer<Boolean> {
-    override fun serialize(src: Boolean, typeOfSrc: Type, context: JsonSerializationContext?): JsonElement {
-        return JsonPrimitive(if(src) 1 else 0)
     }
 }
 
@@ -81,6 +77,5 @@ internal fun GsonBuilder.registerPingDataSerializer(): GsonBuilder {
     return this
         .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
         .registerTypeAdapter(UserType::class.java, UserTypeSerializer())
-        .registerTypeAdapter(Boolean::class.javaObjectType, PingDataBooleanSerializer())
         .registerTypeAdapter(Map::class.java, PingDataVarsSerializer())
 }

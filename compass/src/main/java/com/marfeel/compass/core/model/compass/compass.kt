@@ -36,7 +36,8 @@ internal class IngestPingData(
 	@SerializedName("conv")
 	val conversions: String?,
 	version: String,
-	pageType: Int
+	pageType: Int,
+	userConsent: Boolean?
 ): PingData(
 	accountId,
 	sessionTimeStamp,
@@ -57,7 +58,8 @@ internal class IngestPingData(
 	pageVars,
 	sessionVars,
 	userSegments,
-	pageType = pageType
+	pageType = pageType,
+	userConsent = userConsent
 )
 
 /**

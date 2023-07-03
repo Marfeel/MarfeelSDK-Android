@@ -3,10 +3,10 @@ package com.marfeel.compass.storage
 import androidx.test.core.app.ApplicationProvider
 import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
+import junit.framework.Assert.assertNull
 
 import kotlinx.coroutines.Dispatchers
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -120,5 +120,18 @@ internal class StorageTest {
 		storage.clearUserSegments()
 
 		assertEquals(listOf<String>(), storage.readUserSegments())
+	}
+
+	@Test
+	fun `reads, sets userConsent` () {
+		assertNull(storage.readUserConsent())
+
+		storage.updateUserConsent(true)
+
+		assertTrue(storage.readUserConsent()!!)
+
+		storage.updateUserConsent(false)
+
+		assertFalse(storage.readUserConsent()!!)
 	}
 }
