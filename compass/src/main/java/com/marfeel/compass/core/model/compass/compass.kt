@@ -7,6 +7,8 @@ import org.json.JSONObject
 import java.util.UUID
 
 internal const val androidPageType = 4
+internal const val androidPressReaderPageType = 11
+internal val androidCorePageTypes = intArrayOf(androidPageType, androidPressReaderPageType)
 
 internal class IngestPingData(
 	accountId: String,
