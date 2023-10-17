@@ -211,7 +211,7 @@ interface CompassTracking {
          * Typically, you should initialize the Compass SDK from your Application class.
          * @param context The Android Context.
          * @param accountId Compass account id.
-         * @param tech PageTechnology. Only values greater than 100 or 4, which represents android, are accepted.
+         * @param tech PageTechnology. Only values greater than 100 or 4 or 11, which represents android, are accepted.
          */
         fun initialize(context: Context, accountId: String, tech: Int = androidPageType) {
             require(tech > 100 || androidCorePageTypes.contains(tech)) { bannedPageTechnologyValue }
