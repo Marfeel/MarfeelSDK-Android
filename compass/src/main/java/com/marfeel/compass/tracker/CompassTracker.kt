@@ -9,6 +9,7 @@ import androidx.core.view.ScrollingView
 import androidx.recyclerview.widget.RecyclerView
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.UserType
+import com.marfeel.compass.core.model.compass.androidCorePageTypes
 import com.marfeel.compass.core.model.compass.androidPageType
 import com.marfeel.compass.core.ping.IngestPingEmitter
 import com.marfeel.compass.di.CompassComponent
@@ -213,7 +214,7 @@ interface CompassTracking {
          * @param tech PageTechnology. Only values greater than 100 or 4, which represents android, are accepted.
          */
         fun initialize(context: Context, accountId: String, tech: Int = androidPageType) {
-            require(tech > 100 || tech == androidPageType) { bannedPageTechnologyValue }
+            require(tech > 100 || androidCorePageTypes.contains(tech)) { bannedPageTechnologyValue }
 
             CompassComponent.context = context.applicationContext
             if (!CompassTracker.initialized) {
