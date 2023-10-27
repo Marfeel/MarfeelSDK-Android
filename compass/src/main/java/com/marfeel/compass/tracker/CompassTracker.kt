@@ -265,6 +265,7 @@ internal object CompassTracker : CompassTracking {
         memory.updatePage(Page(url))
         memory.clearPageVars()
         pingEmitter.start(url)
+        MultimediaTracking.reset()
     }
 
     @Deprecated("Use trackNewPage(url, scrollView) method", replaceWith = ReplaceWith("trackNewPage(url, scrollView)"))
@@ -329,7 +330,6 @@ internal object CompassTracker : CompassTracking {
         }
 
         trackNewPage(url)
-        MultimediaTracking.reset()
     }
 
     private fun screenUrl(screen: String): String {
