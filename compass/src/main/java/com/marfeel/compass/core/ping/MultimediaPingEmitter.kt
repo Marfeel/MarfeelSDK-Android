@@ -34,12 +34,10 @@ internal class MultimediaPingEmitter(private val doPing: MultimediaPing) {
     private val pingFrequencyInMs = 5000L
     private var pingRegistry:HashMap<String, Pair<Int, PingFn>> = hashMapOf()
     private val getRFV: GetRFV by lazy { CompassComponent.getRFV() }
-    private var rfv: RFV? = null
 
     fun ping(item: MultimediaItem) {
         val trackingFn:PingFn = { d, onFinish ->
-            rfv = rfv ?: getRFV()
-            d.rfv = rfv
+            d.rfv = getRFV()
             doPing(d)
             onFinish()
         }

@@ -70,7 +70,7 @@ internal class MultimediaPingDataSerializer : JsonSerializer<MultimediaPingData>
 
     override fun serialize(src: MultimediaPingData, typeOfSrc: Type, context: JsonSerializationContext?): JsonElement {
         val pingData = toMap(src)
-        val rfvData = toMap(src.rfv)
+        val rfvData = if (src.rfv != null) toMap(src.rfv) else emptyMap<Any, Any>()
         val itemData = toMap(src.item)
         val itemMetadata = toMap(src.item.metadata)
 
