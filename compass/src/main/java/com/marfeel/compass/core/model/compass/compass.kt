@@ -73,7 +73,7 @@ sealed class UserType(open val numericValue: Int) {
 	object Anonymous : UserType(1)
 	object Logged : UserType(2)
 	object Paid : UserType(3)
-	data class Custom(override val numericValue: Int) : UserType(numericValue)
+	data class Custom(val customValue: Int) : UserType(customValue)
 }
 
 internal data class RfvPayloadData(

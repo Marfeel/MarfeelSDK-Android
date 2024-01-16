@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.tracker.CompassTracking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +64,7 @@ fun MainScreen(
 	tracker.addUserSegment("segment")
 	tracker.addUserSegment("another-segment")
 	tracker.setUserConsent(true)
+	tracker.setUserType(UserType.Custom(11))
 
 	Scaffold(
 		Modifier
