@@ -14,7 +14,6 @@ import com.marfeel.compass.usecase.MultimediaPing
 import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import okhttp3.logging.HttpLoggingInterceptor
 
 @SuppressLint("StaticFieldLeak")
 internal object CompassComponent : CompassServiceLocator {
@@ -27,8 +26,6 @@ internal object CompassComponent : CompassServiceLocator {
         Storage(context, Dispatchers.IO)
     }
     override val apiClient: ApiClient by lazy {
-        val logging = HttpLoggingInterceptor()
-        logging.level = (HttpLoggingInterceptor.Level.BODY)
         ApiClient(
             OkHttpClient.Builder()
                 .protocols(listOf(Protocol.HTTP_1_1))
@@ -40,7 +37,6 @@ internal object CompassComponent : CompassServiceLocator {
                             .build()
                     )
                 }
-                .addInterceptor(logging)
                 .build()
         )
     }
