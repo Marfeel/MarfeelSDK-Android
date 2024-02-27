@@ -86,7 +86,7 @@ internal class ApiClient(
 			}
 
 			Result.success(null)
-		} catch (exception: IOException) {
+		} catch (exception: Exception) {
 			Result.failure(exception)
 		}
 	}
