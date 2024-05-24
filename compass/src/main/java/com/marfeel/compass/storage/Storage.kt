@@ -44,7 +44,7 @@ internal class Storage(
 	 * KeyStore. Applying fallback to plain text when encryption explodes, same strategy applied by
 	 * google: https://github.com/google/tink/blob/master/java_src/src/main/java/com/google/crypto/tink/integration/android/AndroidKeysetManager.java#L101.
 	 */
-	private val preferences: SharedPreferences by lazy {
+	private val persistentPreferences: SharedPreferences by lazy {
 		try {
 			val masterKey = MasterKey.Builder(context)
 				.setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
@@ -59,6 +59,46 @@ internal class Storage(
 		} catch (_: Exception) {
 			context.getSharedPreferences(fallbackStorageName, Context.MODE_PRIVATE)
 		}
+	}
+
+	private val inMemoryPreferences: SharedPreferences by lazy { MockSharedPreference() }
+
+	private var preferences: SharedPreferences
+
+	init {
+		 preferences = togglePreferences(persistentPreferences.getBoolean(userConsent, true))
+	}
+
+	private fun togglePreferences(hasConsent: Boolean, sync: Boolean = false): SharedPreferences {
+		val oldPreferences = preferences
+		preferences = if(hasConsent) persistentPreferences else inMemoryPreferences
+
+		if (sync && oldPreferences != preferences) {
+			preferences.edit {
+				oldPreferences.all.forEach { (t, any) ->
+					if (any is String) {
+						putString(t, any)
+					} else if (any is Int) {
+						putInt(t, any)
+					} else if (any is Long) {
+						putLong(t, any)
+					} else if (any is Float) {
+						putFloat(t, any)
+					} else if (any is Boolean) {
+						putBoolean(t, any)
+					} else if (any is Set<*>) {
+						putStringSet(t, any as MutableSet<String>?)
+					}
+				}
+
+				val oldPreferencesEditor = oldPreferences.edit()
+
+				oldPreferencesEditor.clear()
+				oldPreferencesEditor.apply()
+			}
+		}
+
+		return preferences
 	}
 
 	fun updateFirstSessionTimeStamp(firstSessionTimeStamp: Long) {
@@ -284,6 +324,12 @@ internal class Storage(
 	}
 
 	fun updateUserConsent(hasConsent: Boolean) {
+		val previousUserConsent = getUserConsent()
+
+		if (previousUserConsent != hasConsent) {
+			togglePreferences(hasConsent, previousUserConsent != null)
+		}
+
 		storageScope.launch {
 			setUserConsent(hasConsent)
 		}

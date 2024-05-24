@@ -65,6 +65,7 @@ fun MainScreen(
 	tracker.addUserSegment("another-segment")
 	tracker.setUserConsent(true)
 	tracker.setUserType(UserType.Custom(11))
+	tracker.setUserConsent(true)
 
 	Scaffold(
 		Modifier
