@@ -57,7 +57,9 @@ internal class IngestPingEmitter(
     }
 
     fun updateScrollPercentage(scrollPosition: Int) {
-        pingEmitterState = pingEmitterState?.copy(scrollPercent = scrollPosition)
+        if (scrollPosition > (pingEmitterState?.scrollPercent ?: 0)) {
+            pingEmitterState = pingEmitterState?.copy(scrollPercent = scrollPosition)
+        }
     }
 
     override fun onResume(owner: LifecycleOwner) {
