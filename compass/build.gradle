@@ -5,7 +5,7 @@ plugins {
     id 'maven-publish'
 }
 
-def compassVersion = "1.8.0"
+def compassVersion = "1.9.0"
 def apiVersion = "0.1"
 android {
     compileSdk 33
