@@ -30,5 +30,6 @@ class RecyclerViewActivity : AppCompatActivity() {
 		recyclerview.adapter = adapter
 
 		tracker.trackNewPage("https://newsactivityxml-recycler-view.com", recyclerview)
+		tracker.setUserConsent(false)
 	}
 }
