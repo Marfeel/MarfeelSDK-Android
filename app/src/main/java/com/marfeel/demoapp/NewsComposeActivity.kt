@@ -31,6 +31,9 @@ class NewsComposeActivity : FragmentActivity() {
 		super.onCreate(savedInstanceState)
 
 		tracker.trackNewPage("https://newsactivitycompose.com")
+		tracker.trackConversion("conv_1")
+		tracker.trackConversion("conv_2")
+		tracker.trackConversion("conv_3")
 		setContent {
 			MaterialTheme {
 				NewsScreen()

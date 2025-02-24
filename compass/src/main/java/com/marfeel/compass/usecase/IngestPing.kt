@@ -12,14 +12,24 @@ internal class IngestPing(
 	override val memory: Memory,
 	override val storage: Storage,
 ) : Ping<IngestPingEmitterState, IngestPingData>(api, memory, storage) {
+	private var tick = 0;
+
 	override fun invoke(input: IngestPingData) {
 		val conversions = memory.readPendingConversions()
 		val currentTimeStamp = currentTimeStampInSeconds()
 
-		api.ingestPing(input).also {
-			memory.clearTrackedConversions(conversions)
-			storage.updateLastPingTimeStamp(currentTimeStamp)
+		if (conversions.isEmpty()) {
+			api.ingestPing(input.copy(pingCounter = tick++))
+
+		} else {
+			conversions.forEach { conversion ->
+				val updatedInput = input.copy(conversions = conversion, pingCounter = tick++)
+				api.ingestPing(updatedInput)
+			}
 		}
+
+		memory.clearTrackedConversions(conversions)
+		storage.updateLastPingTimeStamp(currentTimeStamp)
 	}
 
 	override fun getData(input: IngestPingEmitterState): IngestPingData? {
@@ -35,7 +45,7 @@ internal class IngestPing(
 			pageId = pingData.pageId,
 			originalUserId = pingData.originalUserId,
 			sessionId = pingData.sessionId,
-			pingCounter = input.pingCounter,
+			pingCounter = null,
 			currentTimeStamp = pingData.currentTimeStamp,
 			userType = pingData.userType,
 			registeredUserId = pingData.registeredUserId,
@@ -44,7 +54,7 @@ internal class IngestPing(
 			previousSessionTimeStamp = storage.readPreviousSessionLastPingTimeStamp(),
 			timeOnPage = input.activeTimeOnPage.toInt(),
 			pageStartTimeStamp = memory.readPage()?.startTimeStamp ?: 0L,
-			conversions = conversions.join(),
+			conversions = null,
 			version = pingData.version,
 			pageVars = memory.readPageVars(),
 			sessionVars = memory.readSessionVars(),
@@ -54,6 +64,11 @@ internal class IngestPing(
 			userConsent = storage.readUserConsent()
 		)
 	}
+
+	fun resetPing() {
+		tick = 0
+	}
+
 }
 
 private fun List<String>.join(): String? =

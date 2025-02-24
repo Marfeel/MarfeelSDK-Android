@@ -1,6 +1,5 @@
 package com.marfeel.compass.core.model.compass
 
-import com.google.gson.*
 import com.google.gson.annotations.SerializedName
 import com.marfeel.compass.core.model.PingData
 import org.json.JSONObject
@@ -19,7 +18,7 @@ internal class IngestPingData(
 	pageId: String,
 	originalUserId: String,
 	sessionId: String,
-	pingCounter: Int,
+	pingCounter: Int?,
 	currentTimeStamp: Long,
 	userType: UserType,
 	registeredUserId: String,
@@ -62,7 +61,61 @@ internal class IngestPingData(
 	userSegments,
 	pageType = pageType,
 	userConsent = userConsent
-)
+) {
+	fun copy(
+		accountId: String = this.accountId,
+		sessionTimeStamp: Long = this.sessionTimeStamp,
+		url: String = this.url,
+		canonicalUrl: String = this.canonicalUrl,
+		previousUrl: String = this.previousUrl,
+		pageId: String = this.pageId,
+		originalUserId: String = this.originalUserId,
+		sessionId: String = this.sessionId,
+		userType: UserType = this.userType,
+		registeredUserId: String = this.registeredUserId,
+		firsVisitTimeStamp: Long = this.firsVisitTimeStamp,
+		previousSessionTimeStamp: Long? = this.previousSessionTimeStamp,
+		version: String = this.version,
+		currentTimeStamp: Long = this.currentTimeStamp,
+		pingCounter: Int? = this.pingCounter,
+		userVars: Map<String, String> = this.userVars,
+		pageVars: Map<String, String> = this.pageVars,
+		sessionVars: Map<String, String> = this.sessionVars,
+		userSegments: List<String> = this.userSegments,
+		pageType: Int = this.pageType,
+		userConsent: Boolean? = this.userConsent,
+		scrollPercent: Int = this.scrollPercent,
+		timeOnPage: Int = this.timeOnPage,
+		pageStartTimeStamp: Long = this.pageStartTimeStamp,
+		conversions: String? = this.conversions
+	) = IngestPingData(
+		accountId,
+		sessionTimeStamp,
+		url,
+		canonicalUrl,
+		previousUrl,
+		pageId,
+		originalUserId,
+		sessionId,
+		pingCounter,
+		currentTimeStamp,
+		userType,
+		registeredUserId,
+		pageVars,
+		sessionVars,
+		userVars,
+		userSegments,
+		scrollPercent,
+		firsVisitTimeStamp,
+		previousSessionTimeStamp,
+		timeOnPage,
+		pageStartTimeStamp,
+		conversions,
+		version,
+		pageType,
+		userConsent
+	)
+}
 
 /**
  *  Possible types of users.
