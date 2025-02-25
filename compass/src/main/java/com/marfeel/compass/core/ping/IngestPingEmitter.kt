@@ -24,6 +24,7 @@ internal class IngestPingEmitter(
         url: String,
         scrollPosition: Int? = null
     ) {
+        stop()
         lastBackgroundTimeStamp = null
         startBackgroundWatcher()
         pingEmitterState = IngestPingEmitterState(
