@@ -24,11 +24,11 @@ internal class IngestPingEmitter(
         url: String,
         scrollPosition: Int? = null
     ) {
+        stop()
         lastBackgroundTimeStamp = null
         startBackgroundWatcher()
         pingEmitterState = IngestPingEmitterState(
             url = url,
-            pingCounter = 0,
             scrollPercent = scrollPosition,
             pageStartTimeStamp = currentTimeStampInSeconds(),
             timeOnBackground = 0,
@@ -45,7 +45,6 @@ internal class IngestPingEmitter(
 
     private fun ping() {
         pingEmitterState?.let {
-            pingEmitterState = it.copy(pingCounter = it.pingCounter + 1)
             doPing(it)
         }
     }
@@ -53,6 +52,7 @@ internal class IngestPingEmitter(
     fun stop() {
         stopBackgroundWatcher()
         job.cancelChildren()
+        doPing.resetPing()
         pingEmitterState = null
     }
 
@@ -79,7 +79,6 @@ internal class IngestPingEmitter(
 
 internal data class IngestPingEmitterState(
     val url: String,
-    val pingCounter: Int,
     val scrollPercent: Int?,
     val pageStartTimeStamp: Long,
     val timeOnBackground: Long,
