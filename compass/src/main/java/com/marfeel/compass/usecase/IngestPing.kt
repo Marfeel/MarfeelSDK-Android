@@ -33,7 +33,6 @@ internal class IngestPing(
 	}
 
 	override fun getData(input: IngestPingEmitterState): IngestPingData? {
-		val conversions = memory.readPendingConversions()
 		val pingData = getData() ?: return null
 
 		return IngestPingData(
