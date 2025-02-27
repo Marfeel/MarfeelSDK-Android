@@ -2,7 +2,6 @@ package com.marfeel.compass.di
 
 import android.annotation.SuppressLint
 import android.content.Context
-import com.marfeel.compass.BuildConfig
 import com.marfeel.compass.core.ping.IngestPingEmitter
 import com.marfeel.compass.core.ping.MultimediaPingEmitter
 import com.marfeel.compass.memory.Memory
@@ -14,6 +13,7 @@ import com.marfeel.compass.usecase.MultimediaPing
 import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import com.marfeel.compass.BuildConfig
 
 @SuppressLint("StaticFieldLeak")
 internal object CompassComponent : CompassServiceLocator {
@@ -29,17 +29,31 @@ internal object CompassComponent : CompassServiceLocator {
         ApiClient(
             OkHttpClient.Builder()
                 .protocols(listOf(Protocol.HTTP_1_1))
-                .addNetworkInterceptor { chain ->
+                .addInterceptor { chain ->
                     chain.proceed(
                         chain.request()
                             .newBuilder()
-                            .header("User-Agent", "CompassAndroidSDK/${BuildConfig.VERSION}")
+                            .header("User-Agent", getUserAgent())
                             .build()
                     )
                 }
                 .build()
         )
     }
+
+    private fun getDeviceType(): String {
+        val context = this.context
+
+        checkNotNull(context)
+        return if (context.resources.configuration.smallestScreenWidthDp >= 600) "tablet" else "mobile"
+    }
+
+    private fun getUserAgent(): String {
+        val deviceType = getDeviceType()
+
+        return "Marfeel-Android-SDK/${BuildConfig.VERSION} (Android) $deviceType"
+    }
+
     override val memory: Memory by lazy { Memory(storage) }
 
     override fun getPing(): IngestPing = IngestPing(apiClient, memory, storage)
