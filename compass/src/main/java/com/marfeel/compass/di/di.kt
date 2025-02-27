@@ -13,6 +13,7 @@ import com.marfeel.compass.usecase.MultimediaPing
 import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import com.marfeel.compass.BuildConfig
 
 @SuppressLint("StaticFieldLeak")
 internal object CompassComponent : CompassServiceLocator {
@@ -50,7 +51,7 @@ internal object CompassComponent : CompassServiceLocator {
     private fun getUserAgent(): String {
         val deviceType = getDeviceType()
 
-        return "Marfeel-Android-SDK (Android) $deviceType"
+        return "Marfeel-Android-SDK/${BuildConfig.VERSION} (Android) $deviceType"
     }
 
     override val memory: Memory by lazy { Memory(storage) }
