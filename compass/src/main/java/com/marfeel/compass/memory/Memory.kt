@@ -16,6 +16,7 @@ internal class Memory(private val storage: Storage) {
 	private var pageVars: MutableMap<String, String> = mutableMapOf()
 	private var sessionVars: MutableMap<String, String> = mutableMapOf()
 	private var pageTechnology: Int? = null
+	private var landingPage: String? = null
 
 	fun updateAccountId(id: String) {
 		accountId = id
@@ -93,4 +94,11 @@ internal class Memory(private val storage: Storage) {
 
 	fun readPageTechnology(): Int? =
 		pageTechnology
+
+	fun setLandingPage(lp: String) {
+		landingPage = lp
+	}
+
+	fun readLandingPage(): String? =
+		landingPage
 }

@@ -60,7 +60,8 @@ internal class IngestPing(
 			userVars = storage.readUserVars(),
 			userSegments = storage.readUserSegments(),
 			pageType = memory.readPageTechnology()!!,
-			userConsent = storage.readUserConsent()
+			userConsent = storage.readUserConsent(),
+			landingPage =  memory.readLandingPage()
 		)
 	}
 

@@ -38,7 +38,9 @@ internal class IngestPingData(
 	val conversions: String?,
 	version: String,
 	pageType: Int,
-	userConsent: Boolean?
+	userConsent: Boolean?,
+	@SerializedName("lp")
+	val landingPage: String?
 ): PingData(
 	accountId,
 	sessionTimeStamp,
@@ -87,7 +89,8 @@ internal class IngestPingData(
 		scrollPercent: Int = this.scrollPercent,
 		timeOnPage: Int = this.timeOnPage,
 		pageStartTimeStamp: Long = this.pageStartTimeStamp,
-		conversions: String? = this.conversions
+		conversions: String? = this.conversions,
+		landingPage: String? = this.landingPage
 	) = IngestPingData(
 		accountId,
 		sessionTimeStamp,
@@ -113,7 +116,8 @@ internal class IngestPingData(
 		conversions,
 		version,
 		pageType,
-		userConsent
+		userConsent,
+		landingPage
 	)
 }
 
