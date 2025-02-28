@@ -72,7 +72,7 @@ afterEvaluate {
                 url "https://repositories.mrf.io/nexus/repository/mvn-marfeel-public/"
                 credentials {
                     username "jenkins"
-                    password "XXX"
+                    password System.getenv("JENKINS_PWD")
                 }
             }
         }
