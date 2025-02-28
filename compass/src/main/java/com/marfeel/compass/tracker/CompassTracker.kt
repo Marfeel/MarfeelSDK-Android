@@ -209,6 +209,13 @@ interface CompassTracking {
      */
     fun setUserConsent(hasConsent: Boolean)
 
+    /**
+     * Defines landing page por the whole session.
+     *
+     * @param landingPage landingPage url or screen name.
+     */
+    fun setLandingPage(landingPage: String)
+
     companion object {
         /**
          * Prepare the Compass SDK to track the pages.
@@ -446,5 +453,9 @@ internal object CompassTracker : CompassTracking {
 
     override fun getUserId(): String {
         return storage.readOriginalUserId()
+    }
+
+    override fun setLandingPage(landingPage: String) {
+        memory.setLandingPage(landingPage)
     }
 }
