@@ -2,15 +2,15 @@ package com.marfeel.compass.usecase
 
 import com.marfeel.compass.core.model.multimedia.MultimediaPingData
 import com.marfeel.compass.core.ping.MultimediaPingEmitterState
-import com.marfeel.compass.memory.Memory
+import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.network.ApiClient
 import com.marfeel.compass.storage.Storage
 
 internal class MultimediaPing(
 	override val api: ApiClient,
-	override val memory: Memory,
+	override val sessionStorage: SessionStorage,
 	override val storage: Storage,
-) : Ping<MultimediaPingEmitterState, MultimediaPingData>(api, memory, storage) {
+) : Ping<MultimediaPingEmitterState, MultimediaPingData>(api, sessionStorage, storage) {
 	override fun invoke(input: MultimediaPingData) {
 		api.multimediaPing(input)
 	}
@@ -35,11 +35,11 @@ internal class MultimediaPing(
 			previousSessionTimeStamp = storage.readPreviousSessionLastPingTimeStamp(),
 			version = pingData.version,
 			item = input.item,
-			pageVars = memory.readPageVars(),
-			sessionVars = memory.readSessionVars(),
+			pageVars = sessionStorage.readPageVars(),
+			sessionVars = sessionStorage.readSessionVars(),
 			userVars = storage.readUserVars(),
 			userSegments = storage.readUserSegments(),
-			pageType = memory.readPageTechnology()!!,
+			pageType = sessionStorage.readPageTechnology()!!,
 			userConsent = storage.readUserConsent()
 		)
 	}

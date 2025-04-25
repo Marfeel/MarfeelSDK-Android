@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import com.marfeel.compass.core.ping.IngestPingEmitter
 import com.marfeel.compass.core.ping.MultimediaPingEmitter
-import com.marfeel.compass.memory.Memory
+import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.network.ApiClient
 import com.marfeel.compass.storage.Storage
 import com.marfeel.compass.usecase.GetRFV
@@ -54,13 +54,13 @@ internal object CompassComponent : CompassServiceLocator {
         return "Marfeel-Android-SDK/${BuildConfig.VERSION} (Android) $deviceType"
     }
 
-    override val memory: Memory by lazy { Memory(storage) }
+    override val sessionStorage: SessionStorage by lazy { SessionStorage(storage) }
 
-    override fun getPing(): IngestPing = IngestPing(apiClient, memory, storage)
+    override fun getPing(): IngestPing = IngestPing(apiClient, sessionStorage, storage)
 
-    override fun getRFV(): GetRFV = GetRFV(storage, memory, apiClient)
+    override fun getRFV(): GetRFV = GetRFV(storage, sessionStorage, apiClient)
 
-    override fun getPingMultimedia(): MultimediaPing = MultimediaPing(apiClient, memory, storage)
+    override fun getPingMultimedia(): MultimediaPing = MultimediaPing(apiClient, sessionStorage, storage)
 }
 
 internal interface CompassServiceLocator {
@@ -68,7 +68,7 @@ internal interface CompassServiceLocator {
     val multimediaPingEmitter: MultimediaPingEmitter
     val storage: Storage
     val apiClient: ApiClient
-    val memory: Memory
+    val sessionStorage: SessionStorage
     fun getPing(): IngestPing
     fun getRFV(): GetRFV
     fun getPingMultimedia(): MultimediaPing

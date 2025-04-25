@@ -3,19 +3,19 @@ package com.marfeel.compass.usecase
 import com.marfeel.compass.core.ping.IngestPingEmitterState
 import com.marfeel.compass.core.model.compass.IngestPingData
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
-import com.marfeel.compass.memory.Memory
+import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.network.ApiClient
 import com.marfeel.compass.storage.Storage
 
 internal class IngestPing(
 	override val api: ApiClient,
-	override val memory: Memory,
+	override val sessionStorage: SessionStorage,
 	override val storage: Storage,
-) : Ping<IngestPingEmitterState, IngestPingData>(api, memory, storage) {
+) : Ping<IngestPingEmitterState, IngestPingData>(api, sessionStorage, storage) {
 	private var tick = 0;
 
 	override fun invoke(input: IngestPingData) {
-		val conversions = memory.readPendingConversions()
+		val conversions = sessionStorage.readPendingConversions()
 		val currentTimeStamp = currentTimeStampInSeconds()
 
 		if (conversions.isEmpty()) {
@@ -28,7 +28,7 @@ internal class IngestPing(
 			}
 		}
 
-		memory.clearTrackedConversions(conversions)
+		sessionStorage.clearTrackedConversions(conversions)
 		storage.updateLastPingTimeStamp(currentTimeStamp)
 	}
 
@@ -52,16 +52,16 @@ internal class IngestPing(
 			firsVisitTimeStamp = pingData.firsVisitTimeStamp,
 			previousSessionTimeStamp = storage.readPreviousSessionLastPingTimeStamp(),
 			timeOnPage = input.activeTimeOnPage.toInt(),
-			pageStartTimeStamp = memory.readPage()?.startTimeStamp ?: 0L,
+			pageStartTimeStamp = sessionStorage.readPage()?.startTimeStamp ?: 0L,
 			conversions = null,
 			version = pingData.version,
-			pageVars = memory.readPageVars(),
-			sessionVars = memory.readSessionVars(),
+			pageVars = sessionStorage.readPageVars(),
+			sessionVars = sessionStorage.readSessionVars(),
 			userVars = storage.readUserVars(),
 			userSegments = storage.readUserSegments(),
-			pageType = memory.readPageTechnology()!!,
+			pageType = sessionStorage.readPageTechnology()!!,
 			userConsent = storage.readUserConsent(),
-			landingPage =  memory.readLandingPage()
+			landingPage =  sessionStorage.readLandingPage()
 		)
 	}
 
