@@ -264,7 +264,17 @@ internal object CompassTracker : CompassTracking {
     internal fun initialize(accountId: String, tech: Int) {
         sessionStorage.updateAccountId(accountId)
         sessionStorage.setPageTechnology(tech)
-        sessionStorage.updateSession()
+        configureSession()
+    }
+
+    private fun configureSession() {
+        storage.readLastPingTimeStamp()?.let { lastPing ->
+            if (lastPing < thirthyMinsAgoInSeconds()) {
+                sessionStorage.updateSession()
+            }
+        } ?: run {
+            sessionStorage.updateSession()
+        }
     }
 
     @Deprecated("Use trackNewPage(url) method", replaceWith = ReplaceWith("trackNewPage(url)"))
@@ -275,14 +285,7 @@ internal object CompassTracker : CompassTracking {
     override fun trackNewPage(url: String) {
         check(initialized) { compassNotInitializedErrorMessage }
 
-        storage.readLastPingTimeStamp()?.let { lastPing ->
-            if (lastPing < thirthyMinsAgoInSeconds()) {
-                sessionStorage.updateSession()
-            }
-        } ?: run {
-            sessionStorage.updateSession()
-        }
-
+        configureSession()
         sessionStorage.updatePage(Page(url))
         sessionStorage.clearPageVars()
         pingEmitter.start(url)
