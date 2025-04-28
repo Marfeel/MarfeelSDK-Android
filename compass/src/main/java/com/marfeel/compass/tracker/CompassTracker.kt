@@ -7,13 +7,13 @@ import android.widget.FrameLayout
 import android.widget.ScrollView
 import androidx.core.view.ScrollingView
 import androidx.recyclerview.widget.RecyclerView
+import com.marfeel.compass.core.model.compass.*
 import com.marfeel.compass.core.model.compass.Page
-import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.core.model.compass.androidCorePageTypes
 import com.marfeel.compass.core.model.compass.androidPageType
 import com.marfeel.compass.core.ping.IngestPingEmitter
 import com.marfeel.compass.di.CompassComponent
-import com.marfeel.compass.memory.Memory
+import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.storage.Storage
 import com.marfeel.compass.tracker.multimedia.MultimediaTracking
 import com.marfeel.compass.usecase.GetRFV
@@ -253,18 +253,28 @@ internal object CompassTracker : CompassTracking {
 
     private val pingEmitter: IngestPingEmitter by lazy { CompassComponent.ingestPingEmitter }
     private val storage: Storage by lazy { CompassComponent.storage }
-    private val memory: Memory by lazy { CompassComponent.memory }
+    private val sessionStorage: SessionStorage by lazy { CompassComponent.sessionStorage }
     private val getRFV: GetRFV by lazy { CompassComponent.getRFV() }
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
 
     internal val initialized: Boolean
-        get() = memory.readAccountId() != null
+        get() = sessionStorage.readAccountId() != null
 
     internal fun initialize(accountId: String, tech: Int) {
-        memory.updateAccountId(accountId)
-        memory.setPageTechnology(tech)
-        memory.updateSession()
+        sessionStorage.updateAccountId(accountId)
+        sessionStorage.setPageTechnology(tech)
+        configureSession()
+    }
+
+    private fun configureSession() {
+        storage.readLastPingTimeStamp()?.let { lastPing ->
+            if (lastPing < thirthyMinsAgoInSeconds()) {
+                sessionStorage.updateSession()
+            }
+        } ?: run {
+            sessionStorage.updateSession()
+        }
     }
 
     @Deprecated("Use trackNewPage(url) method", replaceWith = ReplaceWith("trackNewPage(url)"))
@@ -274,8 +284,10 @@ internal object CompassTracker : CompassTracking {
 
     override fun trackNewPage(url: String) {
         check(initialized) { compassNotInitializedErrorMessage }
-        memory.updatePage(Page(url))
-        memory.clearPageVars()
+
+        configureSession()
+        sessionStorage.updatePage(Page(url))
+        sessionStorage.clearPageVars()
         pingEmitter.start(url)
         MultimediaTracking.reset()
     }
@@ -345,7 +357,7 @@ internal object CompassTracker : CompassTracking {
     }
 
     private fun screenUrl(screen: String): String {
-        return "https://marfeelwhois.mrf.io/dynamic/${memory.readAccountId()}/${Uri.encode(screen)}"
+        return "https://marfeelwhois.mrf.io/dynamic/${sessionStorage.readAccountId()}/${Uri.encode(screen)}"
     }
 
     override fun trackScreen(screen: String) {
@@ -410,19 +422,19 @@ internal object CompassTracker : CompassTracking {
 
     override fun trackConversion(conversion: String) {
         check(initialized) { compassNotInitializedErrorMessage }
-        memory.addPendingConversion(conversion)
+        sessionStorage.addPendingConversion(conversion)
     }
 
     override fun setPageVar(name: String, value: String) {
         check(initialized) { compassNotInitializedErrorMessage }
 
-        memory.addPageVar(name, value)
+        sessionStorage.addPageVar(name, value)
     }
 
     override fun setSessionVar(name: String, value: String) {
         check(initialized) { compassNotInitializedErrorMessage }
 
-        memory.addSessionVar(name, value)
+        sessionStorage.addSessionVar(name, value)
     }
 
     override fun setUserVar(name: String, value: String) {
@@ -456,6 +468,6 @@ internal object CompassTracker : CompassTracking {
     }
 
     override fun setLandingPage(landingPage: String) {
-        memory.setLandingPage(landingPage)
+        sessionStorage.setLandingPage(landingPage)
     }
 }

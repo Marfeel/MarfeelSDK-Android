@@ -1,20 +1,17 @@
-package com.marfeel.compass.memory
+package com.marfeel.compass.storage
 
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.Session
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
-import com.marfeel.compass.storage.Storage
 import java.util.*
 
-internal class Memory(private val storage: Storage) {
+internal class SessionStorage(private val storage: Storage) {
 
 	private var accountId: String? = null
-	private var session: Session? = null
 	private var page: Page? = null
 	private var previousUrl: String? = null
 	private var pendingConversions: MutableList<String> = mutableListOf()
 	private var pageVars: MutableMap<String, String> = mutableMapOf()
-	private var sessionVars: MutableMap<String, String> = mutableMapOf()
 	private var pageTechnology: Int? = null
 	private var landingPage: String? = null
 
@@ -26,7 +23,9 @@ internal class Memory(private val storage: Storage) {
 		accountId
 
 	fun readSession(): Session =
-		session ?: newSession().also { session = it }
+		storage.readSession() ?: newSession().also {
+			storage.setSession(it)
+		}
 
 	private fun newSession(): Session =
 		Session(UUID.randomUUID().toString(), currentTimeStampInSeconds())
@@ -37,7 +36,8 @@ internal class Memory(private val storage: Storage) {
 				storage.updatePreviousSessionLastPingTimeStamp(it)
 			}
 		}
-		session = newSession
+		storage.setSession(newSession)
+		storage.clearSessionVars()
 	}
 
 	fun readPage(): Page? = page
@@ -77,15 +77,15 @@ internal class Memory(private val storage: Storage) {
 	}
 
 	fun addSessionVar(name: String, value: String) {
-		sessionVars[name] = value
+		storage.setSessionVar(name, value)
 	}
 
 	fun readSessionVars(): Map<String, String> {
-		return sessionVars.toMap()
+		return storage.readSessionVars()
 	}
 
 	fun clearSessionVars() {
-		sessionVars.clear()
+		storage.clearSessionVars()
 	}
 
 	fun setPageTechnology(tech: Int) {

@@ -7,6 +7,7 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.marfeel.compass.core.model.compass.Session
 import java.lang.reflect.Type
 import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
@@ -34,6 +35,8 @@ internal class Storage(
 		private const val userVarsKey = "userVars_key"
 		private const val userSegmentsKey = "userSegments_key"
 		private const val userConsent = "userConsent_key"
+		private const val sessionKey = "session_key"
+		private const val sessionVarsKey = "sessionVars_key";
 	}
 
 	private val storageScope: CoroutineScope = CoroutineScope(coroutineContext)
@@ -348,4 +351,59 @@ internal class Storage(
 
 	private fun getUserConsent(): Boolean? =
 		if (preferences.contains(userConsent)) preferences.getBoolean(userConsent, false) else null
+
+	fun setSession(session: Session) {
+		storageScope.launch {
+			saveSession(session)
+		}
+	}
+
+	private fun saveSession(session: Session) {
+		preferences.edit {
+			putString(sessionKey, gson.toJson(session).toString())
+		}
+	}
+
+	fun readSession(): Session? =
+		runBlocking {
+			readAndParseSession()
+		}
+
+	private fun readAndParseSession(): Session? {
+		val json = preferences.getString(sessionKey, null) ?: return null
+
+		return gson.fromJson(json, Session::class.java)
+	}
+
+	fun setSessionVar(name: String, value: String) {
+		val vars = getSessionVars().toMutableMap()
+
+		storageScope.launch {
+			vars[name] = value
+			setSessionVars(vars)
+		}
+	}
+
+	private fun setSessionVars(vars: Map<String, String>) {
+		preferences.edit {
+			putString(sessionVarsKey, gson.toJson(vars).toString())
+		}
+	}
+
+	fun readSessionVars(): Map<String, String> =
+		runBlocking {
+			getSessionVars()
+		}
+
+	private fun getSessionVars(): Map<String, String> {
+		val mapType: Type = object : TypeToken<Map<String, String>>() {}.type
+
+		return gson.fromJson(preferences.getString(sessionVarsKey, "{}"), mapType)
+	}
+
+	fun clearSessionVars() {
+		storageScope.launch {
+			setSessionVars(mapOf())
+		}
+	}
 }

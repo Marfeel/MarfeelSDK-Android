@@ -179,3 +179,5 @@ internal data class Page(
 )
 
 internal fun currentTimeStampInSeconds() = System.currentTimeMillis() / 1000
+
+internal fun thirthyMinsAgoInSeconds() =  System.currentTimeMillis() / 1000 - 30 * 60
