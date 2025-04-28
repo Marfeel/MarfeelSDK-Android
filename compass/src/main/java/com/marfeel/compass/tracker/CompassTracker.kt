@@ -269,7 +269,7 @@ internal object CompassTracker : CompassTracking {
 
     private fun configureSession() {
         storage.readLastPingTimeStamp()?.let { lastPing ->
-            if (lastPing < thirthyMinsAgoInSeconds()) {
+            if (lastPing < thirtyMinsAgoInSeconds()) {
                 sessionStorage.updateSession()
             }
         } ?: run {
