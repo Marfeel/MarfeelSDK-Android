@@ -63,50 +63,53 @@ interface CompassTracking {
      *
      * @param url the url of the page being tracked.
      * @param scrollView view showing the url content.
+     * @param rs recirculation source
      */
-    fun trackNewPage(url: String, scrollView: ScrollView)
+    fun trackNewPage(url: String, scrollView: ScrollView, rs: String? = null)
 
     /**
      * @see trackNewPage(String, ScrollView)
      */
-    fun trackNewPage(url: String, scrollView: RecyclerView)
+    fun trackNewPage(url: String, scrollView: RecyclerView, rs: String? = null)
 
     /**
      * @see trackNewPage(String, ScrollView)
      */
-    fun<T> trackNewPage(url: String, scrollView: T) where T: FrameLayout, T: ScrollingView
+    fun<T> trackNewPage(url: String, scrollView: T, rs: String? = null) where T: FrameLayout, T: ScrollingView
 
     /**
      * Starts to track the time a user remains on a page given by the [url] parameter.
      *
      * @param url the url of the page being tracked.
+     * @param rs recirculation source
      */
-    fun trackNewPage(url: String)
+    fun trackNewPage(url: String, rs: String? = null)
 
     /**
      * Starts to track the time a user remains on the page given by the [screen] parameter as well as the scroll percentage of the content.
      *
      * @param screen the name of the screen being tracked.
      * @param scrollView view showing the screen content.
+     * @param rs recirculation source
      */
-    fun trackScreen(screen: String, scrollView: ScrollView)
+    fun trackScreen(screen: String, scrollView: ScrollView, rs: String? = null)
 
     /**
      * @see trackScreen(String, ScrollView)
      */
-    fun trackScreen(screen: String, scrollView: RecyclerView)
+    fun trackScreen(screen: String, scrollView: RecyclerView, rs: String? = null)
 
     /**
      * @see trackScreen(String, ScrollView)
      */
-    fun<T> trackScreen(screen: String, scrollView: T) where T: FrameLayout, T: ScrollingView
+    fun<T> trackScreen(screen: String, scrollView: T, rs: String? = null) where T: FrameLayout, T: ScrollingView
 
     /**
      * Starts to track the time a user remains on a page given by the [screen] parameter.
      *
      * @param screen the name of the screen being tracked.
      */
-    fun trackScreen(screen: String)
+    fun trackScreen(screen: String, rs: String? = null)
 
     /**
      * Stops the tracking.
@@ -282,12 +285,13 @@ internal object CompassTracker : CompassTracking {
         trackNewPage(url)
     }
 
-    override fun trackNewPage(url: String) {
+    override fun trackNewPage(url: String, rs: String?) {
         check(initialized) { compassNotInitializedErrorMessage }
 
         configureSession()
         sessionStorage.updatePage(Page(url))
         sessionStorage.clearPageVars()
+        sessionStorage.updateRecirculationSource(rs)
         pingEmitter.start(url)
         MultimediaTracking.reset()
     }
@@ -307,23 +311,23 @@ internal object CompassTracker : CompassTracking {
         trackNewPage(url, scrollView)
     }
 
-    override fun<T> trackNewPage(url: String, scrollView: T) where T: FrameLayout, T: ScrollingView {
-        trackFrameLayoutPageView(url, scrollView)
+    override fun<T> trackNewPage(url: String, scrollView: T, rs: String?) where T: FrameLayout, T: ScrollingView {
+        trackFrameLayoutPageView(url, scrollView, rs)
     }
 
-    override fun trackNewPage(url: String, scrollView: ScrollView) {
-        trackFrameLayoutPageView(url, scrollView)
+    override fun trackNewPage(url: String, scrollView: ScrollView, rs: String?) {
+        trackFrameLayoutPageView(url, scrollView, rs)
     }
 
-    private fun<T> trackFrameLayoutPageView(url: String, scrollView: T) where T: FrameLayout {
+    private fun<T> trackFrameLayoutPageView(url: String, scrollView: T, rs: String? = null) where T: FrameLayout {
         trackNewPage(url, scrollView, fun(view: T, scroll: Int, _: Int): Double {
             val scrollViewHeight = (view.getChildAt(0).bottom - scrollView.height).toDouble()
 
             return scroll.toDouble() / scrollViewHeight * 100
-        })
+        }, rs)
     }
 
-    override fun trackNewPage(url: String, scrollView: RecyclerView) {
+    override fun trackNewPage(url: String, scrollView: RecyclerView, rs: String?) {
         var currentScroll = 0
 
         trackNewPage(url, scrollView, fun(view: RecyclerView, scroll: Int, oldScroll: Int): Double {
@@ -333,14 +337,15 @@ internal object CompassTracker : CompassTracking {
                 currentScroll += dScroll
 
                 return currentScroll / scrollViewHeight * 100
-            }
+            }, rs
         )
     }
 
     private fun<T> trackNewPage(
         url: String,
         scrollView: T,
-        scrollMeasurer: (view: T, scrollY: Int, oldScrollY: Int) -> Double)
+        scrollMeasurer: (view: T, scrollY: Int, oldScrollY: Int) -> Double,
+        rs: String? = null)
     where T: ViewGroup {
         check(initialized) { compassNotInitializedErrorMessage }
         scrollView.setOnScrollChangeListener { view, _, scrollY, _, oldScrollY ->
@@ -353,27 +358,27 @@ internal object CompassTracker : CompassTracking {
             }
         }
 
-        trackNewPage(url)
+        trackNewPage(url, rs)
     }
 
     private fun screenUrl(screen: String): String {
         return "https://marfeelwhois.mrf.io/dynamic/${sessionStorage.readAccountId()}/${Uri.encode(screen)}"
     }
 
-    override fun trackScreen(screen: String) {
-        trackNewPage(screenUrl(screen))
+    override fun trackScreen(screen: String, rs: String?) {
+        trackNewPage(screenUrl(screen), rs)
     }
 
-    override fun<T> trackScreen(screen: String, scrollView: T) where T: FrameLayout, T: ScrollingView {
-        trackNewPage(screenUrl(screen), scrollView)
+    override fun<T> trackScreen(screen: String, scrollView: T, rs: String?) where T: FrameLayout, T: ScrollingView {
+        trackNewPage(screenUrl(screen), scrollView, rs)
     }
 
-    override fun trackScreen(screen: String, scrollView: ScrollView) {
-        trackNewPage(screenUrl(screen), scrollView)
+    override fun trackScreen(screen: String, scrollView: ScrollView, rs: String?) {
+        trackNewPage(screenUrl(screen), scrollView, rs)
     }
 
-    override fun trackScreen(screen: String, scrollView: RecyclerView) {
-        trackNewPage(screenUrl(screen), scrollView)
+    override fun trackScreen(screen: String, scrollView: RecyclerView, rs: String?) {
+        trackNewPage(screenUrl(screen), scrollView, rs)
     }
 
     internal fun Double.toScrollPercentage(): Int {

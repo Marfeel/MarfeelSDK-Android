@@ -37,6 +37,7 @@ internal class Storage(
 		private const val userConsent = "userConsent_key"
 		private const val sessionKey = "session_key"
 		private const val sessionVarsKey = "sessionVars_key";
+		private const val landingPageKey = "landingPage_key"
 	}
 
 	private val storageScope: CoroutineScope = CoroutineScope(coroutineContext)
@@ -406,4 +407,24 @@ internal class Storage(
 			setSessionVars(mapOf())
 		}
 	}
+
+	fun setLandingPage(url: String?) {
+		storageScope.launch {
+			updateLandingPage(url)
+		}
+	}
+
+	private fun updateLandingPage(url: String?) {
+		preferences.edit {
+			putString(landingPageKey, url)
+		}
+	}
+
+	fun readLadingPage(): String? =
+		runBlocking {
+			getLandingPage()
+		}
+
+	private fun getLandingPage(): String? =
+		preferences.getString(landingPageKey, null)
 }

@@ -13,7 +13,7 @@ internal class SessionStorage(private val storage: Storage) {
 	private var pendingConversions: MutableList<String> = mutableListOf()
 	private var pageVars: MutableMap<String, String> = mutableMapOf()
 	private var pageTechnology: Int? = null
-	private var landingPage: String? = null
+	private var recirculationSource: String? = null
 
 	fun updateAccountId(id: String) {
 		accountId = id
@@ -38,6 +38,7 @@ internal class SessionStorage(private val storage: Storage) {
 		}
 		storage.setSession(newSession)
 		storage.clearSessionVars()
+		storage.setLandingPage(null)
 	}
 
 	fun readPage(): Page? = page
@@ -95,10 +96,17 @@ internal class SessionStorage(private val storage: Storage) {
 	fun readPageTechnology(): Int? =
 		pageTechnology
 
-	fun setLandingPage(lp: String) {
-		landingPage = lp
+	fun setLandingPage(lp: String? = null) {
+		storage.setLandingPage(lp)
 	}
 
 	fun readLandingPage(): String? =
-		landingPage
+		storage.readLadingPage()
+
+	fun updateRecirculationSource(rs: String? = null) {
+		recirculationSource = rs
+	}
+
+	fun readRecirculationSource(): String? =
+		recirculationSource
 }
