@@ -28,7 +28,7 @@ class NewsXMLActivity : AppCompatActivity() {
 
 		val scrollView = binding.root
 
-		tracker.trackNewPage("http://dev.marfeel.co/2022/06/24/rem-provident-voluptates-itaque-quis-beatae-ratione/", scrollView)
+		tracker.trackNewPage("http://dev.marfeel.co/2022/06/24/rem-provident-voluptates-itaque-quis-beatae-ratione/", scrollView, "recirculation source")
 		tracker.setPageVar("yop", "yap")
 		tracker.setPageVar("yop2", "yap2")
 		setContentView(binding.root)

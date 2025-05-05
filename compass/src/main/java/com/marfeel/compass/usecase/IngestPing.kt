@@ -62,9 +62,17 @@ internal class IngestPing(
 			pageType = sessionStorage.readPageTechnology()!!,
 			userConsent = storage.readUserConsent(),
 			landingPage =  sessionStorage.readLandingPage(),
-			recirculationSource = sessionStorage.readRecirculationSource()
+			recirculationSource = sessionStorage.readRecirculationSource(),
+			cc = getCc(storage.readUserConsent())
 		)
 	}
+
+	private fun getCc(userConsent: Boolean?): Int = when (userConsent) {
+			true -> 1
+			false -> 0
+			null -> 3
+		}
+
 
 	fun resetPing() {
 		tick = 0

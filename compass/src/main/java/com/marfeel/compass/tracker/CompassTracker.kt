@@ -324,7 +324,7 @@ internal object CompassTracker : CompassTracking {
             val scrollViewHeight = (view.getChildAt(0).bottom - scrollView.height).toDouble()
 
             return scroll.toDouble() / scrollViewHeight * 100
-        })
+        }, rs)
     }
 
     override fun trackNewPage(url: String, scrollView: RecyclerView, rs: String?) {
