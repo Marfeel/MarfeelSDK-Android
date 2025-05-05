@@ -40,7 +40,9 @@ internal class IngestPingData(
 	pageType: Int,
 	userConsent: Boolean?,
 	@SerializedName("lp")
-	val landingPage: String?
+	val landingPage: String?,
+	@SerializedName("rs")
+	val recirculationSource: String?
 ): PingData(
 	accountId,
 	sessionTimeStamp,
@@ -64,6 +66,14 @@ internal class IngestPingData(
 	pageType = pageType,
 	userConsent = userConsent
 ) {
+	@get:SerializedName("cc")
+	val cc: Int
+		get() = when (userConsent) {
+			true -> 1
+			false -> 0
+			null -> 3
+		}
+
 	fun copy(
 		accountId: String = this.accountId,
 		sessionTimeStamp: Long = this.sessionTimeStamp,
@@ -90,7 +100,8 @@ internal class IngestPingData(
 		timeOnPage: Int = this.timeOnPage,
 		pageStartTimeStamp: Long = this.pageStartTimeStamp,
 		conversions: String? = this.conversions,
-		landingPage: String? = this.landingPage
+		landingPage: String? = this.landingPage,
+		recirculationSource: String? = this.recirculationSource
 	) = IngestPingData(
 		accountId,
 		sessionTimeStamp,
@@ -117,7 +128,8 @@ internal class IngestPingData(
 		version,
 		pageType,
 		userConsent,
-		landingPage
+		landingPage,
+		recirculationSource
 	)
 }
 
