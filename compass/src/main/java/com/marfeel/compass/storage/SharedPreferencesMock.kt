@@ -1,7 +1,9 @@
 package com.marfeel.compass.storage
 import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
-import java.util.HashMap
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.collections.set
 
 /**
@@ -10,14 +12,14 @@ import kotlin.collections.set
 @Suppress("UNCHECKED_CAST")
 internal class MockSharedPreference : SharedPreferences {
 
-    var preferenceMap = HashMap<String, Any>()
+    var preferenceMap = ConcurrentHashMap<String, Any>()
 
-    var uncommittedPreferenceMap = HashMap<String, Any>()
+    var uncommittedPreferenceMap = ConcurrentHashMap<String, Any>()
 
     private val preferenceEditor: MockSharedPreferenceEditor =
         MockSharedPreferenceEditor(preferenceMap, uncommittedPreferenceMap)
 
-    private var listeners: MutableSet<OnSharedPreferenceChangeListener> = HashSet()
+    private var listeners: MutableSet<OnSharedPreferenceChangeListener> = CopyOnWriteArraySet()
 
     override fun getAll(): Map<String, *> = preferenceMap
 
@@ -40,7 +42,7 @@ internal class MockSharedPreference : SharedPreferences {
         preferenceMap[key] as Boolean? ?: defaultValue;
 
     override fun contains(key: String): Boolean =
-        key in preferenceMap
+        preferenceMap.containsKey(key)
 
     override fun edit(): SharedPreferences.Editor = preferenceEditor
 
@@ -55,7 +57,7 @@ internal class MockSharedPreference : SharedPreferences {
     class MockSharedPreferenceEditor(
         private val preferenceMap: MutableMap<String, Any>,
         private val uncommittedPreferenceMap: MutableMap<String, Any>,
-        private var uncommittedRemoveKeys: MutableList<String> = ArrayList()
+        private val uncommittedRemoveKeys: ConcurrentLinkedQueue<String> = ConcurrentLinkedQueue()
     ) : SharedPreferences.Editor {
 
         override fun putString(key: String, value: String?): SharedPreferences.Editor {
@@ -112,8 +114,9 @@ internal class MockSharedPreference : SharedPreferences {
         }
 
         override fun commit(): Boolean {
-            uncommittedRemoveKeys.forEach {
-                preferenceMap.remove(it)
+            while (true) {
+                val key = uncommittedRemoveKeys.poll() ?: break
+                preferenceMap.remove(key)
             }
 
             uncommittedPreferenceMap.forEach {
