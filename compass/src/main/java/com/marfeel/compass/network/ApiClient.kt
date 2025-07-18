@@ -11,6 +11,7 @@ import com.marfeel.compass.core.model.compass.RfvPayloadData
 import com.marfeel.compass.core.model.multimedia.MultimediaPingData
 import com.marfeel.compass.core.model.multimedia.MultimediaPingDataSerializer
 import com.marfeel.compass.core.model.registerPingDataSerializer
+import kotlinx.coroutines.*
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -25,6 +26,11 @@ internal enum class PingPaths(val path: String) {
 	MULTIMEDIA("multimedia.php")
 }
 
+internal enum class OriginType {
+	ORIGIN,
+	FALLBACK
+}
+
 internal enum class ContentType(val type: String) {
 	JSON("application/json; charset=utf-8"),
 	TEXT("text/plain"),
@@ -34,7 +40,9 @@ internal enum class ContentType(val type: String) {
 internal class ApiClient(
 	private val httpClient: OkHttpClient,
 	private val pingBaseUrl: String = BuildConfig.COMPASS_PING_BASE_URL,
-	private val rfvBaseUrl: String = BuildConfig.COMPASS_RFV_BASE_URL
+	private val rfvBaseUrl: String = BuildConfig.COMPASS_RFV_BASE_URL,
+	private val pingFallbackUrl: String? = BuildConfig.COMPASS_PING_FALLBACK_BASE_URL,
+	private val fallbackWindowMs: Long = 60000L
 ) {
 	private val mediaType = ContentType.TEXT.type.toMediaType()
 	private val gson:Gson by lazy {
@@ -43,12 +51,15 @@ internal class ApiClient(
 			.registerPingDataSerializer()
 			.create()
 	}
+	private val fallbackScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+	private var pingOrigin: OriginType = OriginType.ORIGIN
+	private var fallbackResetJob: Job? = null
 
 	fun ping(path: PingPaths, pingData: PingData) {
-		val contentType = if(path == PingPaths.INGEST) ContentType.FORM_DATA else ContentType.JSON
+		val contentType = if (path == PingPaths.INGEST) ContentType.FORM_DATA else ContentType.JSON
 
 		val request = Request.Builder()
-			.url("$pingBaseUrl/${path.path}")
+			.url(getPingUrl(path))
 			.ping(pingData, contentType)
 			.build()
 
@@ -57,10 +68,17 @@ internal class ApiClient(
 				if (!response.isSuccessful) throw IOException("Unexpected code $response")
 			}
 		} catch (exception: IOException) {
-			// TODO: track server errors, discarding connection errors
-			println(exception.toString())
+			val canSwitchOrigin = pingFallbackUrl != null && pingOrigin == OriginType.ORIGIN
+
+			if (canSwitchOrigin) {
+				activateFallback()
+				ping(path, pingData)
+			} else {
+				println("Ping failed (origin=$pingOrigin): ${exception.message}")
+			}
 		}
 	}
+
 
 	fun ingestPing(pingData: IngestPingData) {
 		ping(PingPaths.INGEST, pingData)
@@ -115,6 +133,23 @@ internal class ApiClient(
 		)
 
 		return this
+	}
+
+	private fun getPingUrl(path: PingPaths): String {
+		return when (pingOrigin) {
+			OriginType.FALLBACK -> "$pingFallbackUrl/${path.path}"
+			else -> "$pingBaseUrl/${path.path}"
+		}
+	}
+
+	private fun activateFallback() {
+		pingOrigin = OriginType.FALLBACK
+		fallbackResetJob?.cancel()
+
+		fallbackResetJob = fallbackScope.launch {
+			delay(fallbackWindowMs)
+			pingOrigin = OriginType.ORIGIN
+		}
 	}
 }
 
