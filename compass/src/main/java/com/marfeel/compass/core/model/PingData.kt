@@ -56,23 +56,6 @@ internal class UserTypeSerializer : JsonSerializer<UserType> {
     }
 }
 
-internal class PingDataVarsSerializer1 : JsonSerializer<Map<String, String>> {
-    override fun serialize(src: Map<String, String>, typeOfSrc: Type, context: JsonSerializationContext?): JsonElement {
-        val vars = src.toList()
-        val res = JsonArray(vars.size)
-
-        for(someVar in vars) {
-            val serializedVar = JsonArray(2)
-
-            serializedVar.add(someVar.first)
-            serializedVar.add(someVar.second)
-            res.add(serializedVar)
-        }
-
-        return res
-    }
-}
-
 internal class PingDataVarsSerializer : JsonSerializer<Map<*, *>> {
     override fun serialize(
         src: Map<*, *>,
