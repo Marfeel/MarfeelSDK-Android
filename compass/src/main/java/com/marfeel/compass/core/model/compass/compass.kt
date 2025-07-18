@@ -44,7 +44,9 @@ internal class IngestPingData(
 	@SerializedName("rs")
 	val recirculationSource: String?,
 	@SerializedName("cc")
-	val cc: Int
+	val cc: Int,
+	@SerializedName("pm")
+	val pageMetrics: Map<String, Int>
 ): PingData(
 	accountId,
 	sessionTimeStamp,
@@ -96,7 +98,8 @@ internal class IngestPingData(
 		conversions: String? = this.conversions,
 		landingPage: String? = this.landingPage,
 		recirculationSource: String? = this.recirculationSource,
-		cc: Int = this.cc
+		cc: Int = this.cc,
+		pm: Map<String, Int> = this.pageMetrics
 	) = IngestPingData(
 		accountId,
 		sessionTimeStamp,
@@ -125,7 +128,8 @@ internal class IngestPingData(
 		userConsent,
 		landingPage,
 		recirculationSource,
-		cc
+		cc,
+		pm
 	)
 }
 

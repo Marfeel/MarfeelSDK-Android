@@ -63,7 +63,8 @@ internal class IngestPing(
 			userConsent = storage.readUserConsent(),
 			landingPage =  sessionStorage.readLandingPage(),
 			recirculationSource = sessionStorage.readRecirculationSource(),
-			cc = getCc(storage.readUserConsent())
+			cc = getCc(storage.readUserConsent()),
+			pageMetrics = sessionStorage.readPageMetrics()
 		)
 	}
 

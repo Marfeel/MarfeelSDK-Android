@@ -124,6 +124,18 @@ internal class SessionStorageTest {
 	}
 
 	@Test
+	fun `reading and setting pageMetrics`() {
+		sessionStorage.addPageMetric("pepe", 1)
+		sessionStorage.addPageMetric("lolo", 1)
+
+		assertEquals(mapOf("pepe" to 1, "lolo" to 2), sessionStorage.readPageMetrics())
+
+		sessionStorage.clearPageMetrics()
+
+		assertEquals(emptyMap<String, Int>(), sessionStorage.readPageMetrics())
+	}
+
+	@Test
 	fun `reading and setting session vars`() {
 		sessionStorage.addSessionVar("pepe", "pepa")
 		sessionStorage.addSessionVar("lolo", "lola")

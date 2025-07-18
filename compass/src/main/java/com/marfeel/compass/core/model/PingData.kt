@@ -8,7 +8,7 @@ import java.lang.reflect.Type
 internal open class PingData(
     @SerializedName("ac")
     val accountId: String,
-    @SerializedName("t") 
+    @SerializedName("t")
     val sessionTimeStamp: Long,
     @SerializedName("url")
     val url: String,
@@ -56,7 +56,7 @@ internal class UserTypeSerializer : JsonSerializer<UserType> {
     }
 }
 
-internal class PingDataVarsSerializer : JsonSerializer<Map<String, String>> {
+internal class PingDataVarsSerializer1 : JsonSerializer<Map<String, String>> {
     override fun serialize(src: Map<String, String>, typeOfSrc: Type, context: JsonSerializationContext?): JsonElement {
         val vars = src.toList()
         val res = JsonArray(vars.size)
@@ -72,6 +72,33 @@ internal class PingDataVarsSerializer : JsonSerializer<Map<String, String>> {
         return res
     }
 }
+
+internal class PingDataVarsSerializer : JsonSerializer<Map<*, *>> {
+    override fun serialize(
+        src: Map<*, *>,
+        typeOfSrc: Type,
+        context: JsonSerializationContext?
+    ): JsonElement {
+        val res = JsonArray(src.size)
+
+        for ((key, value) in src) {
+            if (key !is String) {
+                continue
+            }
+
+            val serializedVar = JsonArray(2)
+            serializedVar.add(key)
+
+            val serializedValue = context?.serialize(value) ?: JsonPrimitive(value.toString())
+            serializedVar.add(serializedValue)
+
+            res.add(serializedVar)
+        }
+
+        return res
+    }
+}
+
 
 internal fun GsonBuilder.registerPingDataSerializer(): GsonBuilder {
     return this

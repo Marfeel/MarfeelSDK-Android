@@ -165,6 +165,14 @@ interface CompassTracking {
     fun setPageVar(name: String, value: String)
 
     /**
+     * Sets metrics for the current page view.
+     *
+     * @param name variable name
+     * @param value variable value
+     */
+    fun setPageMetric(name: String, value: Int)
+
+    /**
      * Sets variables for the current session.
      *
      * @param name variable name
@@ -291,6 +299,7 @@ internal object CompassTracker : CompassTracking {
         configureSession()
         sessionStorage.updatePage(Page(url))
         sessionStorage.clearPageVars()
+        sessionStorage.clearPageMetrics()
         sessionStorage.updateRecirculationSource(rs)
         pingEmitter.start(url)
         MultimediaTracking.reset()
@@ -434,6 +443,12 @@ internal object CompassTracker : CompassTracking {
         check(initialized) { compassNotInitializedErrorMessage }
 
         sessionStorage.addPageVar(name, value)
+    }
+
+    override fun setPageMetric(name: String, value: Int) {
+        check(initialized) { compassNotInitializedErrorMessage }
+
+        sessionStorage.addPageMetric(name, value)
     }
 
     override fun setSessionVar(name: String, value: String) {
