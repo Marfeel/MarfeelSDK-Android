@@ -67,6 +67,8 @@ fun MainScreen(
 	tracker.setUserConsent(true)
 	tracker.setUserType(UserType.Custom(11))
 	tracker.setUserConsent(true)
+	tracker.setPageMetric("metric_1", 1)
+	tracker.setPageMetric("metric_2", 2)
 
 	Scaffold(
 		Modifier

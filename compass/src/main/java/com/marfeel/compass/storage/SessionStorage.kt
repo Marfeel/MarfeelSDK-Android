@@ -12,6 +12,7 @@ internal class SessionStorage(private val storage: Storage) {
 	private var previousUrl: String? = null
 	private var pendingConversions: MutableList<String> = mutableListOf()
 	private var pageVars: MutableMap<String, String> = mutableMapOf()
+	private var pageMetrics: MutableMap<String, Int> = mutableMapOf()
 	private var pageTechnology: Int? = null
 	private var recirculationSource: String? = null
 
@@ -75,6 +76,18 @@ internal class SessionStorage(private val storage: Storage) {
 
 	fun clearPageVars() {
 		pageVars.clear()
+	}
+
+	fun addPageMetric(name: String, value: Int) {
+		pageMetrics[name] = value
+	}
+
+	fun readPageMetrics(): Map<String, Int> {
+		return pageMetrics.toMap()
+	}
+
+	fun clearPageMetrics() {
+		pageMetrics.clear()
 	}
 
 	fun addSessionVar(name: String, value: String) {
