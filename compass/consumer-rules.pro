@@ -3,3 +3,5 @@
 
 # Ensure Gson's reflective TypeToken helpers stay intact for release builds.
 -keep class com.google.gson.reflect.TypeToken { *; }
+
+-keep class com.marfeel.** { *; }
