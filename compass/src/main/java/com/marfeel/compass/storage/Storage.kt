@@ -11,16 +11,12 @@ import com.marfeel.compass.core.model.compass.Session
 import java.lang.reflect.Type
 import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import java.util.*
-import kotlin.coroutines.CoroutineContext
 
 internal class Storage(
-	private val context: Context,
-	coroutineContext: CoroutineContext
+	private val context: Context
 ) {
 	companion object {
 		private const val encryptedStorageName = "EncryptedStorage"
@@ -41,7 +37,6 @@ internal class Storage(
 		private const val landingPageKey = "landingPage_key"
 	}
 
-	private val storageScope: CoroutineScope = CoroutineScope(coroutineContext)
 	private val gson:Gson by lazy { Gson() }
 
 	private val persistentPreferences: SharedPreferences by lazy {
@@ -130,15 +125,11 @@ internal class Storage(
 	}
 
 	fun updateFirstSessionTimeStamp(firstSessionTimeStamp: Long) {
-		storageScope.launch {
-			setFirstSessionTimeStamp(firstSessionTimeStamp)
-		}
+		setFirstSessionTimeStamp(firstSessionTimeStamp)
 	}
 
 	fun readFirstSessionTimeStamp(): Long =
-		runBlocking(storageScope.coroutineContext) {
-			getFirstSessionTimeStamp()?.toLong() ?: trackFirstSession()
-		}
+		getFirstSessionTimeStamp()?.toLong() ?: trackFirstSession()
 
 	private fun trackFirstSession(): Long {
 		val timeStamp = currentTimeStampInSeconds()
@@ -155,25 +146,17 @@ internal class Storage(
 		preferences.getString(firstSessionTimeStampKey, null)
 
 	fun updateUserId(userId: String) {
-		storageScope.launch {
-			setRegisteredUserId(userId)
-		}
+		setRegisteredUserId(userId)
 	}
 
 	fun readUserId(): String =
-		runBlocking(storageScope.coroutineContext) {
-			getRegisteredUserId() ?: getOriginalUserId()
-		}
+		getRegisteredUserId() ?: getOriginalUserId()
 
 	fun readRegisteredUserId(): String? =
-		runBlocking(storageScope.coroutineContext) {
-			getRegisteredUserId()
-		}
+		getRegisteredUserId()
 
 	fun readOriginalUserId(): String =
-		runBlocking(storageScope.coroutineContext) {
-			getOriginalUserId()
-		}
+		getOriginalUserId()
 
 	private fun getRegisteredUserId(): String? =
 		preferences.getString(registeredUserIdKey, null)
@@ -202,9 +185,7 @@ internal class Storage(
 	}
 
 	fun updateUserType(userType: UserType) {
-		storageScope.launch {
-			setUserType(userType)
-		}
+		setUserType(userType)
 	}
 
 	private fun setUserType(userType: UserType) {
@@ -214,9 +195,7 @@ internal class Storage(
 	}
 
 	fun readUserType(): UserType =
-		runBlocking {
-			getUserType()
-		}
+		getUserType()
 
 	private fun getUserType(): UserType =
 		when (val type = preferences.getString(userTypeKey, null)?.toInt()) {
@@ -228,9 +207,7 @@ internal class Storage(
 		}
 
 	fun updateLastPingTimeStamp(timeStamp: Long) {
-		storageScope.launch {
-			setLastPingTimeStamp(timeStamp)
-		}
+		setLastPingTimeStamp(timeStamp)
 	}
 
 	private fun setLastPingTimeStamp(timeStamp: Long) =
@@ -238,50 +215,43 @@ internal class Storage(
 			putLong(lastPingTimeStampKey, timeStamp)
 		}
 
-	fun readLastPingTimeStamp(): Long? =
-		runBlocking {
-			val lastPingTimeStamp = getLastPingTimeStamp()
-			if (lastPingTimeStamp == 0L) {
-				null
-			} else {
-				lastPingTimeStamp
-			}
+	fun readLastPingTimeStamp(): Long? {
+		val lastPingTimeStamp = getLastPingTimeStamp()
+		return if (lastPingTimeStamp == 0L) {
+			null
+		} else {
+			lastPingTimeStamp
 		}
+	}
 
 	private fun getLastPingTimeStamp(): Long =
 		preferences.getLong(lastPingTimeStampKey, 0L)
 
 
 	fun updatePreviousSessionLastPingTimeStamp(timeStamp: Long) =
-		storageScope.launch {
-			setPreviousSessionLastPingTimeStamp(timeStamp)
-		}
+		setPreviousSessionLastPingTimeStamp(timeStamp)
 
 	private fun setPreviousSessionLastPingTimeStamp(timeStamp: Long) =
 		preferences.edit {
 			putLong(previousSessionLastPingTimeStampKey, timeStamp)
 		}
 
-	fun readPreviousSessionLastPingTimeStamp(): Long? =
-		runBlocking {
-			val lastTimeStamp = getPreviousSessionLastPingTimeStamp()
-			if (lastTimeStamp == 0L) {
-				null
-			} else {
-				lastTimeStamp
-			}
+	fun readPreviousSessionLastPingTimeStamp(): Long? {
+		val lastTimeStamp = getPreviousSessionLastPingTimeStamp()
+		return if (lastTimeStamp == 0L) {
+			null
+		} else {
+			lastTimeStamp
 		}
+	}
 
 	private fun getPreviousSessionLastPingTimeStamp(): Long =
 		preferences.getLong(previousSessionLastPingTimeStampKey, 0L)
 
 	fun setUserVar(name: String, value: String) {
 		val vars = getUserVars().toMutableMap()
-
-		storageScope.launch {
-			vars[name] = value
-			setUserVars(vars)
-		}
+		vars[name] = value
+		setUserVars(vars)
 	}
 
 	private fun setUserVars(vars: Map<String, String>) {
@@ -291,9 +261,7 @@ internal class Storage(
 	}
 
 	fun readUserVars(): Map<String, String> =
-		runBlocking {
-			getUserVars()
-		}
+		getUserVars()
 
 	private fun getUserVars(): Map<String, String> {
 		val mapType: Type = object : TypeToken<Map<String, String>>() {}.type
@@ -304,34 +272,24 @@ internal class Storage(
 
 	fun setUserSegment(name: String) {
 		val userSegments = getUserSegments().toMutableList()
-
-		storageScope.launch {
-			if (!userSegments.contains(name)) {
-				userSegments.add(name)
-				setUserSegments(userSegments)
-			}
-		}
-	}
-
-	fun setUserSegment(segments: List<String>) {
-		storageScope.launch {
-			setUserSegments(segments)
-		}
-	}
-
-	fun removeUserSegment(name: String) {
-		val userSegments = getUserSegments().toMutableList()
-
-		storageScope.launch {
-			userSegments.remove(name)
+		if (!userSegments.contains(name)) {
+			userSegments.add(name)
 			setUserSegments(userSegments)
 		}
 	}
 
+	fun setUserSegment(segments: List<String>) {
+		setUserSegments(segments)
+	}
+
+	fun removeUserSegment(name: String) {
+		val userSegments = getUserSegments().toMutableList()
+		userSegments.remove(name)
+		setUserSegments(userSegments)
+	}
+
 	fun clearUserSegments() {
-		storageScope.launch {
-			setUserSegments(listOf())
-		}
+		setUserSegments(listOf())
 	}
 
 	private fun setUserSegments(vars: List<String>) {
@@ -341,9 +299,7 @@ internal class Storage(
 	}
 
 	fun readUserSegments(): List<String> =
-		runBlocking {
-			getUserSegments()
-		}
+		getUserSegments()
 
 	private fun getUserSegments(): List<String> {
 		val mapType: Type = object : TypeToken<List<String>>() {}.type
@@ -358,9 +314,7 @@ internal class Storage(
 			togglePreferences(hasConsent, previousUserConsent != null)
 		}
 
-		storageScope.launch {
-			setUserConsent(hasConsent)
-		}
+		setUserConsent(hasConsent)
 	}
 
 	private fun setUserConsent(hasConsent: Boolean) {
@@ -370,17 +324,13 @@ internal class Storage(
 	}
 
 	fun readUserConsent(): Boolean? =
-		runBlocking {
-			getUserConsent()
-		}
+		getUserConsent()
 
 	private fun getUserConsent(): Boolean? =
 		if (preferences.contains(userConsent)) preferences.getBoolean(userConsent, false) else null
 
 	fun setSession(session: Session) {
-		storageScope.launch {
-			saveSession(session)
-		}
+		saveSession(session)
 	}
 
 	private fun saveSession(session: Session) {
@@ -390,9 +340,7 @@ internal class Storage(
 	}
 
 	fun readSession(): Session? =
-		runBlocking {
-			readAndParseSession()
-		}
+		readAndParseSession()
 
 	private fun readAndParseSession(): Session? {
 		val json = preferences.getString(sessionKey, null) ?: return null
@@ -402,11 +350,8 @@ internal class Storage(
 
 	fun setSessionVar(name: String, value: String) {
 		val vars = getSessionVars().toMutableMap()
-
-		storageScope.launch {
-			vars[name] = value
-			setSessionVars(vars)
-		}
+		vars[name] = value
+		setSessionVars(vars)
 	}
 
 	private fun setSessionVars(vars: Map<String, String>) {
@@ -416,9 +361,7 @@ internal class Storage(
 	}
 
 	fun readSessionVars(): Map<String, String> =
-		runBlocking {
-			getSessionVars()
-		}
+		getSessionVars()
 
 	private fun getSessionVars(): Map<String, String> {
 		val mapType: Type = object : TypeToken<Map<String, String>>() {}.type
@@ -427,15 +370,11 @@ internal class Storage(
 	}
 
 	fun clearSessionVars() {
-		storageScope.launch {
-			setSessionVars(mapOf())
-		}
+		setSessionVars(mapOf())
 	}
 
 	fun setLandingPage(url: String?) {
-		storageScope.launch {
-			updateLandingPage(url)
-		}
+		updateLandingPage(url)
 	}
 
 	private fun updateLandingPage(url: String?) {
@@ -445,9 +384,7 @@ internal class Storage(
 	}
 
 	fun readLadingPage(): String? =
-		runBlocking {
-			getLandingPage()
-		}
+		getLandingPage()
 
 	private fun getLandingPage(): String? =
 		preferences.getString(landingPageKey, null)

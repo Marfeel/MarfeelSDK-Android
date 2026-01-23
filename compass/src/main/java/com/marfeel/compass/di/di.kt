@@ -23,7 +23,7 @@ internal object CompassComponent : CompassServiceLocator {
     override val storage: Storage by lazy {
         val context = this.context
         checkNotNull(context)
-        Storage(context, Dispatchers.IO)
+        Storage(context)
     }
     override val apiClient: ApiClient by lazy {
         ApiClient(

@@ -22,6 +22,7 @@ internal class IngestPingEmitter(
 
     fun start(
         url: String,
+        pageId: String,
         scrollPosition: Int? = null
     ) {
         stop()
@@ -29,15 +30,16 @@ internal class IngestPingEmitter(
         startBackgroundWatcher()
         pingEmitterState = IngestPingEmitterState(
             url = url,
+            pageId = pageId,
             scrollPercent = scrollPosition,
             pageStartTimeStamp = currentTimeStampInSeconds(),
             timeOnBackground = 0,
         )
 
         scope.launch {
-            while (true) {
+            while (isActive) {
                 if (!appOnBackground)
-                    launch(Dispatchers.IO) { ping() }
+                    withContext(Dispatchers.IO) { ping() }
                 delay(pingFrequencyInMs)
             }
         }
@@ -79,6 +81,7 @@ internal class IngestPingEmitter(
 
 internal data class IngestPingEmitterState(
     val url: String,
+    val pageId: String,
     val scrollPercent: Int?,
     val pageStartTimeStamp: Long,
     val timeOnBackground: Long,
