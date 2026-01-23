@@ -88,7 +88,6 @@ internal class Storage(
 	private var preferences: SharedPreferences
 
 	init {
-        clearAllPreferences()
 		migrateLegacyPrefsIfNeeded()
 		preferences = togglePreferences(persistentPreferences.getBoolean(userConsent, true))
 	}
@@ -389,14 +388,4 @@ internal class Storage(
 
 	private fun getLandingPage(): String? =
 		preferences.getString(landingPageKey, null)
-
-    fun clearAllPreferences() {
-        val names = listOf("RawStorage", "EncryptedStorage", "FallbackStorage")
-        names.forEach { name ->
-            context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear().apply()
-        }
-
-        // Also clear in-memory prefs if needed
-        inMemoryPreferences.edit().clear().apply()
-    }
 }
