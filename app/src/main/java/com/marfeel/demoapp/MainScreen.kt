@@ -57,7 +57,8 @@ fun MainScreen(
 	val titleStyle = TextStyle.Default.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold)
 	val coroutineScope = CoroutineScope(Dispatchers.IO)
 
-	tracker.trackScreen("main screen")
+    tracker.trackScreen("main screen")
+    tracker.trackScreen("main screen")
 	tracker.setSessionVar("pepe", "pepa")
 	tracker.setSessionVar("pepe2", "pepa2")
 	tracker.setUserVar("lolo", "lola")

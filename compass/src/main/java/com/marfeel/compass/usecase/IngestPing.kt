@@ -33,6 +33,9 @@ internal class IngestPing(
 	}
 
 	override fun getData(input: IngestPingEmitterState): IngestPingData? {
+		val currentPageId = sessionStorage.readPage()?.pageId
+		if (currentPageId != input.pageId) return null
+
 		val pingData = getData() ?: return null
 
 		return IngestPingData(
@@ -41,7 +44,7 @@ internal class IngestPing(
 			url = input.url,
 			canonicalUrl = input.url,
 			previousUrl = pingData.previousUrl,
-			pageId = pingData.pageId,
+			pageId = input.pageId,
 			originalUserId = pingData.originalUserId,
 			sessionId = pingData.sessionId,
 			pingCounter = null,

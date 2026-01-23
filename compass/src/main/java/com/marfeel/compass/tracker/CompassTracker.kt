@@ -279,11 +279,13 @@ internal object CompassTracker : CompassTracking {
     }
 
     private fun configureSession() {
-        storage.readLastPingTimeStamp()?.let { lastPing ->
-            if (lastPing < thirtyMinsAgoInSeconds()) {
+        val lastPing = storage.readLastPingTimeStamp()
+        if (lastPing == null) {
+            val session = storage.readSession()
+            if (session == null || session.timeStamp < thirtyMinsAgoInSeconds()) {
                 sessionStorage.updateSession()
             }
-        } ?: run {
+        } else if (lastPing < thirtyMinsAgoInSeconds()) {
             sessionStorage.updateSession()
         }
     }
@@ -297,11 +299,12 @@ internal object CompassTracker : CompassTracking {
         check(initialized) { compassNotInitializedErrorMessage }
 
         configureSession()
-        sessionStorage.updatePage(Page(url))
+        val page = Page(url)
+        sessionStorage.updatePage(page)
         sessionStorage.clearPageVars()
         sessionStorage.clearPageMetrics()
         sessionStorage.updateRecirculationSource(rs)
-        pingEmitter.start(url)
+        pingEmitter.start(url, page.pageId)
         MultimediaTracking.reset()
     }
 
