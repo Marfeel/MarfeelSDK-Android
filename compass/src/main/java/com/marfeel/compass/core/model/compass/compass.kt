@@ -36,6 +36,14 @@ internal class IngestPingData(
 	val pageStartTimeStamp: Long,
 	@SerializedName("conv")
 	val conversions: String?,
+	@SerializedName("conv_i")
+	val conversionInitiator: String? = null,
+	@SerializedName("cvid")
+	val conversionId: String? = null,
+	@SerializedName("cvv")
+	val conversionValue: String? = null,
+	@SerializedName("cvar")
+	val conversionMeta: List<List<String>>? = null,
 	version: String,
 	pageType: Int,
 	userConsent: Boolean?,
@@ -96,6 +104,10 @@ internal class IngestPingData(
 		timeOnPage: Int = this.timeOnPage,
 		pageStartTimeStamp: Long = this.pageStartTimeStamp,
 		conversions: String? = this.conversions,
+		conversionInitiator: String? = this.conversionInitiator,
+		conversionId: String? = this.conversionId,
+		conversionValue: String? = this.conversionValue,
+		conversionMeta: List<List<String>>? = this.conversionMeta,
 		landingPage: String? = this.landingPage,
 		recirculationSource: String? = this.recirculationSource,
 		cc: Int = this.cc,
@@ -123,6 +135,10 @@ internal class IngestPingData(
 		timeOnPage,
 		pageStartTimeStamp,
 		conversions,
+		conversionInitiator,
+		conversionId,
+		conversionValue,
+		conversionMeta,
 		version,
 		pageType,
 		userConsent,
@@ -144,6 +160,32 @@ sealed class UserType(open val numericValue: Int) {
 	object Paid : UserType(3)
 	data class Custom(val customValue: Int) : UserType(customValue)
 }
+
+/**
+ * Scope for a conversion event.
+ */
+enum class ConversionScope {
+	User,
+	Session,
+	Page
+}
+
+/**
+ * Options for tracking a conversion event.
+ *
+ * @property initiator The initiator of the conversion.
+ * @property id The identifier of the conversion.
+ * @property value The value associated with the conversion.
+ * @property meta Additional metadata as key-value pairs.
+ * @property scope The scope of the conversion.
+ */
+data class ConversionOptions(
+	val initiator: String? = null,
+	val id: String? = null,
+	val value: String? = null,
+	val meta: Map<String, String>? = null,
+	val scope: ConversionScope? = null
+)
 
 internal data class RfvPayloadData(
 	@SerializedName("ac")

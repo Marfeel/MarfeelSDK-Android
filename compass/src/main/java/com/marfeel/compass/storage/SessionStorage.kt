@@ -1,16 +1,23 @@
 package com.marfeel.compass.storage
 
+import com.marfeel.compass.core.model.compass.ConversionOptions
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.Session
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
 import java.util.*
+
+internal data class Conversion(
+	val name: String,
+	val options: ConversionOptions? = null
+)
 
 internal class SessionStorage(private val storage: Storage) {
 
 	private var accountId: String? = null
 	private var page: Page? = null
 	private var previousUrl: String? = null
-	private var pendingConversions: MutableList<String> = mutableListOf()
+	private var pendingConversions: MutableList<Conversion> = mutableListOf()
+	private val trackedConversionIds: MutableSet<String> = mutableSetOf()
 	private var pageVars: MutableMap<String, String> = mutableMapOf()
 	private var pageMetrics: MutableMap<String, Int> = mutableMapOf()
 	private var pageTechnology: Int? = null
@@ -56,13 +63,35 @@ internal class SessionStorage(private val storage: Storage) {
 	}
 
 	fun addPendingConversion(conversion: String) {
-		pendingConversions.add(conversion)
+		pendingConversions.add(Conversion(conversion))
 	}
 
-	fun readPendingConversions(): List<String> =
+	private fun shouldAddConversion(conversion: String, id: String?): Boolean {
+		if (id == null) {
+			return true
+		}
+
+		val key = "$conversion:$id"
+
+		return !trackedConversionIds.contains(key)
+	}
+
+	fun addPendingConversion(conversion: String, options: ConversionOptions) {
+		val conversionId = options.id
+
+		if (shouldAddConversion(conversion, conversionId)) {
+			if (conversionId != null) {
+				val key = "$conversion:$conversionId"
+				trackedConversionIds.add(key)
+			}
+			pendingConversions.add(Conversion(conversion, options))
+		}
+	}
+
+	fun readPendingConversions(): List<Conversion> =
 		pendingConversions.toList()
 
-	fun clearTrackedConversions(conversions: List<String>) {
+	fun clearTrackedConversions(conversions: List<Conversion>) {
 		pendingConversions.removeAll(conversions)
 	}
 
