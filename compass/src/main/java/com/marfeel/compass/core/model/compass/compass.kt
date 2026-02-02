@@ -161,24 +161,12 @@ sealed class UserType(open val numericValue: Int) {
 	data class Custom(val customValue: Int) : UserType(customValue)
 }
 
-/**
- * Scope for a conversion event.
- */
 enum class ConversionScope {
 	User,
 	Session,
 	Page
 }
 
-/**
- * Options for tracking a conversion event.
- *
- * @property initiator The initiator of the conversion.
- * @property id The identifier of the conversion.
- * @property value The value associated with the conversion.
- * @property meta Additional metadata as key-value pairs.
- * @property scope The scope of the conversion.
- */
 data class ConversionOptions(
 	val initiator: String? = null,
 	val id: String? = null,
