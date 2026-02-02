@@ -1,5 +1,6 @@
 package com.marfeel.compass.memory
 
+import com.marfeel.compass.core.ConversionOptions
 import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.Session
 import com.marfeel.compass.core.currentTimeStampInSeconds
@@ -7,13 +8,19 @@ import com.marfeel.compass.di.CompassKoinComponent
 import com.marfeel.compass.storage.Storage
 import java.util.*
 
+internal data class Conversion(
+	val name: String,
+	val options: ConversionOptions? = null
+)
+
 internal class Memory(private val storage: Storage) : CompassKoinComponent {
 
 	private var accountId: String? = null
 	private var session: Session? = null
 	private var page: Page? = null
 	private var previousUrl: String? = null
-	private var pendingConversions: MutableList<String> = mutableListOf()
+	private var pendingConversions: MutableList<Conversion> = mutableListOf()
+	private val trackedConversionIds: MutableSet<String> = mutableSetOf()
 
 	fun updateAccountId(id: String) {
 		accountId = id
@@ -51,13 +58,26 @@ internal class Memory(private val storage: Storage) : CompassKoinComponent {
 	}
 
 	fun addPendingConversion(conversion: String) {
-		pendingConversions.add(conversion)
+		pendingConversions.add(Conversion(conversion))
 	}
 
-	fun readPendingConversions(): List<String> =
+	fun addPendingConversion(conversion: String, options: ConversionOptions) {
+		val conversionId = options.id
+		if (conversionId != null) {
+			val key = "$conversion:$conversionId"
+			if (trackedConversionIds.contains(key)) {
+				return
+			}
+			trackedConversionIds.add(key)
+		}
+		pendingConversions.add(Conversion(conversion, options))
+	}
+
+	fun readPendingConversions(): List<Conversion> =
 		pendingConversions.toList()
 
-	fun clearTrackedConversions(conversions: List<String>) {
+	fun clearTrackedConversions(conversions: List<Conversion>) {
 		pendingConversions.removeAll(conversions)
 	}
 }
+

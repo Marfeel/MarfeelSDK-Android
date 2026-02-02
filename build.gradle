@@ -3,13 +3,13 @@ buildscript {
 		google()
 	}
 	dependencies {
-		classpath 'com.android.tools.build:gradle:7.2.2'
+		classpath 'com.android.tools.build:gradle:7.4.2'
 		classpath 'org.jetbrains.dokka:dokka-gradle-plugin:1.7.10'
 	}
 }
 
 plugins {
-	id 'org.jetbrains.kotlin.android' version '1.6.10' apply false
+	id 'org.jetbrains.kotlin.android' version '1.6.21' apply false
 }
 
 task clean(type: Delete) {

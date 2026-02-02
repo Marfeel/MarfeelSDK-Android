@@ -2,6 +2,7 @@ package com.marfeel.compass.tracker
 
 import android.content.Context
 import androidx.core.widget.NestedScrollView
+import com.marfeel.compass.core.ConversionOptions
 import com.marfeel.compass.core.Page
 import com.marfeel.compass.core.PingEmitter
 import com.marfeel.compass.core.Session
@@ -72,6 +73,8 @@ interface CompassTracking {
     fun getRFV(onResult: (String?) -> Unit)
 
     fun trackConversion(conversion: String)
+
+    fun trackConversion(conversion: String, options: ConversionOptions)
 
     companion object {
         /**
@@ -174,5 +177,10 @@ internal object CompassTracker : CompassTracking, CompassKoinComponent {
     override fun trackConversion(conversion: String) {
         check(initialized) { compassNotInitializedErrorMessage }
         memory.addPendingConversion(conversion)
+    }
+
+    override fun trackConversion(conversion: String, options: ConversionOptions) {
+        check(initialized) { compassNotInitializedErrorMessage }
+        memory.addPendingConversion(conversion, options)
     }
 }

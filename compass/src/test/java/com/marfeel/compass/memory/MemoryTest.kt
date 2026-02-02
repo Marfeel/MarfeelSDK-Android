@@ -99,14 +99,14 @@ internal class MemoryTest {
 
 	@Test
 	fun `clearTrackedConversions will not remove not tracked conversions`() {
-		val trackedConversions = listOf("First item", "Second item")
+		val trackedConversions = listOf(Conversion("First item"), Conversion("Second item"))
 		val notTrackedConversion = "Another not tracked conversion"
-		memory.addPendingConversion(trackedConversions[0])
-		memory.addPendingConversion(trackedConversions[1])
+		memory.addPendingConversion(trackedConversions[0].name)
+		memory.addPendingConversion(trackedConversions[1].name)
 		memory.addPendingConversion(notTrackedConversion)
 
 		memory.clearTrackedConversions(trackedConversions)
 		assertEquals(1, memory.readPendingConversions().size)
-		assertEquals(notTrackedConversion, memory.readPendingConversions().first())
+		assertEquals(notTrackedConversion, memory.readPendingConversions().first().name)
 	}
 }
