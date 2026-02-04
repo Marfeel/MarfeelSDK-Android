@@ -156,6 +156,8 @@ interface CompassTracking {
 
     fun trackConversion(conversion: String)
 
+    fun trackConversion(conversion: String, options: ConversionOptions)
+
     /**
      * Sets variables for the current page view.
      *
@@ -440,6 +442,11 @@ internal object CompassTracker : CompassTracking {
     override fun trackConversion(conversion: String) {
         check(initialized) { compassNotInitializedErrorMessage }
         sessionStorage.addPendingConversion(conversion)
+    }
+
+    override fun trackConversion(conversion: String, options: ConversionOptions) {
+        check(initialized) { compassNotInitializedErrorMessage }
+        sessionStorage.addPendingConversion(conversion, options)
     }
 
     override fun setPageVar(name: String, value: String) {

@@ -1,8 +1,11 @@
 package com.marfeel.compass.usecase
 
 import com.marfeel.compass.core.ping.IngestPingEmitterState
+import com.marfeel.compass.core.model.compass.ConversionOptions
+import com.marfeel.compass.core.model.compass.ConversionScope
 import com.marfeel.compass.core.model.compass.IngestPingData
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
+import com.marfeel.compass.storage.Conversion
 import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.network.ApiClient
 import com.marfeel.compass.storage.Storage
@@ -23,13 +26,32 @@ internal class IngestPing(
 
 		} else {
 			conversions.forEach { conversion ->
-				val updatedInput = input.copy(conversions = conversion, pingCounter = tick++)
+				val updatedInput = input.copy(
+					conversion = conversion,
+					conversionId = getConversionId(conversion.options, input.sessionId, input.pageId),
+					pingCounter = tick++
+				)
 				api.ingestPing(updatedInput)
 			}
 		}
 
 		sessionStorage.clearTrackedConversions(conversions)
 		storage.updateLastPingTimeStamp(currentTimeStamp)
+	}
+
+	private fun getConversionId(
+		options: ConversionOptions?,
+		sessionId: String,
+		pageId: String?
+	): String? {
+		if (options == null) return null
+		if (options.id != null) return options.id
+		return when (options.scope) {
+			ConversionScope.User -> storage.readRegisteredUserId()
+			ConversionScope.Session -> sessionId
+			ConversionScope.Page -> pageId
+			null -> null
+		}
 	}
 
 	override fun getData(input: IngestPingEmitterState): IngestPingData? {
@@ -56,7 +78,6 @@ internal class IngestPing(
 			previousSessionTimeStamp = storage.readPreviousSessionLastPingTimeStamp(),
 			timeOnPage = input.activeTimeOnPage.toInt(),
 			pageStartTimeStamp = sessionStorage.readPage()?.startTimeStamp ?: 0L,
-			conversions = null,
 			version = pingData.version,
 			pageVars = sessionStorage.readPageVars(),
 			sessionVars = sessionStorage.readSessionVars(),
@@ -83,12 +104,3 @@ internal class IngestPing(
 	}
 
 }
-
-private fun List<String>.join(): String? =
-	if (isEmpty()) {
-		null
-	} else {
-		this.joinToString(",")
-	}
-
-

@@ -20,14 +20,24 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
+import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Send
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.OutlinedButton
+import com.marfeel.compass.core.model.compass.ConversionOptions
+import com.marfeel.compass.core.model.compass.ConversionScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -171,31 +181,138 @@ fun MainScreen(
 				)
 			}
 
-			Row(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(top = 32.dp),
-				horizontalArrangement = Arrangement.SpaceBetween,
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				Text(
-					text = "Conversión",
-					style = TextStyle.Default.copy(fontWeight = FontWeight.Bold),
-					color = Color.Black,
-				)
 
+			Column(
+				modifier = Modifier.fillMaxWidth().padding(15.dp)
+			) {
 				var conversion by remember { mutableStateOf("") }
+				var options by remember { mutableStateOf(ConversionOptions()) }
+
 				TextField(
-					modifier = Modifier.padding(start = 16.dp),
+					modifier = Modifier.fillMaxWidth(),
 					value = conversion,
 					onValueChange = { conversion = it },
-					trailingIcon = {
-						Icon(
-							imageVector = Icons.Rounded.Send,
-							contentDescription = "Send",
-							Modifier.clickable { tracker.trackConversion(conversion) })
-					}
+					label = { Text("Conversion name") }
 				)
+				FloatingActionButton(
+					modifier = Modifier
+						.align(Alignment.CenterHorizontally)
+						.padding(top = 16.dp, start = 16.dp),
+					backgroundColor = Color(0xB2222222),
+					onClick = { tracker.trackConversion(conversion) }
+				) {
+					Text(text = "Track conversion", color = Color.White)
+				}
+				TextField(
+					modifier = Modifier.fillMaxWidth(),
+					value = options.id ?: "",
+					onValueChange = { options = options.copy(id = it.ifEmpty { null }) },
+					label = { Text("Id") }
+				)
+				TextField(
+					modifier = Modifier.fillMaxWidth(),
+					value = options.value ?: "",
+					onValueChange = { options = options.copy(value = it.ifEmpty { null }) },
+					label = { Text("Value") }
+				)
+				var scopeExpanded by remember { mutableStateOf(false) }
+				Box {
+					OutlinedButton(
+						modifier = Modifier.fillMaxWidth(),
+						onClick = { scopeExpanded = true }
+					) {
+						Text(text = options.scope?.name ?: "Select Scope")
+					}
+					DropdownMenu(
+						expanded = scopeExpanded,
+						onDismissRequest = { scopeExpanded = false }
+					) {
+						DropdownMenuItem(onClick = {
+							options = options.copy(scope = null)
+							scopeExpanded = false
+						}) {
+							Text("None")
+						}
+						ConversionScope.values().forEach { scope ->
+							DropdownMenuItem(onClick = {
+								options = options.copy(scope = scope)
+								scopeExpanded = false
+							}) {
+								Text(scope.name)
+							}
+						}
+					}
+				}
+				Text(
+					text = "Meta",
+					modifier = Modifier.padding(top = 16.dp),
+					color = Color.Black
+				)
+				var metaKey by remember { mutableStateOf("") }
+				var metaValue by remember { mutableStateOf("") }
+				Row(
+					modifier = Modifier.fillMaxWidth(),
+					verticalAlignment = Alignment.CenterVertically
+				) {
+					TextField(
+						modifier = Modifier.weight(1f),
+						value = metaKey,
+						onValueChange = { metaKey = it },
+						label = { Text("Key") }
+					)
+					Spacer(modifier = Modifier.width(8.dp))
+					TextField(
+						modifier = Modifier.weight(1f),
+						value = metaValue,
+						onValueChange = { metaValue = it },
+						label = { Text("Value") }
+					)
+					IconButton(
+						onClick = {
+							if (metaKey.isNotEmpty()) {
+								val currentMeta = options.meta?.toMutableMap() ?: mutableMapOf()
+								currentMeta[metaKey] = metaValue
+								options = options.copy(meta = currentMeta)
+								metaKey = ""
+								metaValue = ""
+							}
+						}
+					) {
+						Icon(Icons.Rounded.Add, contentDescription = "Add")
+					}
+				}
+				options.meta?.forEach { (key, value) ->
+					Row(
+						modifier = Modifier.fillMaxWidth(),
+						verticalAlignment = Alignment.CenterVertically
+					) {
+						Text(
+							text = "$key: $value",
+							modifier = Modifier.weight(1f),
+							color = Color.DarkGray
+						)
+						IconButton(
+							onClick = {
+								val currentMeta = options.meta?.toMutableMap() ?: mutableMapOf()
+								currentMeta.remove(key)
+								options = options.copy(meta = currentMeta.ifEmpty { null })
+							}
+						) {
+							Icon(Icons.Rounded.Close, contentDescription = "Remove")
+						}
+					}
+				}
+
+				FloatingActionButton(
+					modifier = Modifier
+						.align(Alignment.CenterHorizontally)
+						.padding(top = 16.dp, start = 16.dp),
+					backgroundColor = Color(0xB2222222),
+					onClick = { tracker.trackConversion(conversion, options) }
+				) {
+					Text(text = "Track conversion with options", color = Color.White)
+				}
+
 			}
 
 			Row(

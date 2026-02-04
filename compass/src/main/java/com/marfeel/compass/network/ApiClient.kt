@@ -6,6 +6,7 @@ import com.google.gson.JsonObject
 import com.marfeel.compass.BuildConfig
 import com.marfeel.compass.core.model.PingData
 import com.marfeel.compass.core.model.compass.IngestPingData
+import com.marfeel.compass.core.model.compass.IngestPingDataSerializer
 import com.marfeel.compass.core.model.compass.RFV
 import com.marfeel.compass.core.model.compass.RfvPayloadData
 import com.marfeel.compass.core.model.multimedia.MultimediaPingData
@@ -48,6 +49,7 @@ internal class ApiClient(
 	private val gson:Gson by lazy {
 		GsonBuilder()
 			.registerTypeAdapter(MultimediaPingData::class.java, MultimediaPingDataSerializer())
+			.registerTypeAdapter(IngestPingData::class.java, IngestPingDataSerializer())
 			.registerPingDataSerializer()
 			.create()
 	}
