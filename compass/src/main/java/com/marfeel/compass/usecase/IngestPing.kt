@@ -27,11 +27,8 @@ internal class IngestPing(
 		} else {
 			conversions.forEach { conversion ->
 				val updatedInput = input.copy(
-					conversions = conversion.name,
-					conversionInitiator = conversion.options?.initiator,
+					conversion = conversion,
 					conversionId = getConversionId(conversion.options, input.sessionId, input.pageId),
-					conversionValue = conversion.options?.value,
-					conversionMeta = conversion.options?.meta?.toMetaArray(),
 					pingCounter = tick++
 				)
 				api.ingestPing(updatedInput)
@@ -81,7 +78,6 @@ internal class IngestPing(
 			previousSessionTimeStamp = storage.readPreviousSessionLastPingTimeStamp(),
 			timeOnPage = input.activeTimeOnPage.toInt(),
 			pageStartTimeStamp = sessionStorage.readPage()?.startTimeStamp ?: 0L,
-			conversions = null,
 			version = pingData.version,
 			pageVars = sessionStorage.readPageVars(),
 			sessionVars = sessionStorage.readSessionVars(),
@@ -108,15 +104,3 @@ internal class IngestPing(
 	}
 
 }
-
-private fun List<Conversion>.joinNames(): String? =
-	if (isEmpty()) {
-		null
-	} else {
-		this.joinToString(",") { it.name }
-	}
-
-private fun Map<String, String>.toMetaArray(): List<List<String>> =
-	this.map { (key, value) -> listOf(key, value) }
-
-

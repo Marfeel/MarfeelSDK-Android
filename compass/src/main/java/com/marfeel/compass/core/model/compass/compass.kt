@@ -1,8 +1,13 @@
 package com.marfeel.compass.core.model.compass
 
+import com.google.gson.*
 import com.google.gson.annotations.SerializedName
 import com.marfeel.compass.core.model.PingData
+import com.marfeel.compass.core.model.registerPingDataSerializer
+import com.marfeel.compass.storage.Conversion
+import kotlin.jvm.Transient
 import org.json.JSONObject
+import java.lang.reflect.Type
 import java.util.UUID
 
 internal const val androidPageType = 4
@@ -34,16 +39,10 @@ internal class IngestPingData(
 	val timeOnPage: Int,
 	@SerializedName("ps")
 	val pageStartTimeStamp: Long,
-	@SerializedName("conv")
-	val conversions: String?,
-	@SerializedName("conv_i")
-	val conversionInitiator: String? = null,
+	@Transient
+	val conversion: Conversion? = null,
 	@SerializedName("cvid")
 	val conversionId: String? = null,
-	@SerializedName("cvv")
-	val conversionValue: String? = null,
-	@SerializedName("cvar")
-	val conversionMeta: List<List<String>>? = null,
 	version: String,
 	pageType: Int,
 	userConsent: Boolean?,
@@ -103,11 +102,8 @@ internal class IngestPingData(
 		scrollPercent: Int = this.scrollPercent,
 		timeOnPage: Int = this.timeOnPage,
 		pageStartTimeStamp: Long = this.pageStartTimeStamp,
-		conversions: String? = this.conversions,
-		conversionInitiator: String? = this.conversionInitiator,
+		conversion: Conversion? = this.conversion,
 		conversionId: String? = this.conversionId,
-		conversionValue: String? = this.conversionValue,
-		conversionMeta: List<List<String>>? = this.conversionMeta,
 		landingPage: String? = this.landingPage,
 		recirculationSource: String? = this.recirculationSource,
 		cc: Int = this.cc,
@@ -134,11 +130,8 @@ internal class IngestPingData(
 		previousSessionTimeStamp,
 		timeOnPage,
 		pageStartTimeStamp,
-		conversions,
-		conversionInitiator,
+		conversion,
 		conversionId,
-		conversionValue,
-		conversionMeta,
 		version,
 		pageType,
 		userConsent,
@@ -147,6 +140,38 @@ internal class IngestPingData(
 		cc,
 		pm
 	)
+}
+
+internal class IngestPingDataSerializer : JsonSerializer<IngestPingData> {
+	private val gson: Gson by lazy {
+		GsonBuilder()
+			.registerPingDataSerializer()
+			.create()
+	}
+
+	override fun serialize(src: IngestPingData, typeOfSrc: Type, context: JsonSerializationContext?): JsonElement {
+		val pingData = gson.toJsonTree(src).asJsonObject
+
+		src.conversion?.let { conversion ->
+			pingData.addProperty("conv", conversion.name)
+			conversion.options?.let { options ->
+				options.initiator?.let { pingData.addProperty("conv_i", it) }
+				options.value?.let { pingData.addProperty("cvv", it) }
+				options.meta?.let { meta ->
+					val metaArray = JsonArray()
+					meta.forEach { (key, value) ->
+						val pair = JsonArray()
+						pair.add(key)
+						pair.add(value)
+						metaArray.add(pair)
+					}
+					pingData.add("cvar", metaArray)
+				}
+			}
+		}
+
+		return pingData
+	}
 }
 
 /**
@@ -168,10 +193,15 @@ enum class ConversionScope {
 }
 
 data class ConversionOptions(
+	@SerializedName("conv_i")
 	val initiator: String? = null,
+	@SerializedName("cvid")
 	val id: String? = null,
+	@SerializedName("cvv")
 	val value: String? = null,
+	@SerializedName("cvar")
 	val meta: Map<String, String>? = null,
+	@Transient
 	val scope: ConversionScope? = null
 )
 
