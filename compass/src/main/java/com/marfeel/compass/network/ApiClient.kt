@@ -91,11 +91,15 @@ internal class ApiClient(
 	}
 
 	fun getRfv(rfvPayloadData: RfvPayloadData): Result<RFV?> {
-		val jsonRequest = Gson().toJson(rfvPayloadData)
+		val jsonData = gson.toJsonTree(rfvPayloadData).asJsonObject
 
 		val request = Request.Builder()
-			.url("$rfvBaseUrl/$rfvPath")
-			.post(jsonRequest.toRequestBody(mediaType))
+			.url("$pingBaseUrl/data/$rfvPath")
+			.post(
+				FormBody.Builder()
+					.addJson(jsonData)
+					.build()
+			)
 			.build()
 		return try {
 			val response = httpClient.newCall(request).execute()
