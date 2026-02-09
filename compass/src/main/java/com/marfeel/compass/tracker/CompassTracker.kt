@@ -229,6 +229,16 @@ interface CompassTracking {
      */
     fun setLandingPage(landingPage: String)
 
+    /**
+     * Manually updates the scroll percentage for the current page.
+     *
+     * Use this when the scroll view is not a native Android view (e.g. Flutter, Compose).
+     * The value is only updated if it exceeds the previously recorded maximum.
+     *
+     * @param scrollPosition scroll percentage (0-100).
+     */
+    fun updateScrollPercentage(scrollPosition: Int)
+
     companion object {
         /**
          * Prepare the Compass SDK to track the pages.
@@ -423,7 +433,7 @@ internal object CompassTracker : CompassTracking {
         storage.updateUserType(userType)
     }
 
-    internal fun updateScrollPercentage(scrollPosition: Int) {
+    override fun updateScrollPercentage(scrollPosition: Int) {
         check(initialized) { compassNotInitializedErrorMessage }
         pingEmitter.updateScrollPercentage(scrollPosition)
     }
