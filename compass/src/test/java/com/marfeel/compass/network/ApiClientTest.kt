@@ -80,7 +80,7 @@ class ApiClientTest {
 		enqueueApiResponse(200)
 		givenAnApiClient().getRfv(anyRfvPayloadData)
 		assertEquals(
-			"text/plain; charset=utf-8",
+			"application/x-www-form-urlencoded",
 			server.takeRequest().headers["content-type"]
 		)
 	}
