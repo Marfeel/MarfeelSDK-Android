@@ -12,6 +12,8 @@ internal class IngestPingEmitter(
     coroutineContext: CoroutineContext = Dispatchers.Unconfined
 ) : BackgroundWatcher {
 
+    var onResumeCallback: () -> Unit = {}
+
     private val pingFrequencyInMs = 10000L
     private val job = SupervisorJob()
     private val scope: CoroutineScope = CoroutineScope(coroutineContext + job)
@@ -71,6 +73,7 @@ internal class IngestPingEmitter(
             pingEmitterState =
                 pingEmitterState?.addTimeOnBackground(currentTimeStampInSeconds() - timeStamp)
         lastBackgroundTimeStamp = null
+        onResumeCallback()
     }
 
     override fun onPause(owner: LifecycleOwner) {
