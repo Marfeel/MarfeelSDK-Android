@@ -25,6 +25,7 @@ internal class IngestPingEmitter(
     fun start(
         url: String,
         pageId: String,
+        sessionId: String,
         scrollPosition: Int? = null
     ) {
         stop()
@@ -33,6 +34,7 @@ internal class IngestPingEmitter(
         pingEmitterState = IngestPingEmitterState(
             url = url,
             pageId = pageId,
+            sessionId = sessionId,
             scrollPercent = scrollPosition,
             pageStartTimeStamp = currentTimeStampInSeconds(),
             timeOnBackground = 0,
@@ -85,6 +87,7 @@ internal class IngestPingEmitter(
 internal data class IngestPingEmitterState(
     val url: String,
     val pageId: String,
+    val sessionId: String,
     val scrollPercent: Int?,
     val pageStartTimeStamp: Long,
     val timeOnBackground: Long,

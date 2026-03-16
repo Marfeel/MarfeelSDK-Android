@@ -316,7 +316,7 @@ internal object CompassTracker : CompassTracking {
         sessionStorage.clearPageVars()
         sessionStorage.clearPageMetrics()
         sessionStorage.updateRecirculationSource(rs)
-        pingEmitter.start(url, page.pageId)
+        pingEmitter.start(url, page.pageId, sessionStorage.readSession().id)
         MultimediaTracking.reset()
     }
 

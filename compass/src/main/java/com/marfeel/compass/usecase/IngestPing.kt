@@ -68,7 +68,7 @@ internal class IngestPing(
 			previousUrl = pingData.previousUrl,
 			pageId = input.pageId,
 			originalUserId = pingData.originalUserId,
-			sessionId = pingData.sessionId,
+			sessionId = input.sessionId,
 			pingCounter = null,
 			currentTimeStamp = pingData.currentTimeStamp,
 			userType = pingData.userType,
