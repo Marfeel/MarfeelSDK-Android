@@ -288,6 +288,7 @@ internal object CompassTracker : CompassTracking {
         sessionStorage.updateAccountId(accountId)
         sessionStorage.setPageTechnology(tech)
         configureSession()
+        pingEmitter.onResumeCallback = ::configureSession
     }
 
     private fun configureSession() {
@@ -310,13 +311,12 @@ internal object CompassTracker : CompassTracking {
     override fun trackNewPage(url: String, rs: String?) {
         check(initialized) { compassNotInitializedErrorMessage }
 
-        configureSession()
         val page = Page(url)
         sessionStorage.updatePage(page)
         sessionStorage.clearPageVars()
         sessionStorage.clearPageMetrics()
         sessionStorage.updateRecirculationSource(rs)
-        pingEmitter.start(url, page.pageId)
+        pingEmitter.start(url, page.pageId, sessionStorage.readSession().id)
         MultimediaTracking.reset()
     }
 

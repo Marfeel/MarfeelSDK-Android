@@ -68,7 +68,6 @@ fun MainScreen(
 	val coroutineScope = CoroutineScope(Dispatchers.IO)
 
     tracker.trackScreen("main screen")
-    tracker.trackScreen("main screen")
 	tracker.setSessionVar("pepe", "pepa")
 	tracker.setSessionVar("pepe2", "pepa2")
 	tracker.setUserVar("lolo", "lola")

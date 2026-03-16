@@ -12,6 +12,8 @@ internal class IngestPingEmitter(
     coroutineContext: CoroutineContext = Dispatchers.Unconfined
 ) : BackgroundWatcher {
 
+    var onResumeCallback: () -> Unit = {}
+
     private val pingFrequencyInMs = 10000L
     private val job = SupervisorJob()
     private val scope: CoroutineScope = CoroutineScope(coroutineContext + job)
@@ -23,6 +25,7 @@ internal class IngestPingEmitter(
     fun start(
         url: String,
         pageId: String,
+        sessionId: String,
         scrollPosition: Int? = null
     ) {
         stop()
@@ -31,6 +34,7 @@ internal class IngestPingEmitter(
         pingEmitterState = IngestPingEmitterState(
             url = url,
             pageId = pageId,
+            sessionId = sessionId,
             scrollPercent = scrollPosition,
             pageStartTimeStamp = currentTimeStampInSeconds(),
             timeOnBackground = 0,
@@ -71,6 +75,7 @@ internal class IngestPingEmitter(
             pingEmitterState =
                 pingEmitterState?.addTimeOnBackground(currentTimeStampInSeconds() - timeStamp)
         lastBackgroundTimeStamp = null
+        onResumeCallback()
     }
 
     override fun onPause(owner: LifecycleOwner) {
@@ -82,6 +87,7 @@ internal class IngestPingEmitter(
 internal data class IngestPingEmitterState(
     val url: String,
     val pageId: String,
+    val sessionId: String,
     val scrollPercent: Int?,
     val pageStartTimeStamp: Long,
     val timeOnBackground: Long,
