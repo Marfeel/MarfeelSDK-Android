@@ -20,7 +20,7 @@ internal class ExperiencesResponseParser(
 	private val contentResolver: ContentResolver? = null,
 ) {
 	private val gson = Gson()
-	private val metadataKeys = setOf("targeting", "content")
+	private val metadataKeys = setOf("targeting", "content", "experiments")
 
 	fun parse(jsonString: String): ParseResult {
 		val root = gson.fromJson(jsonString, JsonObject::class.java)
@@ -81,8 +81,7 @@ internal class ExperiencesResponseParser(
 			selectors = parseSelectors(action),
 			filters = parseFilters(action),
 			rawJson = rawJson,
-			contentResolver = contentResolver,
-		)
+		).also { it.contentResolver = contentResolver }
 	}
 
 	private fun parseSelectors(action: JsonObject): List<ExperienceSelector>? {

@@ -142,6 +142,35 @@ class ExperimentManagerTest {
 	}
 
 	@Test
+	fun `filterByExperiments keeps experience with NOT_EQUALS filter when variant differs`() {
+		val groups = makeExperimentGroups()
+		manager.handleExperimentGroups(groups)
+		val assignedVariant = manager.getAssignments()["testGroup"]!!
+		val otherVariant = if (assignedVariant == "variant_a") "variant_b" else "variant_a"
+
+		val experience = makeExperience(
+			"exp1",
+			filters = listOf(ExperienceFilter("mrf_exp_testGroup", "NOT_EQUALS", listOf(otherVariant)))
+		)
+		val filtered = manager.filterByExperiments(listOf(experience))
+		assertEquals(1, filtered.size)
+	}
+
+	@Test
+	fun `filterByExperiments drops experience with NOT_EQUALS filter when variant matches`() {
+		val groups = makeExperimentGroups()
+		manager.handleExperimentGroups(groups)
+		val assignedVariant = manager.getAssignments()["testGroup"]!!
+
+		val experience = makeExperience(
+			"exp1",
+			filters = listOf(ExperienceFilter("mrf_exp_testGroup", "NOT_EQUALS", listOf(assignedVariant)))
+		)
+		val filtered = manager.filterByExperiments(listOf(experience))
+		assertEquals(0, filtered.size)
+	}
+
+	@Test
 	fun `getTargetingEntries returns experiment assignments`() {
 		val groups = makeExperimentGroups()
 		manager.handleExperimentGroups(groups)

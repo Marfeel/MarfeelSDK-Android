@@ -15,9 +15,13 @@ data class Experience(
 	val selectors: List<ExperienceSelector>?,
 	val filters: List<ExperienceFilter>?,
 	val rawJson: Map<String, Any>,
-	var resolvedContent: String? = null,
-	@Transient val contentResolver: ContentResolver? = null,
 ) {
+	@Transient
+	internal var contentResolver: ContentResolver? = null
+
+	var resolvedContent: String? = null
+		private set
+
 	suspend fun resolve(): String? {
 		if (resolvedContent != null) return resolvedContent
 		if (contentUrl == null) return null

@@ -10,6 +10,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentHashMap
 
 interface ExperiencesTracking {
 	fun addTargeting(key: String, value: String)
@@ -34,7 +35,7 @@ internal object ExperiencesTracker : ExperiencesTracking {
 	private val experimentManager: ExperimentManager by lazy { CompassComponent.experimentManager }
 	private val frequencyCapManager: FrequencyCapManager by lazy { CompassComponent.frequencyCapManager }
 
-	private val customTargeting = mutableMapOf<String, String>()
+	private val customTargeting = ConcurrentHashMap<String, String>()
 
 	override fun addTargeting(key: String, value: String) {
 		customTargeting[key] = value

@@ -14,9 +14,10 @@ internal class ExperiencesApiClient(
 	private val sessionStorage: SessionStorage,
 	private val experimentManager: ExperimentManager,
 	private val frequencyCapManager: FrequencyCapManager,
-	private val baseUrl: String = BuildConfig.EXPERIENCES_BASE_URL,
+	baseUrl: String = BuildConfig.EXPERIENCES_BASE_URL,
 	private val networkInfoProvider: NetworkInfoProvider? = null
 ) {
+	private val baseUrl: String = baseUrl.trimEnd('/')
 	fun fetch(url: String, customTargeting: Map<String, String>): String? {
 		val httpUrl = buildUrl(url, customTargeting) ?: return null
 		val request = Request.Builder().url(httpUrl).build()

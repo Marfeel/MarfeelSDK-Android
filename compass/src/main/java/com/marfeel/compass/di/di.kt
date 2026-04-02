@@ -69,12 +69,21 @@ internal object CompassComponent : CompassServiceLocator {
 
     override fun getPingMultimedia(): MultimediaPing = MultimediaPing(apiClient, sessionStorage, storage)
 
+    private val experiencesHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .protocols(listOf(Protocol.HTTP_1_1))
+            .addInterceptor { chain ->
+                chain.proceed(
+                    chain.request()
+                        .newBuilder()
+                        .header("User-Agent", getUserAgent())
+                        .build()
+                )
+            }
+            .build()
+    }
     override val contentResolver: ContentResolver by lazy {
-        ContentResolver(
-            OkHttpClient.Builder()
-                .protocols(listOf(Protocol.HTTP_1_1))
-                .build()
-        )
+        ContentResolver(experiencesHttpClient)
     }
     override val experiencesResponseParser: ExperiencesResponseParser by lazy {
         ExperiencesResponseParser(contentResolver)
@@ -96,17 +105,7 @@ internal object CompassComponent : CompassServiceLocator {
     }
     override val experiencesApiClient: ExperiencesApiClient by lazy {
         ExperiencesApiClient(
-            httpClient = OkHttpClient.Builder()
-                .protocols(listOf(Protocol.HTTP_1_1))
-                .addInterceptor { chain ->
-                    chain.proceed(
-                        chain.request()
-                            .newBuilder()
-                            .header("User-Agent", getUserAgent())
-                            .build()
-                    )
-                }
-                .build(),
+            httpClient = experiencesHttpClient,
             storage = storage,
             sessionStorage = sessionStorage,
             experimentManager = experimentManager,
