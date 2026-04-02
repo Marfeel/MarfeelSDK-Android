@@ -20,6 +20,7 @@ android {
         buildConfigField "String", "COMPASS_PING_BASE_URL", "\"https://events.newsroom.bi\""
         buildConfigField "String", "COMPASS_PING_FALLBACK_BASE_URL", "\"https://icu.newsroom.bi\""
         buildConfigField "String", "COMPASS_RFV_BASE_URL", "\"https://compassdata.mrf.io\""
+        buildConfigField "String", "EXPERIENCES_BASE_URL", "\"https://flowcards.mrf.io\""
         buildConfigField "String", "VERSION", "\"$compassVersion\""
         buildConfigField "String", "API_VERSION", "\"$apiVersion\""
     }
