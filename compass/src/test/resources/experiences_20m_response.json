@@ -1,0 +1,276 @@
+{
+    "compass": {},
+    "targeting": {
+        "frequencyCap": {
+            "FC_ThHPY5uhTVm18whxUUB1OQ": [
+                "cls"
+            ],
+            "IL_vG9H2h7ST-qy2g5f17hPuw": [
+                "d"
+            ],
+            "IL_wbA7tMXMQL-qDBBSKPOGpg": [
+                "d"
+            ]
+        }
+    },
+    "content": {
+        "editorialId": "262283850"
+    },
+    "flowcards": {
+        "cards": {}
+    },
+    "inline": {
+        "actions": {
+            "404 - MF - 20M - Pero te puede interesar": {
+                "id": "IL_gkzbOCfARluk3UxUk3OwRQ",
+                "placement": "body.error-page .c-subhome__content",
+                "content": {
+                    "type": "Json",
+                    "url": "https://flowcards.mrf.io/transformer/marfeelrecommenderexperienceengine.mrf.io?url=test1"
+                },
+                "features": {
+                    "mode": "modal",
+                    "removable": true
+                },
+                "selectors": [
+                    {
+                        "selector": "body.error-page .c-subhome__content",
+                        "strategy": "append"
+                    }
+                ]
+            },
+            "Home - RF - 20M - Bloque 20deCompras": {
+                "id": "IL_qOIuJJxpTmS7u9qz-B8_4g",
+                "placement": ".bloque-20decompras",
+                "content": {
+                    "type": "Json",
+                    "url": "https://flowcards.mrf.io/transformer/marfeelrecommenderexperienceengine.mrf.io?url=test2"
+                },
+                "strategy": "replace",
+                "features": {
+                    "button": {
+                        "action": "setSnapPoint:hidden"
+                    },
+                    "mode": "modal",
+                    "removable": true,
+                    "transition": "scrollBounded"
+                },
+                "selectors": [
+                    {
+                        "selector": ".bloque-20decompras",
+                        "strategy": "replace"
+                    }
+                ]
+            },
+            "MF - 20M - Encuesta - Recomendadas": {
+                "id": "IL_00AB1AE4RQqcqiVaKrEgAg",
+                "placement": ".article-poll .c-detail__body",
+                "content": {
+                    "type": "Json",
+                    "url": "https://flowcards.mrf.io/transformer/marfeelrecommenderexperienceengine.mrf.io?url=test3"
+                },
+                "strategy": "replace",
+                "features": {
+                    "mode": "modal",
+                    "removable": true
+                },
+                "selectors": [
+                    {
+                        "selector": ".article-poll .c-detail__body",
+                        "strategy": "insertAfter"
+                    }
+                ]
+            },
+            "Home - MF - 20M - RF - Turismo (Slot 2)": {
+                "id": "IL_MxYqtDnHScO0_v0Dat1XuA",
+                "placement": "div#TfhFgScrD8CQBoiGiObI",
+                "content": {
+                    "type": "Json",
+                    "url": "https://flowcards.mrf.io/transformer/marfeelrecommenderexperienceengine.mrf.io?url=test4"
+                },
+                "strategy": "replace",
+                "features": {
+                    "button": {
+                        "action": "setSnapPoint:hidden"
+                    },
+                    "mode": "modal",
+                    "removable": true,
+                    "transition": "scrollBounded"
+                },
+                "selectors": [
+                    {
+                        "selector": "div#TfhFgScrD8CQBoiGiObI",
+                        "strategy": "replace"
+                    }
+                ]
+            },
+            "Home - RF - 20M - Bloque Gente": {
+                "id": "IL_GdAoW4O2ReyPfvWAIhVrLA",
+                "placement": ".bloque2-branded-gente",
+                "content": {
+                    "type": "Json",
+                    "url": "https://flowcards.mrf.io/transformer/marfeelrecommenderexperienceengine.mrf.io?url=test5"
+                },
+                "strategy": "replace",
+                "features": {
+                    "button": {
+                        "action": "setSnapPoint:hidden"
+                    },
+                    "mode": "modal",
+                    "removable": true,
+                    "transition": "scrollBounded"
+                },
+                "selectors": [
+                    {
+                        "selector": ".bloque2-branded-gente",
+                        "strategy": "replace"
+                    }
+                ]
+            },
+            "Articulo - MF - 20M - Sidebar 2 - Destacado": {
+                "id": "IL_ttF3eLbNSu2ohHTdOuJJeQ",
+                "placement": ".aside-blockContent-marfeel-1",
+                "content": {
+                    "type": "Json",
+                    "url": "https://flowcards.mrf.io/transformer/marfeelrecommenderexperienceengine.mrf.io?url=test6"
+                },
+                "features": {
+                    "mode": "modal",
+                    "removable": true
+                },
+                "selectors": [
+                    {
+                        "selector": ".aside-blockContent-marfeel-1",
+                        "strategy": "replace"
+                    }
+                ]
+            },
+            "Home - MF - 20M - RF - Turismo (Slot 1)": {
+                "id": "IL_mTh1XoKURQe-UkJSBk2HNA",
+                "placement": "div#VCWAnR0kA8oZsTynQlMx",
+                "content": {
+                    "type": "Json",
+                    "url": "https://flowcards.mrf.io/transformer/marfeelrecommenderexperienceengine.mrf.io?url=test7"
+                },
+                "strategy": "replace",
+                "features": {
+                    "button": {
+                        "action": "setSnapPoint:hidden"
+                    },
+                    "mode": "modal",
+                    "removable": true,
+                    "transition": "scrollBounded"
+                },
+                "selectors": [
+                    {
+                        "selector": "div#VCWAnR0kA8oZsTynQlMx",
+                        "strategy": "replace"
+                    }
+                ]
+            },
+            "Articulo - MF - 20M - Sidebar 1 - Lo más visto": {
+                "id": "IL_sX4t5TGWTYaYQ947eaQO_A",
+                "placement": ".aside-blockContent-marfeel-2",
+                "content": {
+                    "type": "Json",
+                    "url": "https://flowcards.mrf.io/transformer/marfeelrecommenderexperienceengine.mrf.io?url=test8"
+                },
+                "features": {
+                    "mode": "modal",
+                    "removable": true
+                },
+                "selectors": [
+                    {
+                        "selector": ".aside-blockContent-marfeel-2",
+                        "strategy": "replace"
+                    }
+                ]
+            },
+            "Home - MF - 20M - Bloque Ciudades (Madrid) - PDF": {
+                "id": "IL_-7LpTCxhQm6FXY9HtiOI1Q",
+                "placement": ".edicion_impresa_news",
+                "content": {
+                    "type": "TextHTML",
+                    "url": "https://flowcards.mrf.io/transformer/marfeelwidgetexperienceengine.mrf.io?url=test9"
+                },
+                "strategy": "replace",
+                "features": {
+                    "mode": "contextual",
+                    "removable": true,
+                    "background": "#F5F5F5"
+                },
+                "selectors": [
+                    {
+                        "selector": ".edicion_impresa_news",
+                        "strategy": "replace"
+                    }
+                ]
+            },
+            "Home - MF - 20M - Bloque Ciudades (Madrid)": {
+                "id": "IL_5jP5oc0gSEuuroyzwwG6pA",
+                "placement": ".bloqueciudadesmarfeel",
+                "content": {
+                    "type": "TextHTML",
+                    "url": "https://flowcards.mrf.io/transformer/marfeelwidgetexperienceengine.mrf.io?url=test10"
+                },
+                "strategy": "replace",
+                "features": {
+                    "mode": "contextual",
+                    "removable": true
+                },
+                "selectors": [
+                    {
+                        "selector": ".bloqueciudadesmarfeel",
+                        "strategy": "replace"
+                    }
+                ]
+            },
+            "Home - RF - 20M - Bloque debajo Animaleros": {
+                "id": "IL_cOvP3QCaT8SEOeG4MA6-rw",
+                "placement": ".bloque3-branded",
+                "content": {
+                    "type": "Json",
+                    "url": "https://flowcards.mrf.io/transformer/marfeelrecommenderexperienceengine.mrf.io?url=test11"
+                },
+                "strategy": "replace",
+                "features": {
+                    "button": {
+                        "action": "setSnapPoint:hidden"
+                    },
+                    "mode": "modal",
+                    "removable": true,
+                    "transition": "scrollBounded"
+                },
+                "selectors": [
+                    {
+                        "selector": ".bloque3-branded",
+                        "strategy": "replace"
+                    }
+                ]
+            },
+            "Home - MF - 20M - RF - Bloque Más actualidad": {
+                "id": "IL_n-9_qPW3Rba72KrkkAO5Hw",
+                "placement": ".bloque_mas_actualidad",
+                "content": {
+                    "type": "Json",
+                    "url": "https://flowcards.mrf.io/transformer/marfeelrecommenderexperienceengine.mrf.io?url=test12"
+                },
+                "strategy": "replace",
+                "features": {
+                    "button": {
+                        "action": "setSnapPoint:hidden"
+                    },
+                    "mode": "modal",
+                    "removable": true,
+                    "transition": "scrollBounded"
+                },
+                "selectors": [
+                    {
+                        "selector": ".bloque_mas_actualidad",
+                        "strategy": "replace"
+                    }
+                ]
+            }
+        }
+    }
+}

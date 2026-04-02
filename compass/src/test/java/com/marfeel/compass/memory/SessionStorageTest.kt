@@ -19,12 +19,14 @@ import junit.framework.TestCase.assertNotNull
 internal class SessionStorageTest {
 
 	private lateinit var sessionStorage: SessionStorage
-	private val storage = mockk<Storage>()
+	private val storage = mockk<Storage>(relaxUnitFun = true)
+	private val sessionVars = mutableMapOf<String, String>()
+	private var storedSession: Session? = null
 
 	@Before
 	fun setup() {
-		var storedSession: Session? = null
-		val sessionVars = mutableMapOf<String, String>()
+		sessionVars.clear()
+		storedSession = null
 		every { storage.readSession() } answers { storedSession }
 		every { storage.setSession(any()) } answers { storedSession = firstArg() }
 		every { storage.readLastPingTimeStamp() } returns null

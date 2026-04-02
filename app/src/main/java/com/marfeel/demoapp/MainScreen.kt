@@ -48,6 +48,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.marfeel.compass.core.model.compass.UserType
+import com.marfeel.compass.experiences.ExperiencesTracking
 import com.marfeel.compass.tracker.CompassTracking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -363,6 +364,106 @@ fun MainScreen(
 					}) {
 					Text(text = "RFV", color = Color.White)
 				}
+			}
+
+			Text(
+				text = "Experiences",
+				color = Color.Black,
+				style = titleStyle,
+				modifier = Modifier.padding(top = 32.dp, bottom = 16.dp)
+			)
+
+			var experiencesUrl by remember { mutableStateOf("https://elpais.com/") }
+			var experiencesResult by remember { mutableStateOf("") }
+			var experiencesLoading by remember { mutableStateOf(false) }
+			val experiencesTracker = remember { ExperiencesTracking.getInstance() }
+
+			TextField(
+				modifier = Modifier.fillMaxWidth(),
+				value = experiencesUrl,
+				onValueChange = { experiencesUrl = it },
+				label = { Text("URL") }
+			)
+
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(top = 16.dp),
+				horizontalArrangement = Arrangement.SpaceEvenly
+			) {
+				FloatingActionButton(
+					backgroundColor = Color(0xFF1231D1),
+					onClick = {
+						experiencesLoading = true
+						experiencesResult = ""
+						coroutineScope.launch {
+							try {
+								val experiences = experiencesTracker.fetchExperiences(
+									url = experiencesUrl,
+									resolve = false
+								)
+								experiencesResult = "Found ${experiences.size} experiences:\n" +
+									experiences.joinToString("\n") { exp ->
+										"- [${exp.typeRaw}] ${exp.name} (id=${exp.id})"
+									}
+							} catch (e: Exception) {
+								experiencesResult = "Error: ${e.message}"
+							}
+							experiencesLoading = false
+						}
+					}
+				) {
+					Text(text = "Fetch", color = Color.White)
+				}
+				FloatingActionButton(
+					backgroundColor = Color(0xFF641172),
+					onClick = {
+						experiencesLoading = true
+						experiencesResult = ""
+						coroutineScope.launch {
+							try {
+								val experiences = experiencesTracker.fetchExperiences(
+									url = experiencesUrl,
+									resolve = true
+								)
+								experiencesResult = "Found ${experiences.size} experiences:\n" +
+									experiences.joinToString("\n") { exp ->
+										val resolved = if (exp.resolvedContent != null)
+											" [resolved: ${exp.resolvedContent!!.take(100)}...]"
+										else ""
+										"- [${exp.typeRaw}] ${exp.name}$resolved"
+									}
+							} catch (e: Exception) {
+								experiencesResult = "Error: ${e.message}"
+							}
+							experiencesLoading = false
+						}
+					}
+				) {
+					Text(text = "Fetch + Resolve", color = Color.White)
+				}
+			}
+
+			if (experiencesLoading) {
+				Text(
+					text = "Loading...",
+					color = Color.Gray,
+					modifier = Modifier.padding(top = 8.dp)
+				)
+			}
+
+			if (experiencesResult.isNotEmpty()) {
+				Text(
+					text = experiencesResult,
+					color = Color.Black,
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(top = 8.dp)
+						.clip(RoundedCornerShape(4.dp))
+						.background(Color(0xFFF0F0F0))
+						.padding(12.dp),
+					style = TextStyle.Default.copy(fontSize = 12.sp)
+				)
 			}
 		}
 	}

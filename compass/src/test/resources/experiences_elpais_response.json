@@ -1,0 +1,111 @@
+{
+    "targeting": {
+        "frequencyCap": {
+            "IL_HMNmL7lWTOWBldjNWm1PgQ": [
+                "d"
+            ],
+            "IL_CRdHEBwJQxqkrmXggsSp-Q": [
+                "d"
+            ],
+            "IL_FQuCyODGSOeqppSkcpr3Vw": [
+                "ls"
+            ],
+            "IL_YF3w9ADrR7eTwRoCMEkUvg": [
+                "ls"
+            ]
+        }
+    },
+    "content": {
+        "editorialId": "190281109"
+    },
+    "flowcards": {
+        "cards": {}
+    },
+    "inline": {
+        "actions": {
+            "Home> CTA cabecera> 1 año, 60 € > 30/03/26 > RESTO": {
+                "id": "IL_mLTwLgXbRS-MJzh1rJM6ng",
+                "placement": "#s_b_df",
+                "content": {
+                    "type": "TextHTML",
+                    "url": "https://flowcards.mrf.io/transformer/marfeelwidgetexperienceengine.mrf.io?url=test"
+                },
+                "strategy": "replace",
+                "features": {
+                    "mode": "contextual",
+                    "removable": true
+                },
+                "selectors": [
+                    {
+                        "selector": "#s_b_df",
+                        "strategy": "replace"
+                    }
+                ]
+            },
+            "EP-R006 > content_personalizacion > bloque Madrid": {
+                "id": "IL_r1-HQ0psRiiLuHZTpi9lDQ",
+                "placement": "popup",
+                "content": {
+                    "type": "Json",
+                    "url": "https://flowcards.mrf.io/transformer/marfeelrecommenderexperienceengine.mrf.io?url=test"
+                },
+                "strategy": "append",
+                "features": {
+                    "mode": "contextual",
+                    "removable": false,
+                    "accentColor": "#ff9828",
+                    "position": "2,1",
+                    "backdropColor": "transparent",
+                    "maxWidth": "100vw"
+                }
+            }
+        }
+    },
+    "compass": {
+        "actions": {
+            "Recirculacion Ticker Directos": {
+                "id": "AC_5zWHRfzXTQOEISmksXIoew",
+                "placement": "window",
+                "recirculationModules": [
+                    {
+                        "name": "ticker_directos",
+                        "selector": "#csw > div.ek"
+                    }
+                ]
+            }
+        }
+    },
+    "affiliationEnhancer": {
+        "actions": {
+            " Affiliation enhancer Escaparate": {
+                "id": "AC_-R26iUcSTyCwya8od9k2yg",
+                "placement": "window",
+                "context": "{\"source\":\"direct\",\"campaign\":\"\",\"url\":\"https://elpais.com/\"}"
+            }
+        }
+    },
+    "adManager": {
+        "actions": {
+            "GAM Portada EP": {
+                "id": "AC_9YP58jOFQli-neuaHNqpcA",
+                "placement": "window",
+                "targeting": [
+                    {
+                        "key": "m_test",
+                        "value": "portada_ep"
+                    }
+                ]
+            },
+            "GAM loyal segment": {
+                "id": "AC_Gwyc3MW_TWiMzAIUsIiHRA",
+                "placement": "window",
+                "targeting": [
+                    {
+                        "key": "m_user",
+                        "value": "loyal"
+                    }
+                ]
+            }
+        }
+    }
+}
