@@ -7,13 +7,10 @@ import com.marfeel.compass.experiences.model.RecirculationLink
 import com.marfeel.compass.experiences.model.RecirculationModule
 import com.marfeel.compass.tracker.CompassTracker
 import com.marfeel.compass.tracker.compassNotInitializedErrorMessage
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 
@@ -22,9 +19,9 @@ interface ExperiencesTracking {
 	fun trackImpression(experienceId: String)
 	fun trackClose(experienceId: String)
 
-	fun trackElegible(experiences: List<Experience>)
-	fun trackRecirculationImpression(experience: Experience)
-	fun trackClick(experience: Experience)
+	fun trackElegible(experiences: Map<Experience, List<RecirculationLink>>)
+	fun trackRecirculationImpression(experience: Experience, links: List<RecirculationLink>)
+	fun trackClick(experience: Experience, link: RecirculationLink)
 
 	suspend fun fetchExperiences(
 		url: String,
@@ -43,10 +40,9 @@ internal object ExperiencesTracker : ExperiencesTracking {
 	private val responseParser: ExperiencesResponseParser by lazy { CompassComponent.experiencesResponseParser }
 	private val experimentManager: ExperimentManager by lazy { CompassComponent.experimentManager }
 	private val frequencyCapManager: FrequencyCapManager by lazy { CompassComponent.frequencyCapManager }
-	private val recirculationApiClient: RecirculationApiClient by lazy { CompassComponent.recirculationApiClient }
+	private val recirculationTracker: RecirculationTracking = RecirculationTracker
 
 	private val customTargeting = ConcurrentHashMap<String, String>()
-	private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
 	override fun addTargeting(key: String, value: String) {
 		customTargeting[key] = value
@@ -60,22 +56,18 @@ internal object ExperiencesTracker : ExperiencesTracking {
 		frequencyCapManager.trackClose(experienceId)
 	}
 
-	override fun trackElegible(experiences: List<Experience>) {
-		scope.launch { recirculationApiClient.send("elegible", experiences.map { it.toRecirculationModule() }) }
+	override fun trackElegible(experiences: Map<Experience, List<RecirculationLink>>) {
+		val modules = experiences.map { (exp, links) -> RecirculationModule(exp.id, links) }
+		recirculationTracker.trackElegible(modules)
 	}
 
-	override fun trackRecirculationImpression(experience: Experience) {
-		scope.launch { recirculationApiClient.send("impression", listOf(experience.toRecirculationModule())) }
+	override fun trackRecirculationImpression(experience: Experience, links: List<RecirculationLink>) {
+		recirculationTracker.trackImpression(RecirculationModule(experience.id, links))
 	}
 
-	override fun trackClick(experience: Experience) {
-		scope.launch { recirculationApiClient.send("click", listOf(experience.toRecirculationModule())) }
+	override fun trackClick(experience: Experience, link: RecirculationLink) {
+		recirculationTracker.trackClick(RecirculationModule(experience.id, listOf(link)))
 	}
-
-	private fun Experience.toRecirculationModule() = RecirculationModule(
-		name = id,
-		links = listOf(RecirculationLink(url = contentUrl ?: "", position = "255"))
-	)
 
 	override suspend fun fetchExperiences(
 		url: String,
