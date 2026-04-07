@@ -5,10 +5,13 @@ import com.marfeel.compass.experiences.model.Experience
 import com.marfeel.compass.experiences.model.ExperienceType
 import com.marfeel.compass.tracker.CompassTracker
 import com.marfeel.compass.tracker.compassNotInitializedErrorMessage
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 
@@ -16,6 +19,10 @@ interface ExperiencesTracking {
 	fun addTargeting(key: String, value: String)
 	fun trackImpression(experienceId: String)
 	fun trackClose(experienceId: String)
+
+	fun trackElegible(experiences: List<Experience>)
+	fun trackRecirculationImpression(experience: Experience)
+	fun trackClick(experience: Experience)
 
 	suspend fun fetchExperiences(
 		url: String,
@@ -34,8 +41,10 @@ internal object ExperiencesTracker : ExperiencesTracking {
 	private val responseParser: ExperiencesResponseParser by lazy { CompassComponent.experiencesResponseParser }
 	private val experimentManager: ExperimentManager by lazy { CompassComponent.experimentManager }
 	private val frequencyCapManager: FrequencyCapManager by lazy { CompassComponent.frequencyCapManager }
+	private val recirculationApiClient: RecirculationApiClient by lazy { CompassComponent.recirculationApiClient }
 
 	private val customTargeting = ConcurrentHashMap<String, String>()
+	private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
 	override fun addTargeting(key: String, value: String) {
 		customTargeting[key] = value
@@ -47,6 +56,18 @@ internal object ExperiencesTracker : ExperiencesTracking {
 
 	override fun trackClose(experienceId: String) {
 		frequencyCapManager.trackClose(experienceId)
+	}
+
+	override fun trackElegible(experiences: List<Experience>) {
+		scope.launch { recirculationApiClient.send("elegible", experiences) }
+	}
+
+	override fun trackRecirculationImpression(experience: Experience) {
+		scope.launch { recirculationApiClient.send("impression", listOf(experience)) }
+	}
+
+	override fun trackClick(experience: Experience) {
+		scope.launch { recirculationApiClient.send("click", listOf(experience)) }
 	}
 
 	override suspend fun fetchExperiences(
