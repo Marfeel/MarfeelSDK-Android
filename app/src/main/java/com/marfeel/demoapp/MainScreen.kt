@@ -49,7 +49,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.experiences.ExperiencesTracking
+import com.marfeel.compass.experiences.RecirculationTracking
 import com.marfeel.compass.experiences.model.Experience
+import com.marfeel.compass.experiences.model.RecirculationLink
+import com.marfeel.compass.experiences.model.RecirculationModule
 import com.marfeel.compass.tracker.CompassTracking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -379,6 +382,7 @@ fun MainScreen(
 			var experiencesLoading by remember { mutableStateOf(false) }
 			var lastExperiences by remember { mutableStateOf<List<Experience>>(emptyList()) }
 			val experiencesTracker = remember { ExperiencesTracking.getInstance() }
+			val recirculationTracker = remember { RecirculationTracking.getInstance() }
 
 			TextField(
 				modifier = Modifier.fillMaxWidth(),
@@ -479,15 +483,31 @@ fun MainScreen(
 				) {
 					FloatingActionButton(
 						backgroundColor = Color(0xFF00AA00),
-						onClick = { experiencesTracker.trackElegible(lastExperiences) }
+						onClick = {
+							val experienceLinks = lastExperiences.associateWith { exp ->
+								listOf(
+									RecirculationLink(
+										url = exp.contentUrl ?: "",
+										position = "0"
+									)
+								)
+							}
+							experiencesTracker.trackElegible(experienceLinks)
+						}
 					) {
 						Text(text = "Elegible", color = Color.White)
 					}
 					FloatingActionButton(
 						backgroundColor = Color(0xFFAA6600),
 						onClick = {
-							lastExperiences.firstOrNull()?.let {
-								experiencesTracker.trackRecirculationImpression(it)
+							lastExperiences.firstOrNull()?.let { exp ->
+								val links = listOf(
+									RecirculationLink(
+										url = exp.contentUrl ?: "",
+										position = "0"
+									)
+								)
+								experiencesTracker.trackRecirculationImpression(exp, links)
 							}
 						}
 					) {
@@ -496,13 +516,82 @@ fun MainScreen(
 					FloatingActionButton(
 						backgroundColor = Color(0xFFAA0000),
 						onClick = {
-							lastExperiences.firstOrNull()?.let {
-								experiencesTracker.trackClick(it)
+							lastExperiences.firstOrNull()?.let { exp ->
+								experiencesTracker.trackClick(
+									exp,
+									RecirculationLink(
+										url = exp.contentUrl ?: "",
+										position = "0"
+									)
+								)
 							}
 						}
 					) {
 						Text(text = "Click", color = Color.White)
 					}
+				}
+			}
+
+			Text(
+				text = "Generic Recirculation",
+				color = Color.Black,
+				style = titleStyle,
+				modifier = Modifier.padding(top = 32.dp, bottom = 16.dp)
+			)
+
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(top = 8.dp),
+				horizontalArrangement = Arrangement.SpaceEvenly
+			) {
+				FloatingActionButton(
+					backgroundColor = Color(0xFF00AA00),
+					onClick = {
+						recirculationTracker.trackElegible(
+							listOf(
+								RecirculationModule(
+									name = "demo-module",
+									links = listOf(
+										RecirculationLink(url = "https://example.com/1", position = "0"),
+										RecirculationLink(url = "https://example.com/2", position = "1")
+									)
+								)
+							)
+						)
+					}
+				) {
+					Text(text = "Elegible", color = Color.White)
+				}
+				FloatingActionButton(
+					backgroundColor = Color(0xFFAA6600),
+					onClick = {
+						recirculationTracker.trackImpression(
+							RecirculationModule(
+								name = "demo-module",
+								links = listOf(
+									RecirculationLink(url = "https://example.com/1", position = "0")
+								)
+							)
+						)
+					}
+				) {
+					Text(text = "Impression", color = Color.White)
+				}
+				FloatingActionButton(
+					backgroundColor = Color(0xFFAA0000),
+					onClick = {
+						recirculationTracker.trackClick(
+							RecirculationModule(
+								name = "demo-module",
+								links = listOf(
+									RecirculationLink(url = "https://example.com/1", position = "0")
+								)
+							)
+						)
+					}
+				) {
+					Text(text = "Click", color = Color.White)
 				}
 			}
 		}
