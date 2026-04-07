@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.experiences.ExperiencesTracking
+import com.marfeel.compass.experiences.model.Experience
 import com.marfeel.compass.tracker.CompassTracking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -376,6 +377,7 @@ fun MainScreen(
 			var experiencesUrl by remember { mutableStateOf("https://elpais.com/") }
 			var experiencesResult by remember { mutableStateOf("") }
 			var experiencesLoading by remember { mutableStateOf(false) }
+			var lastExperiences by remember { mutableStateOf<List<Experience>>(emptyList()) }
 			val experiencesTracker = remember { ExperiencesTracking.getInstance() }
 
 			TextField(
@@ -402,6 +404,7 @@ fun MainScreen(
 									url = experiencesUrl,
 									resolve = false
 								)
+								lastExperiences = experiences
 								experiencesResult = "Found ${experiences.size} experiences:\n" +
 									experiences.joinToString("\n") { exp ->
 										"- [${exp.typeRaw}] ${exp.name} (id=${exp.id})"
@@ -426,6 +429,7 @@ fun MainScreen(
 									url = experiencesUrl,
 									resolve = true
 								)
+								lastExperiences = experiences
 								experiencesResult = "Found ${experiences.size} experiences:\n" +
 									experiences.joinToString("\n") { exp ->
 										val resolved = if (exp.resolvedContent != null)
@@ -464,6 +468,42 @@ fun MainScreen(
 						.padding(12.dp),
 					style = TextStyle.Default.copy(fontSize = 12.sp)
 				)
+			}
+
+			if (lastExperiences.isNotEmpty()) {
+				Row(
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(top = 8.dp),
+					horizontalArrangement = Arrangement.SpaceEvenly
+				) {
+					FloatingActionButton(
+						backgroundColor = Color(0xFF00AA00),
+						onClick = { experiencesTracker.trackElegible(lastExperiences) }
+					) {
+						Text(text = "Elegible", color = Color.White)
+					}
+					FloatingActionButton(
+						backgroundColor = Color(0xFFAA6600),
+						onClick = {
+							lastExperiences.firstOrNull()?.let {
+								experiencesTracker.trackRecirculationImpression(it)
+							}
+						}
+					) {
+						Text(text = "Impression", color = Color.White)
+					}
+					FloatingActionButton(
+						backgroundColor = Color(0xFFAA0000),
+						onClick = {
+							lastExperiences.firstOrNull()?.let {
+								experiencesTracker.trackClick(it)
+							}
+						}
+					) {
+						Text(text = "Click", color = Color.White)
+					}
+				}
 			}
 		}
 	}
