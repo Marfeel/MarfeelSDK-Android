@@ -11,6 +11,7 @@ import com.marfeel.compass.experiences.ExperimentManager
 import com.marfeel.compass.experiences.FrequencyCapManager
 import com.marfeel.compass.experiences.AndroidNetworkInfoProvider
 import com.marfeel.compass.experiences.NetworkInfoProvider
+import com.marfeel.compass.experiences.RecirculationApiClient
 import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.network.ApiClient
 import com.marfeel.compass.storage.Storage
@@ -103,6 +104,13 @@ internal object CompassComponent : CompassServiceLocator {
         checkNotNull(context)
         AndroidNetworkInfoProvider(context)
     }
+    override val recirculationApiClient: RecirculationApiClient by lazy {
+        RecirculationApiClient(
+            httpClient = experiencesHttpClient,
+            storage = storage,
+            sessionStorage = sessionStorage
+        )
+    }
     override val experiencesApiClient: ExperiencesApiClient by lazy {
         ExperiencesApiClient(
             httpClient = experiencesHttpClient,
@@ -126,6 +134,7 @@ internal interface CompassServiceLocator {
     val frequencyCapManager: FrequencyCapManager
     val experimentManager: ExperimentManager
     val networkInfoProvider: NetworkInfoProvider
+    val recirculationApiClient: RecirculationApiClient
     val experiencesApiClient: ExperiencesApiClient
     fun getPing(): IngestPing
     fun getRFV(): GetRFV
