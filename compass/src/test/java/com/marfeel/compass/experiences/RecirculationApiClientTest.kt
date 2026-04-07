@@ -3,9 +3,8 @@ package com.marfeel.compass.experiences
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.Session
 import com.marfeel.compass.core.model.compass.UserType
-import com.marfeel.compass.experiences.model.Experience
-import com.marfeel.compass.experiences.model.ExperienceContentType
-import com.marfeel.compass.experiences.model.ExperienceType
+import com.marfeel.compass.experiences.model.RecirculationLink
+import com.marfeel.compass.experiences.model.RecirculationModule
 import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.storage.Storage
 import io.mockk.every
@@ -27,23 +26,12 @@ class RecirculationApiClientTest {
 	private val sessionStorage = mockk<SessionStorage>()
 	private lateinit var client: RecirculationApiClient
 
-	private fun makeExperience(
-		id: String = "exp-1",
-		contentUrl: String? = "https://example.com/article"
-	): Experience = Experience(
-		id = id,
-		name = "Test Experience",
-		type = ExperienceType.INLINE,
-		typeRaw = "inline",
-		placement = null,
-		contentUrl = contentUrl,
-		contentType = ExperienceContentType.TEXT_HTML,
-		features = null,
-		strategy = null,
-		selectors = null,
-		filters = null,
-		rawJson = emptyMap()
-	)
+	private fun makeModule(
+		name: String = "mod-1",
+		links: List<RecirculationLink> = listOf(
+			RecirculationLink(url = "https://example.com/article", position = "0")
+		)
+	): RecirculationModule = RecirculationModule(name = name, links = links)
 
 	private fun decodedBody(): String {
 		val request = server.takeRequest()
@@ -80,7 +68,7 @@ class RecirculationApiClientTest {
 	@Test
 	fun `sends POST to recirculation endpoint`() {
 		server.enqueue(MockResponse())
-		client.send("elegible", listOf(makeExperience()))
+		client.send("elegible", listOf(makeModule()))
 		val request = server.takeRequest()
 		assertEquals("POST", request.method)
 		assertTrue(request.path!!.contains("/recirculation/recirculation.php"))
@@ -89,44 +77,38 @@ class RecirculationApiClientTest {
 	@Test
 	fun `includes event type parameter`() {
 		server.enqueue(MockResponse())
-		client.send("impression", listOf(makeExperience()))
+		client.send("impression", listOf(makeModule()))
 		val body = decodedBody()
 		assertTrue(body.contains("t=impression"))
 	}
 
 	@Test
-	fun `includes modules with experience id and content url`() {
+	fun `includes module with name and link`() {
 		server.enqueue(MockResponse())
-		client.send("elegible", listOf(makeExperience(id = "abc", contentUrl = "https://example.com/page")))
+		client.send("elegible", listOf(makeModule(name = "abc", links = listOf(
+			RecirculationLink(url = "https://example.com/page", position = "0")
+		))))
 		val body = decodedBody()
 		assertTrue(body.contains("m="))
 		assertTrue(body.contains("\"n\":\"abc\""))
 		assertTrue(body.contains("\"url\":\"https://example.com/page\""))
-		assertTrue(body.contains("\"p\":\"255\""))
+		assertTrue(body.contains("\"p\":\"0\""))
 	}
 
 	@Test
-	fun `includes multiple modules for multiple experiences`() {
+	fun `includes multiple modules`() {
 		server.enqueue(MockResponse())
 		client.send("elegible", listOf(
-			makeExperience(id = "exp-1", contentUrl = "https://a.com"),
-			makeExperience(id = "exp-2", contentUrl = "https://b.com")
+			makeModule(name = "mod-1", links = listOf(RecirculationLink(url = "https://a.com", position = "0"))),
+			makeModule(name = "mod-2", links = listOf(RecirculationLink(url = "https://b.com", position = "0")))
 		))
 		val body = decodedBody()
-		assertTrue(body.contains("\"n\":\"exp-1\""))
-		assertTrue(body.contains("\"n\":\"exp-2\""))
+		assertTrue(body.contains("\"n\":\"mod-1\""))
+		assertTrue(body.contains("\"n\":\"mod-2\""))
 	}
 
 	@Test
-	fun `uses empty string for null contentUrl`() {
-		server.enqueue(MockResponse())
-		client.send("elegible", listOf(makeExperience(contentUrl = null)))
-		val body = decodedBody()
-		assertTrue(body.contains("\"url\":\"\""))
-	}
-
-	@Test
-	fun `does not send request for empty experiences list`() {
+	fun `does not send request for empty modules list`() {
 		client.send("elegible", emptyList())
 		assertEquals(0, server.requestCount)
 	}
@@ -134,7 +116,7 @@ class RecirculationApiClientTest {
 	@Test
 	fun `includes common tracking parameters`() {
 		server.enqueue(MockResponse())
-		client.send("click", listOf(makeExperience()))
+		client.send("click", listOf(makeModule()))
 		val body = decodedBody()
 		assertTrue(body.contains("ac=2223"))
 		assertTrue(body.contains("url=https://elpais.com/article"))
@@ -148,7 +130,7 @@ class RecirculationApiClientTest {
 	@Test
 	fun `includes consent code 1 when consent is true`() {
 		server.enqueue(MockResponse())
-		client.send("elegible", listOf(makeExperience()))
+		client.send("elegible", listOf(makeModule()))
 		val body = decodedBody()
 		assertTrue(body.contains("uc=true"))
 		assertTrue(body.contains("cc=1"))
@@ -158,7 +140,7 @@ class RecirculationApiClientTest {
 	fun `includes consent code 0 when consent is false`() {
 		every { storage.readUserConsent() } returns false
 		server.enqueue(MockResponse())
-		client.send("elegible", listOf(makeExperience()))
+		client.send("elegible", listOf(makeModule()))
 		val body = decodedBody()
 		assertTrue(body.contains("cc=0"))
 	}
@@ -167,7 +149,7 @@ class RecirculationApiClientTest {
 	fun `includes consent code 3 when consent is null`() {
 		every { storage.readUserConsent() } returns null
 		server.enqueue(MockResponse())
-		client.send("elegible", listOf(makeExperience()))
+		client.send("elegible", listOf(makeModule()))
 		val body = decodedBody()
 		assertTrue(body.contains("cc=3"))
 	}
@@ -175,7 +157,7 @@ class RecirculationApiClientTest {
 	@Test
 	fun `includes landing page`() {
 		server.enqueue(MockResponse())
-		client.send("elegible", listOf(makeExperience()))
+		client.send("elegible", listOf(makeModule()))
 		val body = decodedBody()
 		assertTrue(body.contains("lp=https://elpais.com/"))
 	}
@@ -183,7 +165,7 @@ class RecirculationApiClientTest {
 	@Test
 	fun `includes timestamp`() {
 		server.enqueue(MockResponse())
-		client.send("elegible", listOf(makeExperience()))
+		client.send("elegible", listOf(makeModule()))
 		val body = decodedBody()
 		assertTrue(body.contains("n="))
 	}
@@ -192,8 +174,43 @@ class RecirculationApiClientTest {
 	fun `includes sui when registered user id is set`() {
 		every { storage.readRegisteredUserId() } returns "registered-user-1"
 		server.enqueue(MockResponse())
-		client.send("elegible", listOf(makeExperience()))
+		client.send("elegible", listOf(makeModule()))
 		val body = decodedBody()
 		assertTrue(body.contains("sui=registered-user-1"))
+	}
+
+	@Test
+	fun `includes multiple links per module`() {
+		server.enqueue(MockResponse())
+		client.send("elegible", listOf(makeModule(name = "mod-1", links = listOf(
+			RecirculationLink(url = "https://a.com/1", position = "0"),
+			RecirculationLink(url = "https://a.com/2", position = "1"),
+			RecirculationLink(url = "https://a.com/3", position = "2")
+		))))
+		val body = decodedBody()
+		assertTrue(body.contains("\"url\":\"https://a.com/1\""))
+		assertTrue(body.contains("\"url\":\"https://a.com/2\""))
+		assertTrue(body.contains("\"url\":\"https://a.com/3\""))
+		assertTrue(body.contains("\"p\":\"0\""))
+		assertTrue(body.contains("\"p\":\"1\""))
+		assertTrue(body.contains("\"p\":\"2\""))
+	}
+
+	@Test
+	fun `uses client-provided position values`() {
+		server.enqueue(MockResponse())
+		client.send("elegible", listOf(makeModule(links = listOf(
+			RecirculationLink(url = "https://example.com/article", position = "42")
+		))))
+		val body = decodedBody()
+		assertTrue(body.contains("\"p\":\"42\""))
+	}
+
+	@Test
+	fun `handles module with empty links list`() {
+		server.enqueue(MockResponse())
+		client.send("elegible", listOf(makeModule(links = emptyList())))
+		val body = decodedBody()
+		assertTrue(body.contains("\"e\":[]"))
 	}
 }

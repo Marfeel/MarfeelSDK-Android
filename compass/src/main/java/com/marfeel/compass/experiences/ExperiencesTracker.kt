@@ -3,6 +3,8 @@ package com.marfeel.compass.experiences
 import com.marfeel.compass.di.CompassComponent
 import com.marfeel.compass.experiences.model.Experience
 import com.marfeel.compass.experiences.model.ExperienceType
+import com.marfeel.compass.experiences.model.RecirculationLink
+import com.marfeel.compass.experiences.model.RecirculationModule
 import com.marfeel.compass.tracker.CompassTracker
 import com.marfeel.compass.tracker.compassNotInitializedErrorMessage
 import kotlinx.coroutines.CoroutineScope
@@ -59,16 +61,21 @@ internal object ExperiencesTracker : ExperiencesTracking {
 	}
 
 	override fun trackElegible(experiences: List<Experience>) {
-		scope.launch { recirculationApiClient.send("elegible", experiences) }
+		scope.launch { recirculationApiClient.send("elegible", experiences.map { it.toRecirculationModule() }) }
 	}
 
 	override fun trackRecirculationImpression(experience: Experience) {
-		scope.launch { recirculationApiClient.send("impression", listOf(experience)) }
+		scope.launch { recirculationApiClient.send("impression", listOf(experience.toRecirculationModule())) }
 	}
 
 	override fun trackClick(experience: Experience) {
-		scope.launch { recirculationApiClient.send("click", listOf(experience)) }
+		scope.launch { recirculationApiClient.send("click", listOf(experience.toRecirculationModule())) }
 	}
+
+	private fun Experience.toRecirculationModule() = RecirculationModule(
+		name = id,
+		links = listOf(RecirculationLink(url = contentUrl ?: "", position = "255"))
+	)
 
 	override suspend fun fetchExperiences(
 		url: String,

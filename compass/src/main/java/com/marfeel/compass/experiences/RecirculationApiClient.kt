@@ -3,7 +3,7 @@ package com.marfeel.compass.experiences
 import com.google.gson.Gson
 import com.marfeel.compass.BuildConfig
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
-import com.marfeel.compass.experiences.model.Experience
+import com.marfeel.compass.experiences.model.RecirculationModule
 import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.storage.Storage
 import okhttp3.FormBody
@@ -18,25 +18,22 @@ internal class RecirculationApiClient(
 ) {
 	private val gson = Gson()
 
-	fun send(eventType: String, experiences: List<Experience>) {
-		if (experiences.isEmpty()) return
+	fun send(eventType: String, modules: List<RecirculationModule>) {
+		if (modules.isEmpty()) return
 
-		val modules = experiences.map { experience ->
+		val modulesJson = modules.map { module ->
 			mapOf(
-				"n" to experience.id,
-				"e" to listOf(
-					mapOf(
-						"url" to (experience.contentUrl ?: ""),
-						"p" to "255"
-					)
-				)
+				"n" to module.name,
+				"e" to module.links.map { link ->
+					mapOf("url" to link.url, "p" to link.position)
+				}
 			)
 		}
 
 		val formBody = FormBody.Builder()
 			.add("t", eventType)
 			.add("n", currentTimeStampInSeconds().toString())
-			.add("m", gson.toJson(modules))
+			.add("m", gson.toJson(modulesJson))
 			.add("ac", sessionStorage.readAccountId() ?: "")
 			.add("url", sessionStorage.readPage()?.url ?: "")
 			.add("ut", storage.readUserType().numericValue.toString())
