@@ -23,12 +23,12 @@
     },
     "inline": {
         "actions": {
-            "Home> CTA cabecera> 1 año, 60 € > 30/03/26 > RESTO": {
+            "home-cta-widget": {
                 "id": "IL_mLTwLgXbRS-MJzh1rJM6ng",
-                "placement": "#s_b_df",
+                "placement": "#slot-a",
                 "content": {
                     "type": "TextHTML",
-                    "url": "https://flowcards.mrf.io/transformer/marfeelwidgetexperienceengine.mrf.io?url=test"
+                    "url": "https://example.com/widget?id=a"
                 },
                 "strategy": "replace",
                 "features": {
@@ -37,17 +37,17 @@
                 },
                 "selectors": [
                     {
-                        "selector": "#s_b_df",
+                        "selector": "#slot-a",
                         "strategy": "replace"
                     }
                 ]
             },
-            "EP-R006 > content_personalizacion > bloque Madrid": {
+            "content-recommender-block": {
                 "id": "IL_r1-HQ0psRiiLuHZTpi9lDQ",
                 "placement": "popup",
                 "content": {
                     "type": "Json",
-                    "url": "https://flowcards.mrf.io/transformer/marfeelrecommenderexperienceengine.mrf.io?url=test"
+                    "url": "https://example.com/recommender?id=b"
                 },
                 "strategy": "append",
                 "features": {
@@ -63,12 +63,12 @@
     },
     "compass": {
         "actions": {
-            "Recirculacion Ticker Directos": {
+            "recirculation-ticker": {
                 "id": "AC_5zWHRfzXTQOEISmksXIoew",
                 "placement": "window",
                 "recirculationModules": [
                     {
-                        "name": "ticker_directos",
+                        "name": "ticker",
                         "selector": "#csw > div.ek"
                     }
                 ]
@@ -77,26 +77,26 @@
     },
     "affiliationEnhancer": {
         "actions": {
-            " Affiliation enhancer Escaparate": {
+            "affiliation-enhancer": {
                 "id": "AC_-R26iUcSTyCwya8od9k2yg",
                 "placement": "window",
-                "context": "{\"source\":\"direct\",\"campaign\":\"\",\"url\":\"https://elpais.com/\"}"
+                "context": "{\"source\":\"direct\",\"campaign\":\"\",\"url\":\"https://example.com/\"}"
             }
         }
     },
     "adManager": {
         "actions": {
-            "GAM Portada EP": {
+            "gam-home": {
                 "id": "AC_9YP58jOFQli-neuaHNqpcA",
                 "placement": "window",
                 "targeting": [
                     {
                         "key": "m_test",
-                        "value": "portada_ep"
+                        "value": "home"
                     }
                 ]
             },
-            "GAM loyal segment": {
+            "gam-loyal-segment": {
                 "id": "AC_Gwyc3MW_TWiMzAIUsIiHRA",
                 "placement": "window",
                 "targeting": [

@@ -77,10 +77,10 @@ class ExperiencesTrackerTest {
 
 	@Test
 	fun `full pipeline parses experiences from real response`() = runBlocking {
-		val json = loadJson("experiences_elpais_response.json")
+		val json = loadJson("experiences_response_small.json")
 		experiencesServer.enqueue(MockResponse().setBody(json))
 
-		val jsonResponse = apiClient.fetch("https://elpais.com/", emptyMap())
+		val jsonResponse = apiClient.fetch("https://example.com/", emptyMap())
 		assertNotNull(jsonResponse)
 
 		val result = responseParser.parse(jsonResponse!!)
@@ -95,10 +95,10 @@ class ExperiencesTrackerTest {
 
 	@Test
 	fun `filterByType returns only matching experiences`() = runBlocking {
-		val json = loadJson("experiences_elpais_response.json")
+		val json = loadJson("experiences_response_small.json")
 		experiencesServer.enqueue(MockResponse().setBody(json))
 
-		val jsonResponse = apiClient.fetch("https://elpais.com/", emptyMap())!!
+		val jsonResponse = apiClient.fetch("https://example.com/", emptyMap())!!
 		val result = responseParser.parse(jsonResponse)
 
 		val inlines = result.experiences.filter { it.type == ExperienceType.INLINE }
@@ -108,10 +108,10 @@ class ExperiencesTrackerTest {
 
 	@Test
 	fun `filterByTypeRaw returns only matching experiences`() = runBlocking {
-		val json = loadJson("experiences_elpais_response.json")
+		val json = loadJson("experiences_response_small.json")
 		experiencesServer.enqueue(MockResponse().setBody(json))
 
-		val jsonResponse = apiClient.fetch("https://elpais.com/", emptyMap())!!
+		val jsonResponse = apiClient.fetch("https://example.com/", emptyMap())!!
 		val result = responseParser.parse(jsonResponse)
 
 		val types = result.experiences.map { it.typeRaw }.distinct()
@@ -125,10 +125,10 @@ class ExperiencesTrackerTest {
 
 	@Test
 	fun `experiences without contentUrl have null resolvedContent`() = runBlocking {
-		val json = loadJson("experiences_elpais_response.json")
+		val json = loadJson("experiences_response_small.json")
 		experiencesServer.enqueue(MockResponse().setBody(json))
 
-		val jsonResponse = apiClient.fetch("https://elpais.com/", emptyMap())!!
+		val jsonResponse = apiClient.fetch("https://example.com/", emptyMap())!!
 		val result = responseParser.parse(jsonResponse)
 
 		result.experiences.filter { it.contentUrl == null }.forEach {
@@ -175,10 +175,10 @@ class ExperiencesTrackerTest {
 
 	@Test
 	fun `frequencyCap config is populated from response`() = runBlocking {
-		val json = loadJson("experiences_elpais_response.json")
+		val json = loadJson("experiences_response_small.json")
 		experiencesServer.enqueue(MockResponse().setBody(json))
 
-		val jsonResponse = apiClient.fetch("https://elpais.com/", emptyMap())!!
+		val jsonResponse = apiClient.fetch("https://example.com/", emptyMap())!!
 		val result = responseParser.parse(jsonResponse)
 
 		frequencyCapManager.applyResponseConfig(result.frequencyCapConfig)
@@ -190,11 +190,11 @@ class ExperiencesTrackerTest {
 	}
 
 	@Test
-	fun `pipeline with 20m response`() = runBlocking {
-		val json = loadJson("experiences_20m_response.json")
+	fun `pipeline with large response`() = runBlocking {
+		val json = loadJson("experiences_response_large.json")
 		experiencesServer.enqueue(MockResponse().setBody(json))
 
-		val jsonResponse = apiClient.fetch("https://20minutos.es/", emptyMap())
+		val jsonResponse = apiClient.fetch("https://example.org/", emptyMap())
 		assertNotNull(jsonResponse)
 
 		val result = responseParser.parse(jsonResponse!!)

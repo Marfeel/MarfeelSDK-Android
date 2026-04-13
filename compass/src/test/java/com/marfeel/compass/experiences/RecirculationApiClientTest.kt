@@ -49,10 +49,10 @@ class RecirculationApiClientTest {
 		)
 
 		every { sessionStorage.readAccountId() } returns "2223"
-		every { sessionStorage.readPage() } returns Page("https://elpais.com/article")
+		every { sessionStorage.readPage() } returns Page("https://example.com/article")
 		every { sessionStorage.readPageTechnology() } returns 4
 		every { sessionStorage.readSession() } returns Session("session-123", 1000L)
-		every { sessionStorage.readLandingPage() } returns "https://elpais.com/"
+		every { sessionStorage.readLandingPage() } returns "https://example.com/"
 		every { storage.readOriginalUserId() } returns "user-abc"
 		every { storage.readRegisteredUserId() } returns null
 		every { storage.readUserType() } returns UserType.Anonymous
@@ -120,13 +120,13 @@ class RecirculationApiClientTest {
 		client.send("click", listOf(makeModule()))
 		val body = decodedBody()
 		assertTrue(body.contains("ac=2223"))
-		assertTrue(body.contains("url=https://elpais.com/article"))
+		assertTrue(body.contains("url=https://example.com/article"))
 		assertTrue(body.contains("ut=1"))
 		assertTrue(body.contains("fv=1700000000"))
 		assertTrue(body.contains("u=user-abc"))
 		assertTrue(body.contains("s=session-123"))
 		assertTrue(body.contains("pageType=4"))
-		assertTrue(body.contains("c=https://elpais.com/article"))
+		assertTrue(body.contains("c=https://example.com/article"))
 		assertTrue(body.contains("lv=1699000000"))
 	}
 
@@ -171,7 +171,7 @@ class RecirculationApiClientTest {
 		server.enqueue(MockResponse())
 		client.send("elegible", listOf(makeModule()))
 		val body = decodedBody()
-		assertTrue(body.contains("lp=https://elpais.com/"))
+		assertTrue(body.contains("lp=https://example.com/"))
 	}
 
 	@Test
