@@ -86,7 +86,7 @@ class ExperiencesTrackerTest {
 		val result = responseParser.parse(jsonResponse!!)
 		assertTrue(result.experiences.isNotEmpty())
 
-		frequencyCapManager.updateFrequencyCapConfig(result.frequencyCapConfig)
+		frequencyCapManager.applyResponseConfig(result.frequencyCapConfig)
 		experimentManager.handleExperimentGroups(result.experimentGroups)
 
 		val filtered = experimentManager.filterByExperiments(result.experiences)
@@ -181,7 +181,7 @@ class ExperiencesTrackerTest {
 		val jsonResponse = apiClient.fetch("https://elpais.com/", emptyMap())!!
 		val result = responseParser.parse(jsonResponse)
 
-		frequencyCapManager.updateFrequencyCapConfig(result.frequencyCapConfig)
+		frequencyCapManager.applyResponseConfig(result.frequencyCapConfig)
 		frequencyCapManager.trackImpression("some-exp")
 
 		val uexp = frequencyCapManager.buildUexp()
@@ -199,7 +199,7 @@ class ExperiencesTrackerTest {
 		val result = responseParser.parse(jsonResponse!!)
 		assertTrue(result.experiences.isNotEmpty())
 
-		frequencyCapManager.updateFrequencyCapConfig(result.frequencyCapConfig)
+		frequencyCapManager.applyResponseConfig(result.frequencyCapConfig)
 		experimentManager.handleExperimentGroups(result.experimentGroups)
 
 		val filtered = experimentManager.filterByExperiments(result.experiences)

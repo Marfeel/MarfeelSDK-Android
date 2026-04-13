@@ -111,7 +111,7 @@ internal object ExperiencesTracker : ExperiencesTracking {
 
 		val parseResult = responseParser.parse(jsonResponse)
 
-		frequencyCapManager.updateFrequencyCapConfig(parseResult.frequencyCapConfig)
+		frequencyCapManager.applyResponseConfig(parseResult.frequencyCapConfig)
 
 		parseResult.editorialId?.let { readEditorialsManager.add(it) }
 
