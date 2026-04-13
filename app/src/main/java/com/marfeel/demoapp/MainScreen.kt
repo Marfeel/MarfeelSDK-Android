@@ -588,12 +588,23 @@ fun MainScreen(
 					}
 				}
 				Text(
-					text = "Tap Impression/Close per experience, then re-Fetch and inspect the `uexp` query param.",
+					text = "Only experiences declared in the response's targeting.frequencyCap are listed. Tap Impression/Close, then re-Fetch and inspect the `uexp` query param.",
 					color = Color.Gray,
 					modifier = Modifier.padding(bottom = 8.dp),
 					style = TextStyle.Default.copy(fontSize = 12.sp)
 				)
-				lastExperiences.forEach { exp ->
+				val capConfig = remember(capsVersion, lastExperiences) {
+					experiencesTracker.getFrequencyCapConfig()
+				}
+				val cappedExperiences = lastExperiences.filter { it.id in capConfig.keys }
+				if (cappedExperiences.isEmpty()) {
+					Text(
+						text = "No experiences capped in the current response.",
+						color = Color.Gray,
+						style = TextStyle.Default.copy(fontSize = 12.sp)
+					)
+				}
+				cappedExperiences.forEach { exp ->
 					val counts = remember(capsVersion, exp.id) {
 						experiencesTracker.getFrequencyCapCounts(exp.id)
 					}
@@ -602,8 +613,9 @@ fun MainScreen(
 							modifier = Modifier.fillMaxWidth(),
 							verticalAlignment = Alignment.CenterVertically
 						) {
+							val capKeys = capConfig[exp.id].orEmpty().joinToString(",")
 							Text(
-								text = "${exp.typeRaw}/${exp.id.take(16)}…",
+								text = "${exp.typeRaw}/${exp.id.take(16)}… [$capKeys]",
 								color = Color.Black,
 								modifier = Modifier.weight(1f),
 								style = TextStyle.Default.copy(fontSize = 11.sp)

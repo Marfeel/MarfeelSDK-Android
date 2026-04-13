@@ -21,13 +21,14 @@ internal class ExperiencesResponseParser(
 	private val contentResolver: ContentResolver? = null,
 ) {
 	private val gson = Gson()
-	private val metadataKeys = setOf("targeting", "content", "experiments")
+	private val metadataKeys = setOf("targeting", "content", "experiments", "experimentGroups")
 
 	fun parse(jsonString: String): ParseResult {
 		val root = gson.fromJson(jsonString, JsonObject::class.java)
 
 		val frequencyCapConfig = extractFrequencyCapConfig(root)
-		val experimentGroups = root.getAsJsonObject("experiments")
+		val experimentGroups = root.getAsJsonObject("experimentGroups")
+			?: root.getAsJsonObject("experiments")
 		val editorialId = root.getAsJsonObject("content")?.get("editorialId")?.asString
 
 		val experiences = mutableListOf<Experience>()
@@ -99,8 +100,7 @@ internal class ExperiencesResponseParser(
 	}
 
 	private fun parseFilters(action: JsonObject): List<ExperienceFilter>? {
-		val filtersArray = action.getAsJsonArray("filters") ?: return null
-		return filtersArray.mapNotNull { element ->
+		val explicit = action.getAsJsonArray("filters")?.mapNotNull { element ->
 			if (!element.isJsonObject) return@mapNotNull null
 			val obj = element.asJsonObject
 			val valuesArray = obj.getAsJsonArray("values") ?: return@mapNotNull null
@@ -109,7 +109,23 @@ internal class ExperiencesResponseParser(
 				operator = obj.get("operator")?.asString ?: "EQUALS",
 				values = valuesArray.map { it.asString },
 			)
-		}
+		}.orEmpty()
+
+		val experimentFilter = parseExperimentFilter(action.getAsJsonObject("experiment"))
+		val combined = explicit + listOfNotNull(experimentFilter)
+		return combined.takeIf { it.isNotEmpty() }
+	}
+
+	private fun parseExperimentFilter(experiment: JsonObject?): ExperienceFilter? {
+		if (experiment == null) return null
+		val groupId = experiment.get("groupId")?.asString ?: return null
+		val variantIds = experiment.getAsJsonArray("variantIds")?.map { it.asString } ?: return null
+		if (variantIds.isEmpty()) return null
+		return ExperienceFilter(
+			key = "mrf_exp_$groupId",
+			operator = "EQUALS",
+			values = variantIds,
+		)
 	}
 
 	private fun parseMapOrNull(element: JsonElement?): Map<String, Any>? {

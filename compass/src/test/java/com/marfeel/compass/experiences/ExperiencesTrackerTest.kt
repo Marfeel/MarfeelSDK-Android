@@ -182,7 +182,8 @@ class ExperiencesTrackerTest {
 		val result = responseParser.parse(jsonResponse)
 
 		frequencyCapManager.applyResponseConfig(result.frequencyCapConfig)
-		frequencyCapManager.trackImpression("some-exp")
+		val cappedId = result.frequencyCapConfig.keys.first()
+		frequencyCapManager.trackImpression(cappedId)
 
 		val uexp = frequencyCapManager.buildUexp()
 		assertTrue(uexp.isNotEmpty())

@@ -27,6 +27,16 @@ class FrequencyCapManagerTest {
         prefs = MockSharedPreference()
         now = millisFor(2026, 4, 15)
         manager = FrequencyCapManager(prefs, clock = { now }, timeZone = utc)
+        manager.applyResponseConfig(
+            mapOf(
+                "exp1" to listOf("l"),
+                "exp2" to listOf("l"),
+                "keep" to listOf("l"),
+                "drop" to listOf("l"),
+                "old" to listOf("l"),
+                "fresh" to listOf("l"),
+            )
+        )
     }
 
     @Test

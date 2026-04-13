@@ -15,6 +15,9 @@ internal class FrequencyCapManager(
     private val gson = Gson()
     private val lock = Any()
 
+    @Volatile
+    private var lastConfig: Map<String, List<String>> = emptyMap()
+
     companion object {
         private const val COUNTS_KEY = "experiences_frequency_caps"
     }
@@ -56,6 +59,7 @@ internal class FrequencyCapManager(
     }
 
     fun applyResponseConfig(config: Map<String, List<String>>) = synchronized(lock) {
+        lastConfig = config
         if (config.isEmpty()) {
             preferences.edit { remove(COUNTS_KEY) }
             return@synchronized
@@ -63,12 +67,16 @@ internal class FrequencyCapManager(
         saveAll(loadAll().filterKeys { it in config.keys })
     }
 
+    fun getConfig(): Map<String, List<String>> = lastConfig
+
     fun clear() = synchronized(lock) {
+        lastConfig = emptyMap()
         preferences.edit { remove(COUNTS_KEY) }
     }
 
     private inline fun bump(id: String, mutate: (EventCounter, ExperienceCounter, Long) -> Unit) =
         synchronized(lock) {
+            if (id !in lastConfig.keys) return@synchronized
             val all = loadAll()
             val entry = all.getOrPut(id) { ExperienceCounter() }
             val now = clock()

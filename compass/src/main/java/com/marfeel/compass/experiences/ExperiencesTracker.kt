@@ -20,6 +20,7 @@ interface ExperiencesTracking {
 	fun trackClose(experience: Experience)
 	fun clearFrequencyCaps()
 	fun getFrequencyCapCounts(experienceId: String): Map<String, Long>
+	fun getFrequencyCapConfig(): Map<String, List<String>>
 	fun clearReadEditorials()
 	fun getReadEditorials(): List<String>
 
@@ -73,6 +74,9 @@ internal object ExperiencesTracker : ExperiencesTracking {
 
 	override fun getFrequencyCapCounts(experienceId: String): Map<String, Long> =
 		frequencyCapManager.getCounts(experienceId)
+
+	override fun getFrequencyCapConfig(): Map<String, List<String>> =
+		frequencyCapManager.getConfig()
 
 	override fun clearReadEditorials() {
 		readEditorialsManager.clear()
