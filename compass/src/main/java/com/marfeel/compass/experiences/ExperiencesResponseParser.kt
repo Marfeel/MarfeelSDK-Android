@@ -14,6 +14,7 @@ internal data class ParseResult(
 	val experiences: List<Experience>,
 	val frequencyCapConfig: Map<String, List<String>>,
 	val experimentGroups: JsonObject?,
+	val editorialId: String? = null,
 )
 
 internal class ExperiencesResponseParser(
@@ -27,6 +28,7 @@ internal class ExperiencesResponseParser(
 
 		val frequencyCapConfig = extractFrequencyCapConfig(root)
 		val experimentGroups = root.getAsJsonObject("experiments")
+		val editorialId = root.getAsJsonObject("content")?.get("editorialId")?.asString
 
 		val experiences = mutableListOf<Experience>()
 
@@ -51,7 +53,7 @@ internal class ExperiencesResponseParser(
 			}
 		}
 
-		return ParseResult(experiences, frequencyCapConfig, experimentGroups)
+		return ParseResult(experiences, frequencyCapConfig, experimentGroups, editorialId)
 	}
 
 	private fun parseExperience(

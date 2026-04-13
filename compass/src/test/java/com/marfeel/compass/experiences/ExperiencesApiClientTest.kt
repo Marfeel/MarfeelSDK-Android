@@ -24,6 +24,7 @@ class ExperiencesApiClientTest {
 	private val sessionStorage = mockk<SessionStorage>()
 	private val experimentManager = mockk<ExperimentManager>()
 	private val frequencyCapManager = mockk<FrequencyCapManager>()
+	private val readEditorialsManager = mockk<ReadEditorialsManager>()
 	private lateinit var apiClient: ExperiencesApiClient
 
 	@Before
@@ -35,6 +36,7 @@ class ExperiencesApiClientTest {
 			sessionStorage = sessionStorage,
 			experimentManager = experimentManager,
 			frequencyCapManager = frequencyCapManager,
+			readEditorialsManager = readEditorialsManager,
 			baseUrl = baseUrl
 		)
 
@@ -53,6 +55,7 @@ class ExperiencesApiClientTest {
 		every { storage.readUserVars() } returns mapOf("uv1" to "val3")
 		every { experimentManager.getTargetingEntries() } returns mapOf("experiment::grp1" to "var1")
 		every { frequencyCapManager.buildUexp() } returns "exp1,l|1|cl|0|m|1|cm|0|w|1|cw|0|d|1|cd|0|ls|1234"
+		every { readEditorialsManager.buildRedParam() } returns ""
 	}
 
 	@After
@@ -105,6 +108,23 @@ class ExperiencesApiClientTest {
 		apiClient.fetch("https://test.com", emptyMap())
 		val request = server.takeRequest()
 		assertTrue(request.path!!.contains("v=2"))
+	}
+
+	@Test
+	fun `includes red parameter when readEditorials non-empty`() {
+		every { readEditorialsManager.buildRedParam() } returns "120,10"
+		server.enqueue(MockResponse().setBody("{}"))
+		apiClient.fetch("https://test.com", emptyMap())
+		val request = server.takeRequest()
+		assertTrue(request.path!!.contains("red=120%2C10"))
+	}
+
+	@Test
+	fun `omits red parameter when readEditorials empty`() {
+		server.enqueue(MockResponse().setBody("{}"))
+		apiClient.fetch("https://test.com", emptyMap())
+		val request = server.takeRequest()
+		assertTrue(!request.path!!.contains("red="))
 	}
 
 	@Test

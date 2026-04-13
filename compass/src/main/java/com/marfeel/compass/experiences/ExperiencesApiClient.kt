@@ -14,6 +14,7 @@ internal class ExperiencesApiClient(
 	private val sessionStorage: SessionStorage,
 	private val experimentManager: ExperimentManager,
 	private val frequencyCapManager: FrequencyCapManager,
+	private val readEditorialsManager: ReadEditorialsManager,
 	baseUrl: String = BuildConfig.EXPERIENCES_BASE_URL,
 	private val networkInfoProvider: NetworkInfoProvider? = null
 ) {
@@ -36,6 +37,7 @@ internal class ExperiencesApiClient(
 		builder.addQueryParameter("sid", sessionStorage.readAccountId() ?: "")
 		builder.addQueryParameter("ptch", (sessionStorage.readPageTechnology() ?: 4).toString())
 		builder.addQueryParameter("url", pageUrl)
+		builder.addQueryParameter("canonical_url", pageUrl)
 		builder.addQueryParameter("seid", sessionStorage.readSession().id)
 		builder.addQueryParameter("uid", storage.readOriginalUserId())
 
@@ -66,6 +68,11 @@ internal class ExperiencesApiClient(
 		val uexp = frequencyCapManager.buildUexp()
 		if (uexp.isNotEmpty()) {
 			builder.addQueryParameter("uexp", uexp)
+		}
+
+		val red = readEditorialsManager.buildRedParam()
+		if (red.isNotEmpty()) {
+			builder.addQueryParameter("red", red)
 		}
 
 		builder.addQueryParameter("v", "2")

@@ -42,17 +42,56 @@ class FrequencyCapManagerTest {
     }
 
     @Test
+    fun `trackClose updates close last seen timestamp`() {
+        manager.trackClose("exp1")
+        val counts = manager.getCounts("exp1")
+        assertTrue((counts["cls"] ?: 0L) > 0L)
+    }
+
+    @Test
     fun `buildUexp returns empty string when no data`() {
         val uexp = manager.buildUexp()
         assertEquals("", uexp)
     }
 
     @Test
-    fun `buildUexp includes experience with recent impressions`() {
+    fun `buildUexp filters counter keys by config`() {
+        manager.updateFrequencyCapConfig(mapOf("exp1" to listOf("d")))
+        manager.trackImpression("exp1")
+        val uexp = manager.buildUexp()
+        assertTrue(uexp.contains("exp1,d|1"))
+        assertFalse(uexp.contains("l|"))
+        assertFalse(uexp.contains("m|"))
+        assertFalse(uexp.contains("w|"))
+    }
+
+    @Test
+    fun `buildUexp uses default freqs for recent activity without config`() {
         manager.trackImpression("exp1")
         val uexp = manager.buildUexp()
         assertTrue(uexp.contains("exp1"))
+        assertTrue(uexp.contains("d|1"))
         assertTrue(uexp.contains("l|1"))
+        assertTrue(uexp.contains("m|1"))
+        assertTrue(uexp.contains("w|1"))
+        assertTrue(uexp.contains("ls|"))
+    }
+
+    @Test
+    fun `buildUexp omits zero-valued counters`() {
+        manager.updateFrequencyCapConfig(mapOf("exp1" to listOf("l", "cl", "d")))
+        manager.trackImpression("exp1")
+        val uexp = manager.buildUexp()
+        assertTrue(uexp.contains("l|1"))
+        assertTrue(uexp.contains("d|1"))
+        assertFalse(uexp.contains("cl|"))
+    }
+
+    @Test
+    fun `buildUexp drops experiences with no non-zero counters`() {
+        manager.updateFrequencyCapConfig(mapOf("exp_empty" to listOf("d")))
+        val uexp = manager.buildUexp()
+        assertFalse(uexp.contains("exp_empty"))
     }
 
     @Test
@@ -66,19 +105,12 @@ class FrequencyCapManagerTest {
     }
 
     @Test
-    fun `buildUexp includes experience requested by server config`() {
-        manager.updateFrequencyCapConfig(mapOf("exp_server" to listOf("d")))
+    fun `buildUexp includes cls when trackClose was called and config lists it`() {
+        manager.updateFrequencyCapConfig(mapOf("exp1" to listOf("cl", "cls")))
+        manager.trackClose("exp1")
         val uexp = manager.buildUexp()
-        assertTrue(uexp.contains("exp_server"))
-    }
-
-    @Test
-    fun `updateFrequencyCapConfig persists config`() {
-        val config = mapOf("exp1" to listOf("d", "ls"), "exp2" to listOf("w"))
-        manager.updateFrequencyCapConfig(config)
-        val uexp = manager.buildUexp()
-        assertTrue(uexp.contains("exp1"))
-        assertTrue(uexp.contains("exp2"))
+        assertTrue(uexp.contains("cl|1"))
+        assertTrue(uexp.contains("cls|"))
     }
 
     @Test
@@ -86,5 +118,6 @@ class FrequencyCapManagerTest {
         val counts = manager.getCounts("unknown")
         assertEquals(0L, counts["l"])
         assertEquals(0L, counts["cl"])
+        assertEquals(0L, counts["cls"])
     }
 }

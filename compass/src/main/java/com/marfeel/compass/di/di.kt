@@ -9,6 +9,7 @@ import com.marfeel.compass.experiences.ExperiencesApiClient
 import com.marfeel.compass.experiences.ExperiencesResponseParser
 import com.marfeel.compass.experiences.ExperimentManager
 import com.marfeel.compass.experiences.FrequencyCapManager
+import com.marfeel.compass.experiences.ReadEditorialsManager
 import com.marfeel.compass.experiences.AndroidNetworkInfoProvider
 import com.marfeel.compass.experiences.NetworkInfoProvider
 import com.marfeel.compass.experiences.RecirculationApiClient
@@ -94,6 +95,11 @@ internal object CompassComponent : CompassServiceLocator {
         checkNotNull(context)
         FrequencyCapManager(context.getSharedPreferences("CompassExperiencesFreqCaps", Context.MODE_PRIVATE))
     }
+    override val readEditorialsManager: ReadEditorialsManager by lazy {
+        val context = this.context
+        checkNotNull(context)
+        ReadEditorialsManager(context.getSharedPreferences("CompassReadEditorials", Context.MODE_PRIVATE))
+    }
     override val experimentManager: ExperimentManager by lazy {
         val context = this.context
         checkNotNull(context)
@@ -118,6 +124,7 @@ internal object CompassComponent : CompassServiceLocator {
             sessionStorage = sessionStorage,
             experimentManager = experimentManager,
             frequencyCapManager = frequencyCapManager,
+            readEditorialsManager = readEditorialsManager,
             networkInfoProvider = networkInfoProvider
         )
     }
@@ -132,6 +139,7 @@ internal interface CompassServiceLocator {
     val contentResolver: ContentResolver
     val experiencesResponseParser: ExperiencesResponseParser
     val frequencyCapManager: FrequencyCapManager
+    val readEditorialsManager: ReadEditorialsManager
     val experimentManager: ExperimentManager
     val networkInfoProvider: NetworkInfoProvider
     val recirculationApiClient: RecirculationApiClient

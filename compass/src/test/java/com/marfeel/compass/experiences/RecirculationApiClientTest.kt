@@ -57,6 +57,7 @@ class RecirculationApiClientTest {
 		every { storage.readRegisteredUserId() } returns null
 		every { storage.readUserType() } returns UserType.Anonymous
 		every { storage.readFirstSessionTimeStamp() } returns 1700000000L
+		every { storage.readPreviousSessionLastPingTimeStamp() } returns 1699000000L
 		every { storage.readUserConsent() } returns true
 	}
 
@@ -125,6 +126,17 @@ class RecirculationApiClientTest {
 		assertTrue(body.contains("u=user-abc"))
 		assertTrue(body.contains("s=session-123"))
 		assertTrue(body.contains("pageType=4"))
+		assertTrue(body.contains("c=https://elpais.com/article"))
+		assertTrue(body.contains("lv=1699000000"))
+	}
+
+	@Test
+	fun `sends lv as 0 when previous session timestamp is null`() {
+		every { storage.readPreviousSessionLastPingTimeStamp() } returns null
+		server.enqueue(MockResponse())
+		client.send("click", listOf(makeModule()))
+		val body = decodedBody()
+		assertTrue(body.contains("lv=0"))
 	}
 
 	@Test

@@ -80,6 +80,16 @@ internal class ExperimentManager(
 		}.toMap()
 	}
 
+	fun setAssignment(groupId: String, variantId: String) {
+		val assignments = getAssignments().toMutableMap()
+		assignments[groupId] = variantId
+		saveAssignments(assignments)
+	}
+
+	fun clear() {
+		preferences.edit { remove(EXPERIMENTS_KEY) }
+	}
+
 	private fun saveAssignments(assignments: Map<String, String>) {
 		preferences.edit {
 			putString(EXPERIMENTS_KEY, gson.toJson(assignments))

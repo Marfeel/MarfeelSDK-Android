@@ -14,6 +14,7 @@ internal class FrequencyCapManager(private val preferences: SharedPreferences) {
         private const val COUNTS_KEY = "experiences_frequency_caps"
         private const val CONFIG_KEY = "experiences_frequency_cap_config"
         private const val ONE_HOUR_SECONDS = 3600L
+        private val DEFAULT_FREQS = listOf("d", "cd", "w", "cw", "m", "cm", "l", "cl", "ls", "cls")
     }
 
     fun trackImpression(experienceId: String) = synchronized(lock) {
@@ -35,6 +36,7 @@ internal class FrequencyCapManager(private val preferences: SharedPreferences) {
         entry["cm"] = (entry["cm"] ?: 0) + 1
         entry["cw"] = (entry["cw"] ?: 0) + 1
         entry["cd"] = (entry["cd"] ?: 0) + 1
+        entry["cls"] = currentTimeStampInSeconds()
         counts[experienceId] = entry
         saveCounts(counts)
     }
@@ -53,27 +55,34 @@ internal class FrequencyCapManager(private val preferences: SharedPreferences) {
         experienceIds.addAll(config.keys)
         for ((id, counts) in allCounts) {
             val ls = counts["ls"] ?: 0L
-            if (now - ls < ONE_HOUR_SECONDS) {
+            if (ls > 0L && now - ls < ONE_HOUR_SECONDS) {
                 experienceIds.add(id)
             }
         }
 
         if (experienceIds.isEmpty()) return ""
 
-        experienceIds.joinToString(";") { id ->
+        val entries = experienceIds.mapNotNull { id ->
             val counts = allCounts[id] ?: defaultCounts()
-            val parts = listOf(
-                "l", counts["l"],
-                "cl", counts["cl"],
-                "m", counts["m"],
-                "cm", counts["cm"],
-                "w", counts["w"],
-                "cw", counts["cw"],
-                "d", counts["d"],
-                "cd", counts["cd"],
-                "ls", counts["ls"]
-            )
-            "$id,${parts.joinToString("|")}"
+            val keys = config[id] ?: DEFAULT_FREQS
+            val parts = mutableListOf<String>()
+            for (key in keys) {
+                val v = counts[key] ?: 0L
+                if (v > 0L) {
+                    parts.add(key)
+                    parts.add(v.toString())
+                }
+            }
+            if (parts.isEmpty()) null else "$id,${parts.joinToString("|")}"
+        }
+
+        entries.joinToString(";")
+    }
+
+    fun clear() = synchronized(lock) {
+        preferences.edit {
+            remove(COUNTS_KEY)
+            remove(CONFIG_KEY)
         }
     }
 
@@ -107,6 +116,6 @@ internal class FrequencyCapManager(private val preferences: SharedPreferences) {
         "m" to 0L, "cm" to 0L,
         "w" to 0L, "cw" to 0L,
         "d" to 0L, "cd" to 0L,
-        "ls" to 0L
+        "ls" to 0L, "cls" to 0L
     )
 }

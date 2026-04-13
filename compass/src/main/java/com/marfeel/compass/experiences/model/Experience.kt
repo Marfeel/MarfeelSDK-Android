@@ -25,7 +25,7 @@ data class Experience(
 	suspend fun resolve(): String? {
 		if (resolvedContent != null) return resolvedContent
 		if (contentUrl == null) return null
-		resolvedContent = contentResolver?.fetch(contentUrl)
+		resolvedContent = contentResolver?.fetch(contentUrl, id)
 		return resolvedContent
 	}
 }

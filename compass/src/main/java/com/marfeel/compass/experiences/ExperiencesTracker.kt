@@ -16,11 +16,18 @@ import java.util.concurrent.ConcurrentHashMap
 
 interface ExperiencesTracking {
 	fun addTargeting(key: String, value: String)
-	fun trackImpression(experienceId: String)
-	fun trackClose(experienceId: String)
+	fun trackImpression(experience: Experience, links: List<RecirculationLink> = emptyList())
+	fun trackClose(experience: Experience)
+	fun clearFrequencyCaps()
+	fun getFrequencyCapCounts(experienceId: String): Map<String, Long>
+	fun clearReadEditorials()
+	fun getReadEditorials(): List<String>
+
+	fun getExperimentAssignments(): Map<String, String>
+	fun setExperimentAssignment(groupId: String, variantId: String)
+	fun clearExperimentAssignments()
 
 	fun trackElegible(experiences: Map<Experience, List<RecirculationLink>>)
-	fun trackRecirculationImpression(experience: Experience, links: List<RecirculationLink>)
 	fun trackClick(experience: Experience, link: RecirculationLink)
 
 	suspend fun fetchExperiences(
@@ -40,6 +47,7 @@ internal object ExperiencesTracker : ExperiencesTracking {
 	private val responseParser: ExperiencesResponseParser by lazy { CompassComponent.experiencesResponseParser }
 	private val experimentManager: ExperimentManager by lazy { CompassComponent.experimentManager }
 	private val frequencyCapManager: FrequencyCapManager by lazy { CompassComponent.frequencyCapManager }
+	private val readEditorialsManager: ReadEditorialsManager by lazy { CompassComponent.readEditorialsManager }
 	private val recirculationTracker: RecirculationTracking = RecirculationTracker
 
 	private val customTargeting = ConcurrentHashMap<String, String>()
@@ -48,21 +56,43 @@ internal object ExperiencesTracker : ExperiencesTracking {
 		customTargeting[key] = value
 	}
 
-	override fun trackImpression(experienceId: String) {
-		frequencyCapManager.trackImpression(experienceId)
+	override fun trackImpression(experience: Experience, links: List<RecirculationLink>) {
+		frequencyCapManager.trackImpression(experience.id)
+		if (links.isNotEmpty()) {
+			recirculationTracker.trackImpression(RecirculationModule(experience.id, links))
+		}
 	}
 
-	override fun trackClose(experienceId: String) {
-		frequencyCapManager.trackClose(experienceId)
+	override fun trackClose(experience: Experience) {
+		frequencyCapManager.trackClose(experience.id)
+	}
+
+	override fun clearFrequencyCaps() {
+		frequencyCapManager.clear()
+	}
+
+	override fun getFrequencyCapCounts(experienceId: String): Map<String, Long> =
+		frequencyCapManager.getCounts(experienceId)
+
+	override fun clearReadEditorials() {
+		readEditorialsManager.clear()
+	}
+
+	override fun getReadEditorials(): List<String> = readEditorialsManager.getIds()
+
+	override fun getExperimentAssignments(): Map<String, String> = experimentManager.getAssignments()
+
+	override fun setExperimentAssignment(groupId: String, variantId: String) {
+		experimentManager.setAssignment(groupId, variantId)
+	}
+
+	override fun clearExperimentAssignments() {
+		experimentManager.clear()
 	}
 
 	override fun trackElegible(experiences: Map<Experience, List<RecirculationLink>>) {
 		val modules = experiences.map { (exp, links) -> RecirculationModule(exp.id, links) }
 		recirculationTracker.trackElegible(modules)
-	}
-
-	override fun trackRecirculationImpression(experience: Experience, links: List<RecirculationLink>) {
-		recirculationTracker.trackImpression(RecirculationModule(experience.id, links))
 	}
 
 	override fun trackClick(experience: Experience, link: RecirculationLink) {
@@ -82,6 +112,8 @@ internal object ExperiencesTracker : ExperiencesTracking {
 		val parseResult = responseParser.parse(jsonResponse)
 
 		frequencyCapManager.updateFrequencyCapConfig(parseResult.frequencyCapConfig)
+
+		parseResult.editorialId?.let { readEditorialsManager.add(it) }
 
 		experimentManager.handleExperimentGroups(parseResult.experimentGroups)
 

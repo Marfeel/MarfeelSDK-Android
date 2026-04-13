@@ -171,6 +171,46 @@ class ExperimentManagerTest {
 	}
 
 	@Test
+	fun `setAssignment writes the given variant`() {
+		manager.setAssignment("testGroup", "variant_b")
+		assertEquals("variant_b", manager.getAssignments()["testGroup"])
+	}
+
+	@Test
+	fun `setAssignment overrides an existing assignment`() {
+		manager.handleExperimentGroups(makeExperimentGroups())
+		manager.setAssignment("testGroup", "variant_a")
+		assertEquals("variant_a", manager.getAssignments()["testGroup"])
+	}
+
+	@Test
+	fun `setAssignment preserves other group assignments`() {
+		manager.setAssignment("groupOne", "v1")
+		manager.setAssignment("groupTwo", "v2")
+		val assignments = manager.getAssignments()
+		assertEquals("v1", assignments["groupOne"])
+		assertEquals("v2", assignments["groupTwo"])
+	}
+
+	@Test
+	fun `clear removes all assignments`() {
+		manager.handleExperimentGroups(makeExperimentGroups())
+		assertEquals(1, manager.getAssignments().size)
+		manager.clear()
+		assertEquals(0, manager.getAssignments().size)
+	}
+
+	@Test
+	fun `handleExperimentGroups after clear re-assigns`() {
+		manager.handleExperimentGroups(makeExperimentGroups())
+		val first = manager.getAssignments()["testGroup"]
+		manager.clear()
+		manager.handleExperimentGroups(makeExperimentGroups())
+		assertNotNull(manager.getAssignments()["testGroup"])
+		assertTrue(first in listOf("variant_a", "variant_b"))
+	}
+
+	@Test
 	fun `getTargetingEntries returns experiment assignments`() {
 		val groups = makeExperimentGroups()
 		manager.handleExperimentGroups(groups)

@@ -51,6 +51,7 @@ import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.experiences.ExperiencesTracking
 import com.marfeel.compass.experiences.RecirculationTracking
 import com.marfeel.compass.experiences.model.Experience
+import com.marfeel.compass.experiences.model.ExperienceType
 import com.marfeel.compass.experiences.model.RecirculationLink
 import com.marfeel.compass.experiences.model.RecirculationModule
 import com.marfeel.compass.tracker.CompassTracking
@@ -377,10 +378,13 @@ fun MainScreen(
 				modifier = Modifier.padding(top = 32.dp, bottom = 16.dp)
 			)
 
-			var experiencesUrl by remember { mutableStateOf("https://elpais.com/") }
+			var experiencesUrl by remember { mutableStateOf("https://dev.marfeel.co/") }
 			var experiencesResult by remember { mutableStateOf("") }
 			var experiencesLoading by remember { mutableStateOf(false) }
 			var lastExperiences by remember { mutableStateOf<List<Experience>>(emptyList()) }
+			var selectedType by remember { mutableStateOf<ExperienceType?>(null) }
+			var typeExpanded by remember { mutableStateOf(false) }
+			var experimentsVersion by remember { mutableStateOf(0) }
 			val experiencesTracker = remember { ExperiencesTracking.getInstance() }
 			val recirculationTracker = remember { RecirculationTracking.getInstance() }
 
@@ -390,6 +394,34 @@ fun MainScreen(
 				onValueChange = { experiencesUrl = it },
 				label = { Text("URL") }
 			)
+
+			Box(modifier = Modifier.padding(top = 8.dp)) {
+				OutlinedButton(
+					modifier = Modifier.fillMaxWidth(),
+					onClick = { typeExpanded = true }
+				) {
+					Text(text = selectedType?.name ?: "Filter by type: All")
+				}
+				DropdownMenu(
+					expanded = typeExpanded,
+					onDismissRequest = { typeExpanded = false }
+				) {
+					DropdownMenuItem(onClick = {
+						selectedType = null
+						typeExpanded = false
+					}) {
+						Text("All")
+					}
+					ExperienceType.values().forEach { type ->
+						DropdownMenuItem(onClick = {
+							selectedType = type
+							typeExpanded = false
+						}) {
+							Text(type.name)
+						}
+					}
+				}
+			}
 
 			Row(
 				modifier = Modifier
@@ -406,9 +438,11 @@ fun MainScreen(
 							try {
 								val experiences = experiencesTracker.fetchExperiences(
 									url = experiencesUrl,
+									filterByType = selectedType,
 									resolve = false
 								)
 								lastExperiences = experiences
+								experimentsVersion++
 								experiencesResult = "Found ${experiences.size} experiences:\n" +
 									experiences.joinToString("\n") { exp ->
 										"- [${exp.typeRaw}] ${exp.name} (id=${exp.id})"
@@ -431,9 +465,11 @@ fun MainScreen(
 							try {
 								val experiences = experiencesTracker.fetchExperiences(
 									url = experiencesUrl,
+									filterByType = selectedType,
 									resolve = true
 								)
 								lastExperiences = experiences
+								experimentsVersion++
 								experiencesResult = "Found ${experiences.size} experiences:\n" +
 									experiences.joinToString("\n") { exp ->
 										val resolved = if (exp.resolvedContent != null)
@@ -507,7 +543,7 @@ fun MainScreen(
 										position = "0"
 									)
 								)
-								experiencesTracker.trackRecirculationImpression(exp, links)
+								experiencesTracker.trackImpression(exp, links)
 							}
 						}
 					) {
@@ -529,6 +565,149 @@ fun MainScreen(
 					) {
 						Text(text = "Click", color = Color.White)
 					}
+				}
+
+				var capsVersion by remember { mutableStateOf(0) }
+				Row(
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(top = 32.dp, bottom = 8.dp),
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.SpaceBetween
+				) {
+					Text(
+						text = "Frequency Caps",
+						color = Color.Black,
+						style = titleStyle
+					)
+					OutlinedButton(onClick = {
+						experiencesTracker.clearFrequencyCaps()
+						capsVersion++
+					}) {
+						Text(text = "Clear", style = TextStyle.Default.copy(fontSize = 12.sp))
+					}
+				}
+				Text(
+					text = "Tap Impression/Close per experience, then re-Fetch and inspect the `uexp` query param.",
+					color = Color.Gray,
+					modifier = Modifier.padding(bottom = 8.dp),
+					style = TextStyle.Default.copy(fontSize = 12.sp)
+				)
+				lastExperiences.forEach { exp ->
+					val counts = remember(capsVersion, exp.id) {
+						experiencesTracker.getFrequencyCapCounts(exp.id)
+					}
+					Column(modifier = Modifier.padding(vertical = 4.dp)) {
+						Row(
+							modifier = Modifier.fillMaxWidth(),
+							verticalAlignment = Alignment.CenterVertically
+						) {
+							Text(
+								text = "${exp.typeRaw}/${exp.id.take(16)}…",
+								color = Color.Black,
+								modifier = Modifier.weight(1f),
+								style = TextStyle.Default.copy(fontSize = 11.sp)
+							)
+							OutlinedButton(onClick = {
+								experiencesTracker.trackImpression(exp)
+								capsVersion++
+							}) {
+								Text(text = "Impression", style = TextStyle.Default.copy(fontSize = 11.sp))
+							}
+							Spacer(modifier = Modifier.width(4.dp))
+							OutlinedButton(onClick = {
+								experiencesTracker.trackClose(exp)
+								capsVersion++
+							}) {
+								Text(text = "Close", style = TextStyle.Default.copy(fontSize = 11.sp))
+							}
+						}
+						Text(
+							text = "l=${counts["l"]} cl=${counts["cl"]} m=${counts["m"]} cm=${counts["cm"]} w=${counts["w"]} cw=${counts["cw"]} d=${counts["d"]} cd=${counts["cd"]} ls=${counts["ls"]}",
+							color = Color.Gray,
+							style = TextStyle.Default.copy(fontSize = 10.sp)
+						)
+					}
+				}
+			}
+
+			Text(
+				text = "Experiments",
+				color = Color.Black,
+				style = titleStyle,
+				modifier = Modifier.padding(top = 32.dp, bottom = 8.dp)
+			)
+			Text(
+				text = "Draws happen during Fetch. Force a variant to pin a branch; Clear to re-roll on next Fetch. Targeting is sent as trg=experiment::groupId=variantId.",
+				color = Color.Gray,
+				modifier = Modifier.padding(bottom = 8.dp),
+				style = TextStyle.Default.copy(fontSize = 12.sp)
+			)
+
+			val experimentAssignments = remember(experimentsVersion) {
+				experiencesTracker.getExperimentAssignments()
+			}
+
+			if (experimentAssignments.isEmpty()) {
+				Text(
+					text = "No assignments yet. Fetch experiences to draw, or force one below.",
+					color = Color.Gray,
+					style = TextStyle.Default.copy(fontSize = 12.sp)
+				)
+			} else {
+				experimentAssignments.forEach { (groupId, variantId) ->
+					Text(
+						text = "$groupId → $variantId",
+						color = Color.Black,
+						modifier = Modifier.padding(vertical = 2.dp),
+						style = TextStyle.Default.copy(fontSize = 11.sp)
+					)
+				}
+			}
+
+			var forceGroupId by remember { mutableStateOf("") }
+			var forceVariantId by remember { mutableStateOf("") }
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(top = 8.dp),
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				TextField(
+					modifier = Modifier.weight(1f),
+					value = forceGroupId,
+					onValueChange = { forceGroupId = it },
+					label = { Text("groupId") }
+				)
+				Spacer(modifier = Modifier.width(8.dp))
+				TextField(
+					modifier = Modifier.weight(1f),
+					value = forceVariantId,
+					onValueChange = { forceVariantId = it },
+					label = { Text("variantId") }
+				)
+			}
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(top = 8.dp),
+				horizontalArrangement = Arrangement.SpaceEvenly
+			) {
+				OutlinedButton(onClick = {
+					if (forceGroupId.isNotBlank() && forceVariantId.isNotBlank()) {
+						experiencesTracker.setExperimentAssignment(forceGroupId.trim(), forceVariantId.trim())
+						forceGroupId = ""
+						forceVariantId = ""
+						experimentsVersion++
+					}
+				}) {
+					Text(text = "Force variant")
+				}
+				OutlinedButton(onClick = {
+					experiencesTracker.clearExperimentAssignments()
+					experimentsVersion++
+				}) {
+					Text(text = "Clear assignments")
 				}
 			}
 

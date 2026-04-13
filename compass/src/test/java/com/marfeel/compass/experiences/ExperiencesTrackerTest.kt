@@ -27,6 +27,7 @@ class ExperiencesTrackerTest {
 	private val storage = mockk<Storage>()
 	private val sessionStorage = mockk<SessionStorage>()
 	private lateinit var frequencyCapManager: FrequencyCapManager
+	private lateinit var readEditorialsManager: ReadEditorialsManager
 	private lateinit var experimentManager: ExperimentManager
 	private lateinit var contentResolver: ContentResolver
 	private lateinit var responseParser: ExperiencesResponseParser
@@ -38,6 +39,7 @@ class ExperiencesTrackerTest {
 	@Before
 	fun setUp() {
 		frequencyCapManager = FrequencyCapManager(MockSharedPreference())
+		readEditorialsManager = ReadEditorialsManager(MockSharedPreference())
 		experimentManager = ExperimentManager(MockSharedPreference())
 		contentResolver = ContentResolver(httpClient)
 		responseParser = ExperiencesResponseParser(contentResolver)
@@ -48,6 +50,7 @@ class ExperiencesTrackerTest {
 			sessionStorage = sessionStorage,
 			experimentManager = experimentManager,
 			frequencyCapManager = frequencyCapManager,
+			readEditorialsManager = readEditorialsManager,
 			baseUrl = experiencesServer.url("/").toString().removeSuffix("/")
 		)
 
