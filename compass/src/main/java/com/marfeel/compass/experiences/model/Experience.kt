@@ -6,7 +6,6 @@ data class Experience(
 	val id: String,
 	val name: String,
 	val type: ExperienceType,
-	val typeRaw: String,
 	val placement: String?,
 	val contentUrl: String?,
 	val contentType: ExperienceContentType,
@@ -15,6 +14,7 @@ data class Experience(
 	val selectors: List<ExperienceSelector>?,
 	val filters: List<ExperienceFilter>?,
 	val rawJson: Map<String, Any>,
+	val family: ExperienceFamily? = null,
 ) {
 	@Transient
 	internal var contentResolver: ContentResolver? = null

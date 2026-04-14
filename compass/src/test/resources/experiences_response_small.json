@@ -44,6 +44,7 @@
             },
             "content-recommender-block": {
                 "id": "IL_r1-HQ0psRiiLuHZTpi9lDQ",
+                "family": "recommenderexperience",
                 "placement": "popup",
                 "content": {
                     "type": "Json",

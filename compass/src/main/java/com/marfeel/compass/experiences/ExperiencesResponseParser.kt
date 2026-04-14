@@ -8,6 +8,7 @@ import com.marfeel.compass.experiences.model.Experience
 import com.marfeel.compass.experiences.model.ExperienceContentType
 import com.marfeel.compass.experiences.model.ExperienceFilter
 import com.marfeel.compass.experiences.model.ExperienceSelector
+import com.marfeel.compass.experiences.model.ExperienceFamily
 import com.marfeel.compass.experiences.model.ExperienceType
 
 internal data class ParseResult(
@@ -50,7 +51,7 @@ internal class ExperiencesResponseParser(
 				if (!actionValue.isJsonObject) continue
 				val actionObj = actionValue.asJsonObject
 
-				experiences.add(parseExperience(actionName, actionObj, experienceType, typeKey))
+				experiences.add(parseExperience(actionName, actionObj, experienceType))
 			}
 		}
 
@@ -61,11 +62,13 @@ internal class ExperiencesResponseParser(
 		name: String,
 		action: JsonObject,
 		type: ExperienceType,
-		typeRaw: String,
 	): Experience {
 		val contentObj = action.getAsJsonObject("content")
 		val contentTypeStr = contentObj?.get("type")?.asString
 		val contentUrl = contentObj?.get("url")?.asString
+
+		val familyStr = action.get("family")?.asString
+		val family = familyStr?.let { ExperienceFamily.fromKey(it) }
 
 		val rawJsonType = object : TypeToken<Map<String, Any>>() {}.type
 		val rawJson: Map<String, Any> = gson.fromJson(action, rawJsonType)
@@ -74,7 +77,6 @@ internal class ExperiencesResponseParser(
 			id = action.get("id")?.asString ?: "",
 			name = name,
 			type = type,
-			typeRaw = typeRaw,
 			placement = action.get("placement")?.asString,
 			contentUrl = contentUrl,
 			contentType = contentTypeStr?.let { ExperienceContentType.fromKey(it) }
@@ -84,6 +86,7 @@ internal class ExperiencesResponseParser(
 			selectors = parseSelectors(action),
 			filters = parseFilters(action),
 			rawJson = rawJson,
+		family = family,
 		).also { it.contentResolver = contentResolver }
 	}
 

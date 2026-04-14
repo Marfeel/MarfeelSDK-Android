@@ -51,6 +51,7 @@ import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.experiences.ExperiencesTracking
 import com.marfeel.compass.experiences.RecirculationTracking
 import com.marfeel.compass.experiences.model.Experience
+import com.marfeel.compass.experiences.model.ExperienceFamily
 import com.marfeel.compass.experiences.model.ExperienceType
 import com.marfeel.compass.experiences.model.RecirculationLink
 import com.marfeel.compass.experiences.model.RecirculationModule
@@ -88,7 +89,6 @@ fun MainScreen(
 
 	Scaffold(
 		Modifier
-			.verticalScroll(rememberScrollState())
 			.fillMaxSize()
 			.background(backgroundColor),
 		scaffoldState = scaffoldState,
@@ -97,6 +97,7 @@ fun MainScreen(
 			Modifier
 				.fillMaxSize()
 				.background(backgroundColor)
+				.verticalScroll(rememberScrollState())
 				.padding(horizontal = 20.dp, vertical = 48.dp)
 		) {
 			Text(
@@ -384,6 +385,8 @@ fun MainScreen(
 			var lastExperiences by remember { mutableStateOf<List<Experience>>(emptyList()) }
 			var selectedType by remember { mutableStateOf<ExperienceType?>(null) }
 			var typeExpanded by remember { mutableStateOf(false) }
+			var selectedFamily by remember { mutableStateOf<ExperienceFamily?>(null) }
+			var familyExpanded by remember { mutableStateOf(false) }
 			var experimentsVersion by remember { mutableStateOf(0) }
 			val experiencesTracker = remember { ExperiencesTracking.getInstance() }
 			val recirculationTracker = remember { RecirculationTracking.getInstance() }
@@ -423,6 +426,34 @@ fun MainScreen(
 				}
 			}
 
+			Box(modifier = Modifier.padding(top = 8.dp)) {
+				OutlinedButton(
+					modifier = Modifier.fillMaxWidth(),
+					onClick = { familyExpanded = true }
+				) {
+					Text(text = selectedFamily?.name ?: "Filter by family: All")
+				}
+				DropdownMenu(
+					expanded = familyExpanded,
+					onDismissRequest = { familyExpanded = false }
+				) {
+					DropdownMenuItem(onClick = {
+						selectedFamily = null
+						familyExpanded = false
+					}) {
+						Text("All")
+					}
+					ExperienceFamily.values().filter { it != ExperienceFamily.UNKNOWN }.forEach { family ->
+						DropdownMenuItem(onClick = {
+							selectedFamily = family
+							familyExpanded = false
+						}) {
+							Text(family.name)
+						}
+					}
+				}
+			}
+
 			Row(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -439,13 +470,15 @@ fun MainScreen(
 								val experiences = experiencesTracker.fetchExperiences(
 									url = experiencesUrl,
 									filterByType = selectedType,
+									filterByFamily = selectedFamily,
 									resolve = false
 								)
 								lastExperiences = experiences
 								experimentsVersion++
 								experiencesResult = "Found ${experiences.size} experiences:\n" +
 									experiences.joinToString("\n") { exp ->
-										"- [${exp.typeRaw}] ${exp.name} (id=${exp.id})"
+										val familyTag = exp.family?.let { " family=${it.key}" } ?: ""
+										"- [${exp.type.key}] ${exp.name}$familyTag (id=${exp.id})"
 									}
 							} catch (e: Exception) {
 								experiencesResult = "Error: ${e.message}"
@@ -466,6 +499,7 @@ fun MainScreen(
 								val experiences = experiencesTracker.fetchExperiences(
 									url = experiencesUrl,
 									filterByType = selectedType,
+									filterByFamily = selectedFamily,
 									resolve = true
 								)
 								lastExperiences = experiences
@@ -475,7 +509,8 @@ fun MainScreen(
 										val resolved = if (exp.resolvedContent != null)
 											" [resolved: ${exp.resolvedContent!!.take(100)}...]"
 										else ""
-										"- [${exp.typeRaw}] ${exp.name}$resolved"
+										val familyTag = exp.family?.let { " family=${it.key}" } ?: ""
+										"- [${exp.type.key}] ${exp.name}$familyTag$resolved"
 									}
 							} catch (e: Exception) {
 								experiencesResult = "Error: ${e.message}"
@@ -615,7 +650,7 @@ fun MainScreen(
 						) {
 							val capKeys = capConfig[exp.id].orEmpty().joinToString(",")
 							Text(
-								text = "${exp.typeRaw}/${exp.id.take(16)}… [$capKeys]",
+								text = "${exp.type.key}/${exp.id.take(16)}… [$capKeys]",
 								color = Color.Black,
 								modifier = Modifier.weight(1f),
 								style = TextStyle.Default.copy(fontSize = 11.sp)

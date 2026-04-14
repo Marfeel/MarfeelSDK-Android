@@ -68,7 +68,6 @@ class RecirculationTrackerTest {
             id = id,
             name = "Test",
             type = ExperienceType.INLINE,
-            typeRaw = "inline",
             placement = null,
             contentUrl = contentUrl,
             contentType = ExperienceContentType.TEXT_HTML,

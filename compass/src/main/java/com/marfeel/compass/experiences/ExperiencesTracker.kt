@@ -2,6 +2,7 @@ package com.marfeel.compass.experiences
 
 import com.marfeel.compass.di.CompassComponent
 import com.marfeel.compass.experiences.model.Experience
+import com.marfeel.compass.experiences.model.ExperienceFamily
 import com.marfeel.compass.experiences.model.ExperienceType
 import com.marfeel.compass.experiences.model.RecirculationLink
 import com.marfeel.compass.experiences.model.RecirculationModule
@@ -34,7 +35,7 @@ interface ExperiencesTracking {
 	suspend fun fetchExperiences(
 		url: String,
 		filterByType: ExperienceType? = null,
-		filterByTypeRaw: String? = null,
+		filterByFamily: ExperienceFamily? = null,
 		resolve: Boolean = true
 	): List<Experience>
 
@@ -106,7 +107,7 @@ internal object ExperiencesTracker : ExperiencesTracking {
 	override suspend fun fetchExperiences(
 		url: String,
 		filterByType: ExperienceType?,
-		filterByTypeRaw: String?,
+		filterByFamily: ExperienceFamily?,
 		resolve: Boolean
 	): List<Experience> = withContext(Dispatchers.IO) {
 		check(CompassTracker.initialized) { compassNotInitializedErrorMessage }
@@ -125,8 +126,9 @@ internal object ExperiencesTracker : ExperiencesTracking {
 
 		if (filterByType != null) {
 			experiences = experiences.filter { it.type == filterByType }
-		} else if (filterByTypeRaw != null) {
-			experiences = experiences.filter { it.typeRaw == filterByTypeRaw }
+		}
+		if (filterByFamily != null) {
+			experiences = experiences.filter { it.family == filterByFamily }
 		}
 
 		if (resolve) {

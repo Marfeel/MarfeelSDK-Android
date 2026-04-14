@@ -2,6 +2,7 @@ package com.marfeel.compass.experiences
 
 import com.marfeel.compass.core.model.compass.Session
 import com.marfeel.compass.core.model.compass.UserType
+import com.marfeel.compass.experiences.model.ExperienceFamily
 import com.marfeel.compass.experiences.model.ExperienceType
 import com.marfeel.compass.storage.MockSharedPreference
 import com.marfeel.compass.storage.SessionStorage
@@ -107,20 +108,30 @@ class ExperiencesTrackerTest {
 	}
 
 	@Test
-	fun `filterByTypeRaw returns only matching experiences`() = runBlocking {
+	fun `filterByFamily returns only matching experiences`() = runBlocking {
 		val json = loadJson("experiences_response_small.json")
 		experiencesServer.enqueue(MockResponse().setBody(json))
 
 		val jsonResponse = apiClient.fetch("https://example.com/", emptyMap())!!
 		val result = responseParser.parse(jsonResponse)
 
-		val types = result.experiences.map { it.typeRaw }.distinct()
-		assertTrue(types.isNotEmpty())
+		val recommenders = result.experiences.filter { it.family == ExperienceFamily.RECOMMENDER }
+		assertTrue(recommenders.isNotEmpty())
+		assertTrue(recommenders.all { it.family == ExperienceFamily.RECOMMENDER })
+	}
 
-		val firstType = types.first()
-		val byRaw = result.experiences.filter { it.typeRaw == firstType }
-		assertTrue(byRaw.isNotEmpty())
-		assertTrue(byRaw.all { it.typeRaw == firstType })
+	@Test
+	fun `filterByType and filterByFamily combine with AND logic`() = runBlocking {
+		val json = loadJson("experiences_response_small.json")
+		experiencesServer.enqueue(MockResponse().setBody(json))
+
+		val jsonResponse = apiClient.fetch("https://example.com/", emptyMap())!!
+		val result = responseParser.parse(jsonResponse)
+
+		val filtered = result.experiences
+			.filter { it.type == ExperienceType.INLINE }
+			.filter { it.family == ExperienceFamily.RECOMMENDER }
+		assertTrue(filtered.all { it.type == ExperienceType.INLINE && it.family == ExperienceFamily.RECOMMENDER })
 	}
 
 	@Test

@@ -52,7 +52,6 @@ class ExperimentManagerTest {
 		id = id,
 		name = id,
 		type = ExperienceType.INLINE,
-		typeRaw = "inline",
 		placement = null,
 		contentUrl = null,
 		contentType = ExperienceContentType.UNKNOWN,
