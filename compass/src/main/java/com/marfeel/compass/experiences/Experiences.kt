@@ -5,7 +5,6 @@ import com.marfeel.compass.experiences.model.Experience
 import com.marfeel.compass.experiences.model.ExperienceFamily
 import com.marfeel.compass.experiences.model.ExperienceType
 import com.marfeel.compass.experiences.model.RecirculationLink
-import com.marfeel.compass.experiences.model.RecirculationModule
 import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.tracker.CompassTracker
 import com.marfeel.compass.tracker.compassNotInitializedErrorMessage
@@ -19,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap
 interface Experiences {
 	fun addTargeting(key: String, value: String)
 	fun trackImpression(experience: Experience, links: List<RecirculationLink> = emptyList())
+	fun trackImpression(experience: Experience, link: RecirculationLink)
 	fun trackClose(experience: Experience)
 	fun clearFrequencyCaps()
 	fun getFrequencyCapCounts(experienceId: String): Map<String, Long>
@@ -36,7 +36,7 @@ interface Experiences {
 	suspend fun fetchExperiences(
 		filterByType: ExperienceType? = null,
 		filterByFamily: ExperienceFamily? = null,
-		resolve: Boolean = true,
+		resolve: Boolean = false,
 		url: String? = null
 	): List<Experience>
 
@@ -63,8 +63,12 @@ internal object ExperiencesTracker : Experiences {
 	override fun trackImpression(experience: Experience, links: List<RecirculationLink>) {
 		frequencyCapManager.trackImpression(experience.id)
 		if (links.isNotEmpty()) {
-			recirculationTracker.trackImpression(RecirculationModule(experience.id, links))
+			recirculationTracker.trackImpression(experience.id, links)
 		}
+	}
+
+	override fun trackImpression(experience: Experience, link: RecirculationLink) {
+		trackImpression(experience, listOf(link))
 	}
 
 	override fun trackClose(experience: Experience) {
@@ -98,11 +102,11 @@ internal object ExperiencesTracker : Experiences {
 	}
 
 	override fun trackEligible(experience: Experience, links: List<RecirculationLink>) {
-		recirculationTracker.trackEligible(listOf(RecirculationModule(experience.id, links)))
+		recirculationTracker.trackEligible(experience.id, links)
 	}
 
 	override fun trackClick(experience: Experience, link: RecirculationLink) {
-		recirculationTracker.trackClick(RecirculationModule(experience.id, listOf(link)))
+		recirculationTracker.trackClick(experience.id, link)
 	}
 
 	override suspend fun fetchExperiences(

@@ -10,9 +10,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 interface Recirculation {
-    fun trackEligible(modules: List<RecirculationModule>)
-    fun trackImpression(module: RecirculationModule)
-    fun trackClick(module: RecirculationModule)
+    fun trackEligible(name: String, links: List<RecirculationLink>)
+    fun trackImpression(name: String, links: List<RecirculationLink>)
+    fun trackImpression(name: String, link: RecirculationLink)
+    fun trackClick(name: String, link: RecirculationLink)
 
     companion object {
         fun getInstance(): Recirculation = RecirculationTracker
@@ -71,17 +72,24 @@ internal object RecirculationTracker : Recirculation {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val augmenter by lazy { WholeModuleAugmenter { sessionStorage.readPage()?.url } }
 
-    override fun trackEligible(modules: List<RecirculationModule>) {
-        val augmented = augmenter.onEligible(modules)
+    override fun trackEligible(name: String, links: List<RecirculationLink>) {
+        val module = RecirculationModule(name, links)
+        val augmented = augmenter.onEligible(listOf(module))
         scope.launch { recirculationApiClient.send("elegible", augmented) }
     }
 
-    override fun trackImpression(module: RecirculationModule) {
+    override fun trackImpression(name: String, links: List<RecirculationLink>) {
+        val module = RecirculationModule(name, links)
         val augmented = augmenter.onImpression(module)
         scope.launch { recirculationApiClient.send("impression", listOf(augmented)) }
     }
 
-    override fun trackClick(module: RecirculationModule) {
+    override fun trackImpression(name: String, link: RecirculationLink) {
+        trackImpression(name, listOf(link))
+    }
+
+    override fun trackClick(name: String, link: RecirculationLink) {
+        val module = RecirculationModule(name, listOf(link))
         scope.launch { recirculationApiClient.send("click", listOf(module)) }
     }
 }

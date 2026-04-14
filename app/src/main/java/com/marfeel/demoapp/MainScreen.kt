@@ -54,7 +54,6 @@ import com.marfeel.compass.experiences.model.Experience
 import com.marfeel.compass.experiences.model.ExperienceFamily
 import com.marfeel.compass.experiences.model.ExperienceType
 import com.marfeel.compass.experiences.model.RecirculationLink
-import com.marfeel.compass.experiences.model.RecirculationModule
 import com.marfeel.compass.tracker.CompassTracking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -775,14 +774,10 @@ fun MainScreen(
 					backgroundColor = Color(0xFF00AA00),
 					onClick = {
 						recirculationTracker.trackEligible(
+							"demo-module",
 							listOf(
-								RecirculationModule(
-									name = "demo-module",
-									links = listOf(
-										RecirculationLink(url = "https://example.com/1", position = 0),
-										RecirculationLink(url = "https://example.com/2", position = 1)
-									)
-								)
+								RecirculationLink(url = "https://example.com/1", position = 0),
+								RecirculationLink(url = "https://example.com/2", position = 1)
 							)
 						)
 					}
@@ -793,11 +788,9 @@ fun MainScreen(
 					backgroundColor = Color(0xFFAA6600),
 					onClick = {
 						recirculationTracker.trackImpression(
-							RecirculationModule(
-								name = "demo-module",
-								links = listOf(
-									RecirculationLink(url = "https://example.com/1", position = 0)
-								)
+							"demo-module",
+							listOf(
+								RecirculationLink(url = "https://example.com/1", position = 0)
 							)
 						)
 					}
@@ -808,12 +801,8 @@ fun MainScreen(
 					backgroundColor = Color(0xFFAA0000),
 					onClick = {
 						recirculationTracker.trackClick(
-							RecirculationModule(
-								name = "demo-module",
-								links = listOf(
-									RecirculationLink(url = "https://example.com/1", position = 0)
-								)
-							)
+							"demo-module",
+							RecirculationLink(url = "https://example.com/1", position = 0)
 						)
 					}
 				) {

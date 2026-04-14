@@ -15,16 +15,20 @@ class RecirculationTrackerTest {
     private lateinit var tracker: RecirculationTrackerTestable
 
     internal class RecirculationTrackerTestable(private val apiClient: RecirculationApiClient) : Recirculation {
-        override fun trackEligible(modules: List<RecirculationModule>) {
-            apiClient.send("elegible", modules)
+        override fun trackEligible(name: String, links: List<RecirculationLink>) {
+            apiClient.send("elegible", listOf(RecirculationModule(name, links)))
         }
 
-        override fun trackImpression(module: RecirculationModule) {
-            apiClient.send("impression", listOf(module))
+        override fun trackImpression(name: String, links: List<RecirculationLink>) {
+            apiClient.send("impression", listOf(RecirculationModule(name, links)))
         }
 
-        override fun trackClick(module: RecirculationModule) {
-            apiClient.send("click", listOf(module))
+        override fun trackImpression(name: String, link: RecirculationLink) {
+            trackImpression(name, listOf(link))
+        }
+
+        override fun trackClick(name: String, link: RecirculationLink) {
+            apiClient.send("click", listOf(RecirculationModule(name, listOf(link))))
         }
     }
 
@@ -35,32 +39,29 @@ class RecirculationTrackerTest {
 
     @Test
     fun `trackEligible delegates to apiClient with elegible event type`() {
-        val modules = listOf(
-            RecirculationModule("mod-1", listOf(RecirculationLink("https://a.com", 0))),
-            RecirculationModule("mod-2", listOf(RecirculationLink("https://b.com", 1)))
-        )
-        tracker.trackEligible(modules)
-        verify { apiClient.send("elegible", modules) }
+        val links = listOf(RecirculationLink("https://a.com", 0))
+        tracker.trackEligible("mod-1", links)
+        verify { apiClient.send("elegible", listOf(RecirculationModule("mod-1", links))) }
     }
 
     @Test
     fun `trackImpression delegates to apiClient with impression event type`() {
-        val module = RecirculationModule("mod-1", listOf(RecirculationLink("https://a.com", 0)))
-        tracker.trackImpression(module)
-        verify { apiClient.send("impression", listOf(module)) }
+        val links = listOf(RecirculationLink("https://a.com", 0))
+        tracker.trackImpression("mod-1", links)
+        verify { apiClient.send("impression", listOf(RecirculationModule("mod-1", links))) }
     }
 
     @Test
     fun `trackClick delegates to apiClient with click event type`() {
-        val module = RecirculationModule("mod-1", listOf(RecirculationLink("https://a.com", 5)))
-        tracker.trackClick(module)
-        verify { apiClient.send("click", listOf(module)) }
+        val link = RecirculationLink("https://a.com", 5)
+        tracker.trackClick("mod-1", link)
+        verify { apiClient.send("click", listOf(RecirculationModule("mod-1", listOf(link)))) }
     }
 
     @Test
     fun `trackEligible with empty list delegates empty list`() {
-        tracker.trackEligible(emptyList())
-        verify { apiClient.send("elegible", emptyList()) }
+        tracker.trackEligible("mod-1", emptyList())
+        verify { apiClient.send("elegible", listOf(RecirculationModule("mod-1", emptyList()))) }
     }
 
     private fun makeExperience(id: String = "exp-1", contentUrl: String? = "https://example.com"): Experience =
@@ -78,34 +79,27 @@ class RecirculationTrackerTest {
             rawJson = emptyMap()
         )
 
-    private fun trackEligibleViaExperiences(experiences: Map<Experience, List<RecirculationLink>>) {
-        val modules = experiences.map { (exp, links) -> RecirculationModule(exp.id, links) }
-        tracker.trackEligible(modules)
+    private fun trackEligibleViaExperiences(experience: Experience, links: List<RecirculationLink>) {
+        tracker.trackEligible(experience.id, links)
     }
 
     private fun trackImpressionViaExperiences(experience: Experience, links: List<RecirculationLink>) {
-        tracker.trackImpression(RecirculationModule(experience.id, links))
+        tracker.trackImpression(experience.id, links)
     }
 
     private fun trackClickViaExperiences(experience: Experience, link: RecirculationLink) {
-        tracker.trackClick(RecirculationModule(experience.id, listOf(link)))
+        tracker.trackClick(experience.id, link)
     }
 
     @Test
     fun `trackEligible maps experience id to module name`() {
-        val links1 = listOf(RecirculationLink("https://a.com", 0))
-        val links2 = listOf(RecirculationLink("https://b.com", 1))
-        val exp1 = makeExperience("exp-1")
-        val exp2 = makeExperience("exp-2")
-        val experiences = mapOf(exp1 to links1, exp2 to links2)
+        val links = listOf(RecirculationLink("https://a.com", 0))
+        val exp = makeExperience("exp-1")
 
-        trackEligibleViaExperiences(experiences)
+        trackEligibleViaExperiences(exp, links)
 
         verify {
-            apiClient.send(
-                "elegible",
-                listOf(RecirculationModule("exp-1", links1), RecirculationModule("exp-2", links2))
-            )
+            apiClient.send("elegible", listOf(RecirculationModule("exp-1", links)))
         }
     }
 
@@ -133,9 +127,8 @@ class RecirculationTrackerTest {
     fun `trackEligible passes client-provided links not contentUrl`() {
         val experience = makeExperience("exp-1", contentUrl = "https://original.com")
         val clientLinks = listOf(RecirculationLink("https://override.com", 0))
-        val experiences = mapOf(experience to clientLinks)
 
-        trackEligibleViaExperiences(experiences)
+        trackEligibleViaExperiences(experience, clientLinks)
 
         verify {
             apiClient.send(
