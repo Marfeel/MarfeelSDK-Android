@@ -14,7 +14,7 @@ class RecirculationTrackerTest {
     private val apiClient = mockk<RecirculationApiClient>(relaxed = true)
     private lateinit var tracker: RecirculationTrackerTestable
 
-    internal class RecirculationTrackerTestable(private val apiClient: RecirculationApiClient) : RecirculationTracking {
+    internal class RecirculationTrackerTestable(private val apiClient: RecirculationApiClient) : Recirculation {
         override fun trackElegible(modules: List<RecirculationModule>) {
             apiClient.send("elegible", modules)
         }

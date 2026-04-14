@@ -48,8 +48,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.marfeel.compass.core.model.compass.UserType
-import com.marfeel.compass.experiences.ExperiencesTracking
-import com.marfeel.compass.experiences.RecirculationTracking
+import com.marfeel.compass.experiences.Experiences
+import com.marfeel.compass.experiences.Recirculation
 import com.marfeel.compass.experiences.model.Experience
 import com.marfeel.compass.experiences.model.ExperienceFamily
 import com.marfeel.compass.experiences.model.ExperienceType
@@ -388,8 +388,8 @@ fun MainScreen(
 			var selectedFamily by remember { mutableStateOf<ExperienceFamily?>(null) }
 			var familyExpanded by remember { mutableStateOf(false) }
 			var experimentsVersion by remember { mutableStateOf(0) }
-			val experiencesTracker = remember { ExperiencesTracking.getInstance() }
-			val recirculationTracker = remember { RecirculationTracking.getInstance() }
+			val experiencesTracker = remember { Experiences.getInstance() }
+			val recirculationTracker = remember { Recirculation.getInstance() }
 
 			TextField(
 				modifier = Modifier.fillMaxWidth(),
@@ -468,10 +468,10 @@ fun MainScreen(
 						coroutineScope.launch {
 							try {
 								val experiences = experiencesTracker.fetchExperiences(
-									url = experiencesUrl,
 									filterByType = selectedType,
 									filterByFamily = selectedFamily,
-									resolve = false
+									resolve = false,
+									url = experiencesUrl
 								)
 								lastExperiences = experiences
 								experimentsVersion++
@@ -497,10 +497,10 @@ fun MainScreen(
 						coroutineScope.launch {
 							try {
 								val experiences = experiencesTracker.fetchExperiences(
-									url = experiencesUrl,
 									filterByType = selectedType,
 									filterByFamily = selectedFamily,
-									resolve = true
+									resolve = true,
+									url = experiencesUrl
 								)
 								lastExperiences = experiences
 								experimentsVersion++

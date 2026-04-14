@@ -9,13 +9,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-interface RecirculationTracking {
+interface Recirculation {
     fun trackElegible(modules: List<RecirculationModule>)
     fun trackImpression(module: RecirculationModule)
     fun trackClick(module: RecirculationModule)
 
     companion object {
-        fun getInstance(): RecirculationTracking = RecirculationTracker
+        fun getInstance(): Recirculation = RecirculationTracker
     }
 }
 
@@ -65,7 +65,7 @@ internal class WholeModuleAugmenter(private val pageUrlProvider: () -> String?) 
     }
 }
 
-internal object RecirculationTracker : RecirculationTracking {
+internal object RecirculationTracker : Recirculation {
     private val recirculationApiClient: RecirculationApiClient by lazy { CompassComponent.recirculationApiClient }
     private val sessionStorage: SessionStorage by lazy { CompassComponent.sessionStorage }
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())

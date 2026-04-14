@@ -6,6 +6,7 @@ import com.marfeel.compass.experiences.model.ExperienceFamily
 import com.marfeel.compass.experiences.model.ExperienceType
 import com.marfeel.compass.experiences.model.RecirculationLink
 import com.marfeel.compass.experiences.model.RecirculationModule
+import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.tracker.CompassTracker
 import com.marfeel.compass.tracker.compassNotInitializedErrorMessage
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +16,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 
-interface ExperiencesTracking {
+interface Experiences {
 	fun addTargeting(key: String, value: String)
 	fun trackImpression(experience: Experience, links: List<RecirculationLink> = emptyList())
 	fun trackClose(experience: Experience)
@@ -33,24 +34,25 @@ interface ExperiencesTracking {
 	fun trackClick(experience: Experience, link: RecirculationLink)
 
 	suspend fun fetchExperiences(
-		url: String,
 		filterByType: ExperienceType? = null,
 		filterByFamily: ExperienceFamily? = null,
-		resolve: Boolean = true
+		resolve: Boolean = true,
+		url: String? = null
 	): List<Experience>
 
 	companion object {
-		fun getInstance(): ExperiencesTracking = ExperiencesTracker
+		fun getInstance(): Experiences = ExperiencesTracker
 	}
 }
 
-internal object ExperiencesTracker : ExperiencesTracking {
+internal object ExperiencesTracker : Experiences {
 	private val apiClient: ExperiencesApiClient by lazy { CompassComponent.experiencesApiClient }
 	private val responseParser: ExperiencesResponseParser by lazy { CompassComponent.experiencesResponseParser }
 	private val experimentManager: ExperimentManager by lazy { CompassComponent.experimentManager }
 	private val frequencyCapManager: FrequencyCapManager by lazy { CompassComponent.frequencyCapManager }
 	private val readEditorialsManager: ReadEditorialsManager by lazy { CompassComponent.readEditorialsManager }
-	private val recirculationTracker: RecirculationTracking = RecirculationTracker
+	private val sessionStorage: SessionStorage by lazy { CompassComponent.sessionStorage }
+	private val recirculationTracker: Recirculation = RecirculationTracker
 
 	private val customTargeting = ConcurrentHashMap<String, String>()
 
@@ -105,14 +107,15 @@ internal object ExperiencesTracker : ExperiencesTracking {
 	}
 
 	override suspend fun fetchExperiences(
-		url: String,
 		filterByType: ExperienceType?,
 		filterByFamily: ExperienceFamily?,
-		resolve: Boolean
+		resolve: Boolean,
+		url: String?
 	): List<Experience> = withContext(Dispatchers.IO) {
 		check(CompassTracker.initialized) { compassNotInitializedErrorMessage }
 
-		val jsonResponse = apiClient.fetch(url, customTargeting) ?: return@withContext emptyList()
+		val pageUrl = url ?: sessionStorage.readPage()?.url ?: return@withContext emptyList()
+		val jsonResponse = apiClient.fetch(pageUrl, customTargeting) ?: return@withContext emptyList()
 
 		val parseResult = responseParser.parse(jsonResponse)
 
