@@ -30,7 +30,7 @@ interface Experiences {
 	fun setExperimentAssignment(groupId: String, variantId: String)
 	fun clearExperimentAssignments()
 
-	fun trackElegible(experiences: Map<Experience, List<RecirculationLink>>)
+	fun trackEligible(experiences: Map<Experience, List<RecirculationLink>>)
 	fun trackClick(experience: Experience, link: RecirculationLink)
 
 	suspend fun fetchExperiences(
@@ -97,9 +97,9 @@ internal object ExperiencesTracker : Experiences {
 		experimentManager.clear()
 	}
 
-	override fun trackElegible(experiences: Map<Experience, List<RecirculationLink>>) {
+	override fun trackEligible(experiences: Map<Experience, List<RecirculationLink>>) {
 		val modules = experiences.map { (exp, links) -> RecirculationModule(exp.id, links) }
-		recirculationTracker.trackElegible(modules)
+		recirculationTracker.trackEligible(modules)
 	}
 
 	override fun trackClick(experience: Experience, link: RecirculationLink) {

@@ -10,7 +10,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 interface Recirculation {
-    fun trackElegible(modules: List<RecirculationModule>)
+    fun trackEligible(modules: List<RecirculationModule>)
     fun trackImpression(module: RecirculationModule)
     fun trackClick(module: RecirculationModule)
 
@@ -24,7 +24,7 @@ internal class WholeModuleAugmenter(private val pageUrlProvider: () -> String?) 
     private var currentPageUrl: String? = null
     private val moduleStates = mutableMapOf<String, Boolean>()
 
-    fun onElegible(modules: List<RecirculationModule>): List<RecirculationModule> =
+    fun onEligible(modules: List<RecirculationModule>): List<RecirculationModule> =
         synchronized(lock) {
             resetIfPageChanged()
             modules.map { module ->
@@ -57,7 +57,7 @@ internal class WholeModuleAugmenter(private val pageUrlProvider: () -> String?) 
     }
 
     companion object {
-        const val WHOLE_MODULE_POSITION = "255"
+        const val WHOLE_MODULE_POSITION = 255
         const val WHOLE_MODULE_URL = " "
 
         fun wholeModuleLink(): RecirculationLink =
@@ -71,8 +71,8 @@ internal object RecirculationTracker : Recirculation {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val augmenter by lazy { WholeModuleAugmenter { sessionStorage.readPage()?.url } }
 
-    override fun trackElegible(modules: List<RecirculationModule>) {
-        val augmented = augmenter.onElegible(modules)
+    override fun trackEligible(modules: List<RecirculationModule>) {
+        val augmented = augmenter.onEligible(modules)
         scope.launch { recirculationApiClient.send("elegible", augmented) }
     }
 

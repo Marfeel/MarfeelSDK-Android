@@ -559,14 +559,14 @@ fun MainScreen(
 								listOf(
 									RecirculationLink(
 										url = exp.contentUrl ?: "",
-										position = "0"
+										position = 0
 									)
 								)
 							}
-							experiencesTracker.trackElegible(experienceLinks)
+							experiencesTracker.trackEligible(experienceLinks)
 						}
 					) {
-						Text(text = "Elegible", color = Color.White)
+						Text(text = "Eligible", color = Color.White)
 					}
 					FloatingActionButton(
 						backgroundColor = Color(0xFFAA6600),
@@ -575,7 +575,7 @@ fun MainScreen(
 								val links = listOf(
 									RecirculationLink(
 										url = exp.contentUrl ?: "",
-										position = "0"
+										position = 0
 									)
 								)
 								experiencesTracker.trackImpression(exp, links)
@@ -592,7 +592,7 @@ fun MainScreen(
 									exp,
 									RecirculationLink(
 										url = exp.contentUrl ?: "",
-										position = "0"
+										position = 0
 									)
 								)
 							}
@@ -774,20 +774,20 @@ fun MainScreen(
 				FloatingActionButton(
 					backgroundColor = Color(0xFF00AA00),
 					onClick = {
-						recirculationTracker.trackElegible(
+						recirculationTracker.trackEligible(
 							listOf(
 								RecirculationModule(
 									name = "demo-module",
 									links = listOf(
-										RecirculationLink(url = "https://example.com/1", position = "0"),
-										RecirculationLink(url = "https://example.com/2", position = "1")
+										RecirculationLink(url = "https://example.com/1", position = 0),
+										RecirculationLink(url = "https://example.com/2", position = 1)
 									)
 								)
 							)
 						)
 					}
 				) {
-					Text(text = "Elegible", color = Color.White)
+					Text(text = "Eligible", color = Color.White)
 				}
 				FloatingActionButton(
 					backgroundColor = Color(0xFFAA6600),
@@ -796,7 +796,7 @@ fun MainScreen(
 							RecirculationModule(
 								name = "demo-module",
 								links = listOf(
-									RecirculationLink(url = "https://example.com/1", position = "0")
+									RecirculationLink(url = "https://example.com/1", position = 0)
 								)
 							)
 						)
@@ -811,7 +811,7 @@ fun MainScreen(
 							RecirculationModule(
 								name = "demo-module",
 								links = listOf(
-									RecirculationLink(url = "https://example.com/1", position = "0")
+									RecirculationLink(url = "https://example.com/1", position = 0)
 								)
 							)
 						)

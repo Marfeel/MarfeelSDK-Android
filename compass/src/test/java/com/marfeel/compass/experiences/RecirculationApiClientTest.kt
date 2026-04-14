@@ -29,7 +29,7 @@ class RecirculationApiClientTest {
 	private fun makeModule(
 		name: String = "mod-1",
 		links: List<RecirculationLink> = listOf(
-			RecirculationLink(url = "https://example.com/article", position = "0")
+			RecirculationLink(url = "https://example.com/article", position = 0)
 		)
 	): RecirculationModule = RecirculationModule(name = name, links = links)
 
@@ -87,7 +87,7 @@ class RecirculationApiClientTest {
 	fun `includes module with name and link`() {
 		server.enqueue(MockResponse())
 		client.send("elegible", listOf(makeModule(name = "abc", links = listOf(
-			RecirculationLink(url = "https://example.com/page", position = "0")
+			RecirculationLink(url = "https://example.com/page", position = 0)
 		))))
 		val body = decodedBody()
 		assertTrue(body.contains("m="))
@@ -100,8 +100,8 @@ class RecirculationApiClientTest {
 	fun `includes multiple modules`() {
 		server.enqueue(MockResponse())
 		client.send("elegible", listOf(
-			makeModule(name = "mod-1", links = listOf(RecirculationLink(url = "https://a.com", position = "0"))),
-			makeModule(name = "mod-2", links = listOf(RecirculationLink(url = "https://b.com", position = "0")))
+			makeModule(name = "mod-1", links = listOf(RecirculationLink(url = "https://a.com", position = 0))),
+			makeModule(name = "mod-2", links = listOf(RecirculationLink(url = "https://b.com", position = 0)))
 		))
 		val body = decodedBody()
 		assertTrue(body.contains("\"n\":\"mod-1\""))
@@ -195,9 +195,9 @@ class RecirculationApiClientTest {
 	fun `includes multiple links per module`() {
 		server.enqueue(MockResponse())
 		client.send("elegible", listOf(makeModule(name = "mod-1", links = listOf(
-			RecirculationLink(url = "https://a.com/1", position = "0"),
-			RecirculationLink(url = "https://a.com/2", position = "1"),
-			RecirculationLink(url = "https://a.com/3", position = "2")
+			RecirculationLink(url = "https://a.com/1", position = 0),
+			RecirculationLink(url = "https://a.com/2", position = 1),
+			RecirculationLink(url = "https://a.com/3", position = 2)
 		))))
 		val body = decodedBody()
 		assertTrue(body.contains("\"url\":\"https://a.com/1\""))
@@ -212,7 +212,7 @@ class RecirculationApiClientTest {
 	fun `uses client-provided position values`() {
 		server.enqueue(MockResponse())
 		client.send("elegible", listOf(makeModule(links = listOf(
-			RecirculationLink(url = "https://example.com/article", position = "42")
+			RecirculationLink(url = "https://example.com/article", position = 42)
 		))))
 		val body = decodedBody()
 		assertTrue(body.contains("\"p\":\"42\""))

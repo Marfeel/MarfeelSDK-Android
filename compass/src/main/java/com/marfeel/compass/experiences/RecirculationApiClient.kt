@@ -25,7 +25,7 @@ internal class RecirculationApiClient(
 			mapOf(
 				"n" to module.name,
 				"e" to module.links.map { link ->
-					mapOf("url" to link.url, "p" to link.position)
+					mapOf("url" to link.url, "p" to link.position.toString())
 				}
 			)
 		}
