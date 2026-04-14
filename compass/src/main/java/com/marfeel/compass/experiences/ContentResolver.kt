@@ -30,8 +30,9 @@ internal class ContentResolver(private val httpClient: OkHttpClient) {
 	private suspend fun fetchRaw(url: String): String? = withContext(Dispatchers.IO) {
 		try {
 			val request = Request.Builder().url(url).build()
-			val response = httpClient.newCall(request).execute()
-			if (response.isSuccessful) response.body?.string() else null
+			httpClient.newCall(request).execute().use { response ->
+				if (response.isSuccessful) response.body?.string() else null
+			}
 		} catch (_: Exception) {
 			null
 		}

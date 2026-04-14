@@ -24,8 +24,9 @@ internal class ExperiencesApiClient(
 		val request = Request.Builder().url(httpUrl).build()
 
 		return try {
-			val response = httpClient.newCall(request).execute()
-			if (response.isSuccessful) response.body?.string() else null
+			httpClient.newCall(request).execute().use { response ->
+				if (response.isSuccessful) response.body?.string() else null
+			}
 		} catch (_: Exception) {
 			null
 		}
