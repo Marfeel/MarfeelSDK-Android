@@ -2,6 +2,7 @@ package com.marfeel.compass.experiences
 
 import com.marfeel.compass.experiences.model.ExperienceContentType
 import com.marfeel.compass.experiences.model.ExperienceType
+import com.marfeel.compass.experiences.model.ExperienceFamily
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertNull
@@ -27,7 +28,7 @@ class ExperiencesResponseParserTest {
 		val result = parser.parse(json)
 		val inlines = result.experiences.filter { it.type == ExperienceType.INLINE }
 		assertTrue(inlines.isNotEmpty())
-		assertEquals("inline", inlines.first().typeRaw)
+		assertEquals(ExperienceType.INLINE, inlines.first().type)
 	}
 
 	@Test
@@ -87,8 +88,8 @@ class ExperiencesResponseParserTest {
 	fun `skips targeting and content metadata keys`() {
 		val json = loadJson("experiences_response_small.json")
 		val result = parser.parse(json)
-		val targeting = result.experiences.filter { it.typeRaw == "targeting" }
-		val content = result.experiences.filter { it.typeRaw == "content" }
+		val targeting = result.experiences.filter { it.type.key == "targeting" }
+		val content = result.experiences.filter { it.type.key == "content" }
 		assertTrue(targeting.isEmpty())
 		assertTrue(content.isEmpty())
 	}
@@ -143,6 +144,40 @@ class ExperiencesResponseParserTest {
 		val result = parser.parse(json)
 		val inlines = result.experiences.filter { it.type == ExperienceType.INLINE }
 		assertTrue(inlines.size >= 10)
+	}
+
+	@Test
+	fun `parses family when present`() {
+		val json = loadJson("experiences_response_small.json")
+		val result = parser.parse(json)
+		val recommender = result.experiences.find { it.id == "IL_r1-HQ0psRiiLuHZTpi9lDQ" }
+		assertEquals(ExperienceFamily.RECOMMENDER, recommender!!.family)
+	}
+
+	@Test
+	fun `family is null when absent from json`() {
+		val json = loadJson("experiences_response_small.json")
+		val result = parser.parse(json)
+		val cta = result.experiences.find { it.id == "IL_mLTwLgXbRS-MJzh1rJM6ng" }
+		assertNull(cta!!.family)
+	}
+
+	@Test
+	fun `unknown family string maps to UNKNOWN`() {
+		val json = """
+		{
+			"inline": {
+				"actions": {
+					"test": {
+						"id": "test1",
+						"family": "somefuturefamily"
+					}
+				}
+			}
+		}
+		""".trimIndent()
+		val result = parser.parse(json)
+		assertEquals(ExperienceFamily.UNKNOWN, result.experiences.first().family)
 	}
 
 	@Test
