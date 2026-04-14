@@ -555,15 +555,15 @@ fun MainScreen(
 					FloatingActionButton(
 						backgroundColor = Color(0xFF00AA00),
 						onClick = {
-							val experienceLinks = lastExperiences.associateWith { exp ->
-								listOf(
+							lastExperiences.firstOrNull()?.let { exp ->
+								val links = listOf(
 									RecirculationLink(
 										url = exp.contentUrl ?: "",
 										position = 0
 									)
 								)
+								experiencesTracker.trackEligible(exp, links)
 							}
-							experiencesTracker.trackEligible(experienceLinks)
 						}
 					) {
 						Text(text = "Eligible", color = Color.White)
