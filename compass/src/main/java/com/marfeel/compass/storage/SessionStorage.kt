@@ -5,6 +5,9 @@ import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.Session
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CopyOnWriteArraySet
 
 internal data class Conversion(
 	val name: String,
@@ -16,10 +19,10 @@ internal class SessionStorage(private val storage: Storage) {
 	private var accountId: String? = null
 	private var page: Page? = null
 	private var previousUrl: String? = null
-	private var pendingConversions: MutableList<Conversion> = mutableListOf()
-	private val trackedConversionIds: MutableSet<String> = mutableSetOf()
-	private var pageVars: MutableMap<String, String> = mutableMapOf()
-	private var pageMetrics: MutableMap<String, Int> = mutableMapOf()
+	private var pendingConversions: MutableList<Conversion> = CopyOnWriteArrayList()
+	private val trackedConversionIds: MutableSet<String> = CopyOnWriteArraySet()
+	private var pageVars: MutableMap<String, String> = ConcurrentHashMap()
+	private var pageMetrics: MutableMap<String, Int> = ConcurrentHashMap()
 	private var pageTechnology: Int? = null
 	private var recirculationSource: String? = null
 

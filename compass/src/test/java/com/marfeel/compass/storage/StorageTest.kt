@@ -5,7 +5,6 @@ import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
 import junit.framework.Assert.assertNull
 
-import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.BeforeClass
@@ -31,7 +30,7 @@ internal class StorageTest {
 	@Before
 	fun setup() {
 		storage =
-			Storage(ApplicationProvider.getApplicationContext(), Dispatchers.Unconfined)
+			Storage(ApplicationProvider.getApplicationContext())
 	}
 
 	@Test

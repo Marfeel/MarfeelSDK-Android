@@ -3,9 +3,12 @@ package com.marfeel.compass.sessionStorage
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.Session
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
+import com.marfeel.compass.storage.Conversion
 import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.storage.Storage
+import io.mockk.Runs
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
 import org.junit.Before
@@ -20,6 +23,17 @@ internal class SessionStorageTest {
 
 	@Before
 	fun setup() {
+		var storedSession: Session? = null
+		val sessionVars = mutableMapOf<String, String>()
+		every { storage.readSession() } answers { storedSession }
+		every { storage.setSession(any()) } answers { storedSession = firstArg() }
+		every { storage.readLastPingTimeStamp() } returns null
+		every { storage.setLandingPage(any()) } just Runs
+		every { storage.readSessionVars() } answers { sessionVars.toMap() }
+		every { storage.setSessionVar(any(), any()) } answers {
+			sessionVars[firstArg()] = secondArg()
+		}
+		every { storage.clearSessionVars() } answers { sessionVars.clear() }
 		sessionStorage = SessionStorage(storage)
 	}
 
@@ -100,15 +114,15 @@ internal class SessionStorageTest {
 
 	@Test
 	fun `clearTrackedConversions will not remove not tracked conversions`() {
-		val trackedConversions = listOf("First item", "Second item")
+		val trackedConversions = listOf("First item", "Second item").map { Conversion(it) }
 		val notTrackedConversion = "Another not tracked conversion"
-		sessionStorage.addPendingConversion(trackedConversions[0])
-		sessionStorage.addPendingConversion(trackedConversions[1])
+		sessionStorage.addPendingConversion(trackedConversions[0].name)
+		sessionStorage.addPendingConversion(trackedConversions[1].name)
 		sessionStorage.addPendingConversion(notTrackedConversion)
 
 		sessionStorage.clearTrackedConversions(trackedConversions)
 		assertEquals(1, sessionStorage.readPendingConversions().size)
-		assertEquals(notTrackedConversion, sessionStorage.readPendingConversions().first())
+		assertEquals(notTrackedConversion, sessionStorage.readPendingConversions().first().name)
 	}
 
 	@Test
@@ -126,7 +140,7 @@ internal class SessionStorageTest {
 	@Test
 	fun `reading and setting pageMetrics`() {
 		sessionStorage.addPageMetric("pepe", 1)
-		sessionStorage.addPageMetric("lolo", 1)
+		sessionStorage.addPageMetric("lolo", 2)
 
 		assertEquals(mapOf("pepe" to 1, "lolo" to 2), sessionStorage.readPageMetrics())
 
