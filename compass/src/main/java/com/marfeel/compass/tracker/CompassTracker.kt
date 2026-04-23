@@ -292,13 +292,14 @@ internal object CompassTracker : CompassTracking {
     }
 
     private fun configureSession() {
-        val lastPing = storage.readLastPingTimeStamp()
-        if (lastPing == null) {
-            val session = storage.readSession()
-            if (session == null || session.timeStamp < thirtyMinsAgoInSeconds()) {
-                sessionStorage.updateSession()
-            }
-        } else if (lastPing < thirtyMinsAgoInSeconds()) {
+        val session = storage.readSession()
+        if (session == null) {
+            sessionStorage.updateSession()
+            return
+        }
+        val lastPing = storage.readLastPingTimeStamp() ?: 0L
+        val lastActivity = maxOf(session.timeStamp, lastPing)
+        if (lastActivity < thirtyMinsAgoInSeconds()) {
             sessionStorage.updateSession()
         }
     }
