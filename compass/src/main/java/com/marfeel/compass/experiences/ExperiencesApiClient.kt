@@ -33,7 +33,7 @@ internal class ExperiencesApiClient(
 	}
 
 	private fun buildUrl(pageUrl: String, customTargeting: Map<String, String>): HttpUrl? {
-		val builder = "$baseUrl/json/experiences".toHttpUrlOrNull()?.newBuilder() ?: return null
+		val builder = "$baseUrl/json/experiences/app".toHttpUrlOrNull()?.newBuilder() ?: return null
 
 		builder.addQueryParameter("sid", sessionStorage.readAccountId() ?: "")
 		builder.addQueryParameter("ptch", (sessionStorage.readPageTechnology() ?: 4).toString())
