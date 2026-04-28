@@ -7,7 +7,6 @@ import com.marfeel.compass.experiences.model.ExperienceType
 import com.marfeel.compass.experiences.model.RecirculationLink
 import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.tracker.CompassTracker
-import com.marfeel.compass.tracker.compassNotInitializedErrorMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -115,7 +114,7 @@ internal object ExperiencesTracker : Experiences {
 		resolve: Boolean,
 		url: String?
 	): List<Experience> = withContext(Dispatchers.IO) {
-		check(CompassTracker.initialized) { compassNotInitializedErrorMessage }
+		if (!CompassTracker.initialized) return@withContext emptyList()
 
 		val pageUrl = url ?: sessionStorage.readPage()?.url ?: return@withContext emptyList()
 		val jsonResponse = apiClient.fetch(pageUrl, customTargeting) ?: return@withContext emptyList()

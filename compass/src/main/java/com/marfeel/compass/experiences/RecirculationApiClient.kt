@@ -62,7 +62,7 @@ internal class RecirculationApiClient(
 			.build()
 
 		try {
-			httpClient.newCall(request).execute().close()
+			httpClient.newCall(request).execute().use { }
 		} catch (_: Exception) {
 			// Fire-and-forget — silently ignore failures
 		}
