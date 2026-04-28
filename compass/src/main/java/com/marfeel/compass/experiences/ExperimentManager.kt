@@ -6,6 +6,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import com.marfeel.compass.experiences.model.Experience
+import com.marfeel.compass.experiences.model.ExperienceFilterOperator
 import kotlin.random.Random
 
 internal class ExperimentManager(
@@ -60,8 +61,8 @@ internal class ExperimentManager(
 				val groupId = filter.key.removePrefix(EXPERIMENT_FILTER_PREFIX)
 				val assignedVariant = assignments[groupId] ?: return@all false
 				when (filter.operator) {
-					"EQUALS" -> assignedVariant in filter.values
-					"NOT_EQUALS" -> assignedVariant !in filter.values
+					ExperienceFilterOperator.EQUALS -> assignedVariant in filter.values
+					ExperienceFilterOperator.NOT_EQUALS -> assignedVariant !in filter.values
 					else -> true
 				}
 			}

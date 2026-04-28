@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken
 import com.marfeel.compass.experiences.model.Experience
 import com.marfeel.compass.experiences.model.ExperienceContentType
 import com.marfeel.compass.experiences.model.ExperienceFilter
+import com.marfeel.compass.experiences.model.ExperienceFilterOperator
 import com.marfeel.compass.experiences.model.ExperienceSelector
 import com.marfeel.compass.experiences.model.ExperienceFamily
 import com.marfeel.compass.experiences.model.ExperienceType
@@ -103,20 +104,60 @@ internal class ExperiencesResponseParser(
 	}
 
 	private fun parseFilters(action: JsonObject): List<ExperienceFilter>? {
-		val explicit = action.getAsJsonArray("filters")?.mapNotNull { element ->
-			if (!element.isJsonObject) return@mapNotNull null
-			val obj = element.asJsonObject
-			val valuesArray = obj.getAsJsonArray("values") ?: return@mapNotNull null
-			ExperienceFilter(
-				key = obj.get("key")?.asString ?: return@mapNotNull null,
-				operator = obj.get("operator")?.asString ?: "EQUALS",
-				values = valuesArray.map { it.asString },
-			)
-		}.orEmpty()
-
+		val explicit = parseFiltersField(action.get("filters"))
 		val experimentFilter = parseExperimentFilter(action.getAsJsonObject("experiment"))
 		val combined = explicit + listOfNotNull(experimentFilter)
 		return combined.takeIf { it.isNotEmpty() }
+	}
+
+	private fun parseFiltersField(element: JsonElement?): List<ExperienceFilter> {
+		if (element == null || element.isJsonNull) return emptyList()
+		return when {
+			element.isJsonArray -> element.asJsonArray.mapNotNull(::parseLegacyFilter)
+			element.isJsonObject -> parseFilterTree(element.asJsonObject)
+			else -> emptyList()
+		}
+	}
+
+	private fun parseLegacyFilter(element: JsonElement): ExperienceFilter? {
+		if (!element.isJsonObject) return null
+		val obj = element.asJsonObject
+		val valuesArray = obj.getAsJsonArray("values") ?: return null
+		val key = obj.get("key")?.asString ?: return null
+		val operator = obj.get("operator")?.asString
+			?.let { ExperienceFilterOperator.fromKey(it) }
+			?: ExperienceFilterOperator.EQUALS
+		return ExperienceFilter(
+			key = key,
+			operator = operator,
+			values = valuesArray.mapNotNull { if (it.isJsonPrimitive) it.asString else null },
+		)
+	}
+
+	private fun parseFilterTree(node: JsonObject): List<ExperienceFilter> {
+		return when (node.get("type")?.asString) {
+			"condition" -> listOfNotNull(parseConditionNode(node))
+			"group" -> {
+				val children = node.getAsJsonArray("children") ?: return emptyList()
+				children.flatMap { child ->
+					if (child.isJsonObject) parseFilterTree(child.asJsonObject) else emptyList()
+				}
+			}
+			else -> emptyList()
+		}
+	}
+
+	private fun parseConditionNode(node: JsonObject): ExperienceFilter? {
+		val field = node.get("field")?.asString ?: return null
+		val comparator = node.get("comparator")?.asString ?: "eq"
+		val values = node.getAsJsonArray("values")
+			?.mapNotNull { if (it.isJsonPrimitive) it.asString else null }
+			?: return null
+		return ExperienceFilter(
+			key = field,
+			operator = ExperienceFilterOperator.fromKey(comparator),
+			values = values,
+		)
 	}
 
 	private fun parseExperimentFilter(experiment: JsonObject?): ExperienceFilter? {
@@ -126,7 +167,7 @@ internal class ExperiencesResponseParser(
 		if (variantIds.isEmpty()) return null
 		return ExperienceFilter(
 			key = "mrf_exp_$groupId",
-			operator = "EQUALS",
+			operator = ExperienceFilterOperator.EQUALS,
 			values = variantIds,
 		)
 	}

@@ -37,6 +37,6 @@ data class ExperienceSelector(
 
 data class ExperienceFilter(
 	val key: String,
-	val operator: String,
+	val operator: ExperienceFilterOperator,
 	val values: List<String>,
 )

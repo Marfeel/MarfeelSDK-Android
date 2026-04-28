@@ -1,6 +1,7 @@
 package com.marfeel.compass.experiences
 
 import com.marfeel.compass.experiences.model.ExperienceContentType
+import com.marfeel.compass.experiences.model.ExperienceFilterOperator
 import com.marfeel.compass.experiences.model.ExperienceType
 import com.marfeel.compass.experiences.model.ExperienceFamily
 import junit.framework.TestCase.assertEquals
@@ -187,5 +188,101 @@ class ExperiencesResponseParserTest {
 		val compass = result.experiences.find { it.type == ExperienceType.COMPASS }
 		assertNotNull(compass)
 		assertTrue(compass!!.rawJson.containsKey("recirculationModules"))
+	}
+
+	@Test
+	fun `tree filter group with empty children produces no filters`() {
+		val json = """
+		{
+			"compass": {
+				"actions": {
+					"a": {
+						"id": "AC_1",
+						"filters": { "type": "group", "children": [], "logic": "AND" }
+					}
+				}
+			}
+		}
+		""".trimIndent()
+		val result = parser.parse(json)
+		assertNull(result.experiences.first().filters)
+	}
+
+	@Test
+	fun `tree filter top-level condition is parsed and comparator mapped to operator`() {
+		val json = """
+		{
+			"experimentation": {
+				"actions": {
+					"a": {
+						"id": "AC_1",
+						"filters": {
+							"type": "condition",
+							"field": "url",
+							"comparator": "eq",
+							"values": ["https://dev.marfeel.co/"]
+						}
+					}
+				}
+			}
+		}
+		""".trimIndent()
+		val result = parser.parse(json)
+		val filters = result.experiences.first().filters!!
+		assertEquals(1, filters.size)
+		assertEquals("url", filters[0].key)
+		assertEquals(ExperienceFilterOperator.EQUALS, filters[0].operator)
+		assertEquals(listOf("https://dev.marfeel.co/"), filters[0].values)
+	}
+
+	@Test
+	fun `tree filter group flattens nested condition children`() {
+		val json = """
+		{
+			"compass": {
+				"actions": {
+					"a": {
+						"id": "AC_1",
+						"filters": {
+							"type": "group",
+							"logic": "AND",
+							"children": [
+								{ "type": "condition", "field": "url", "comparator": "contains", "values": ["news"] },
+								{ "type": "condition", "field": "lang", "comparator": "neq", "values": ["es"] }
+							]
+						}
+					}
+				}
+			}
+		}
+		""".trimIndent()
+		val result = parser.parse(json)
+		val filters = result.experiences.first().filters!!
+		assertEquals(2, filters.size)
+		assertEquals(ExperienceFilterOperator.LIKE, filters[0].operator)
+		assertEquals(ExperienceFilterOperator.NOT_EQUALS, filters[1].operator)
+	}
+
+	@Test
+	fun `legacy array filter form still parses`() {
+		val json = """
+		{
+			"inline": {
+				"actions": {
+					"a": {
+						"id": "IL_1",
+						"filters": [
+							{ "key": "url", "operator": "EQUALS", "values": ["https://example.com"] }
+						]
+					}
+				}
+			}
+		}
+		""".trimIndent()
+		val result = parser.parse(json)
+		val filters = result.experiences.first().filters!!
+		assertEquals(1, filters.size)
+		assertEquals("url", filters[0].key)
+		assertEquals(ExperienceFilterOperator.EQUALS, filters[0].operator)
 	}
 }

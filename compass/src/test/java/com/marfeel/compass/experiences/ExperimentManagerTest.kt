@@ -5,6 +5,7 @@ import com.google.gson.JsonObject
 import com.marfeel.compass.experiences.model.Experience
 import com.marfeel.compass.experiences.model.ExperienceContentType
 import com.marfeel.compass.experiences.model.ExperienceFilter
+import com.marfeel.compass.experiences.model.ExperienceFilterOperator
 import com.marfeel.compass.experiences.model.ExperienceType
 import com.marfeel.compass.storage.MockSharedPreference
 import junit.framework.TestCase.assertEquals
@@ -104,7 +105,7 @@ class ExperimentManagerTest {
 
 		val experience = makeExperience(
 			"exp1",
-			filters = listOf(ExperienceFilter("mrf_exp_testGroup", "EQUALS", listOf(assignedVariant)))
+			filters = listOf(ExperienceFilter("mrf_exp_testGroup", ExperienceFilterOperator.EQUALS, listOf(assignedVariant)))
 		)
 		val filtered = manager.filterByExperiments(listOf(experience))
 		assertEquals(1, filtered.size)
@@ -117,7 +118,7 @@ class ExperimentManagerTest {
 
 		val experience = makeExperience(
 			"exp1",
-			filters = listOf(ExperienceFilter("mrf_exp_testGroup", "EQUALS", listOf("nonexistent_variant")))
+			filters = listOf(ExperienceFilter("mrf_exp_testGroup", ExperienceFilterOperator.EQUALS, listOf("nonexistent_variant")))
 		)
 		val filtered = manager.filterByExperiments(listOf(experience))
 		assertEquals(0, filtered.size)
@@ -134,7 +135,7 @@ class ExperimentManagerTest {
 	fun `filterByExperiments keeps experience with non-experiment filters`() {
 		val experience = makeExperience(
 			"exp1",
-			filters = listOf(ExperienceFilter("url", "EQUALS", listOf("something.com")))
+			filters = listOf(ExperienceFilter("url", ExperienceFilterOperator.EQUALS, listOf("something.com")))
 		)
 		val filtered = manager.filterByExperiments(listOf(experience))
 		assertEquals(1, filtered.size)
@@ -149,7 +150,7 @@ class ExperimentManagerTest {
 
 		val experience = makeExperience(
 			"exp1",
-			filters = listOf(ExperienceFilter("mrf_exp_testGroup", "NOT_EQUALS", listOf(otherVariant)))
+			filters = listOf(ExperienceFilter("mrf_exp_testGroup", ExperienceFilterOperator.NOT_EQUALS, listOf(otherVariant)))
 		)
 		val filtered = manager.filterByExperiments(listOf(experience))
 		assertEquals(1, filtered.size)
@@ -163,7 +164,7 @@ class ExperimentManagerTest {
 
 		val experience = makeExperience(
 			"exp1",
-			filters = listOf(ExperienceFilter("mrf_exp_testGroup", "NOT_EQUALS", listOf(assignedVariant)))
+			filters = listOf(ExperienceFilter("mrf_exp_testGroup", ExperienceFilterOperator.NOT_EQUALS, listOf(assignedVariant)))
 		)
 		val filtered = manager.filterByExperiments(listOf(experience))
 		assertEquals(0, filtered.size)
