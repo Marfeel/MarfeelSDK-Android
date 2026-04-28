@@ -48,6 +48,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.marfeel.compass.core.model.compass.UserType
+import com.marfeel.compass.experiences.Experiences
+import com.marfeel.compass.experiences.Recirculation
+import com.marfeel.compass.experiences.model.Experience
+import com.marfeel.compass.experiences.model.ExperienceFamily
+import com.marfeel.compass.experiences.model.ExperienceType
+import com.marfeel.compass.experiences.model.RecirculationLink
 import com.marfeel.compass.tracker.CompassTracking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -82,7 +88,6 @@ fun MainScreen(
 
 	Scaffold(
 		Modifier
-			.verticalScroll(rememberScrollState())
 			.fillMaxSize()
 			.background(backgroundColor),
 		scaffoldState = scaffoldState,
@@ -91,6 +96,7 @@ fun MainScreen(
 			Modifier
 				.fillMaxSize()
 				.background(backgroundColor)
+				.verticalScroll(rememberScrollState())
 				.padding(horizontal = 20.dp, vertical = 48.dp)
 		) {
 			Text(
@@ -362,6 +368,445 @@ fun MainScreen(
 						}
 					}) {
 					Text(text = "RFV", color = Color.White)
+				}
+			}
+
+			Text(
+				text = "Experiences",
+				color = Color.Black,
+				style = titleStyle,
+				modifier = Modifier.padding(top = 32.dp, bottom = 16.dp)
+			)
+
+			var experiencesUrl by remember { mutableStateOf("https://dev.marfeel.co/") }
+			var experiencesResult by remember { mutableStateOf("") }
+			var experiencesLoading by remember { mutableStateOf(false) }
+			var lastExperiences by remember { mutableStateOf<List<Experience>>(emptyList()) }
+			var selectedType by remember { mutableStateOf<ExperienceType?>(null) }
+			var typeExpanded by remember { mutableStateOf(false) }
+			var selectedFamily by remember { mutableStateOf<ExperienceFamily?>(null) }
+			var familyExpanded by remember { mutableStateOf(false) }
+			var experimentsVersion by remember { mutableStateOf(0) }
+			val experiencesTracker = remember { Experiences.getInstance() }
+			val recirculationTracker = remember { Recirculation.getInstance() }
+
+			TextField(
+				modifier = Modifier.fillMaxWidth(),
+				value = experiencesUrl,
+				onValueChange = { experiencesUrl = it },
+				label = { Text("URL") }
+			)
+
+			Box(modifier = Modifier.padding(top = 8.dp)) {
+				OutlinedButton(
+					modifier = Modifier.fillMaxWidth(),
+					onClick = { typeExpanded = true }
+				) {
+					Text(text = selectedType?.name ?: "Filter by type: All")
+				}
+				DropdownMenu(
+					expanded = typeExpanded,
+					onDismissRequest = { typeExpanded = false }
+				) {
+					DropdownMenuItem(onClick = {
+						selectedType = null
+						typeExpanded = false
+					}) {
+						Text("All")
+					}
+					ExperienceType.values().forEach { type ->
+						DropdownMenuItem(onClick = {
+							selectedType = type
+							typeExpanded = false
+						}) {
+							Text(type.name)
+						}
+					}
+				}
+			}
+
+			Box(modifier = Modifier.padding(top = 8.dp)) {
+				OutlinedButton(
+					modifier = Modifier.fillMaxWidth(),
+					onClick = { familyExpanded = true }
+				) {
+					Text(text = selectedFamily?.name ?: "Filter by family: All")
+				}
+				DropdownMenu(
+					expanded = familyExpanded,
+					onDismissRequest = { familyExpanded = false }
+				) {
+					DropdownMenuItem(onClick = {
+						selectedFamily = null
+						familyExpanded = false
+					}) {
+						Text("All")
+					}
+					ExperienceFamily.values().filter { it != ExperienceFamily.UNKNOWN }.forEach { family ->
+						DropdownMenuItem(onClick = {
+							selectedFamily = family
+							familyExpanded = false
+						}) {
+							Text(family.name)
+						}
+					}
+				}
+			}
+
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(top = 16.dp),
+				horizontalArrangement = Arrangement.SpaceEvenly
+			) {
+				FloatingActionButton(
+					backgroundColor = Color(0xFF1231D1),
+					onClick = {
+						experiencesLoading = true
+						experiencesResult = ""
+						coroutineScope.launch {
+							try {
+								val experiences = experiencesTracker.fetchExperiences(
+									filterByType = selectedType,
+									filterByFamily = selectedFamily,
+									resolve = false,
+									url = experiencesUrl
+								)
+								lastExperiences = experiences
+								experimentsVersion++
+								experiencesResult = "Found ${experiences.size} experiences:\n" +
+									experiences.joinToString("\n") { exp ->
+										val familyTag = exp.family?.let { " family=${it.key}" } ?: ""
+										"- [${exp.type.key}] ${exp.name}$familyTag (id=${exp.id})"
+									}
+							} catch (e: Exception) {
+								experiencesResult = "Error: ${e.message}"
+							}
+							experiencesLoading = false
+						}
+					}
+				) {
+					Text(text = "Fetch", color = Color.White)
+				}
+				FloatingActionButton(
+					backgroundColor = Color(0xFF641172),
+					onClick = {
+						experiencesLoading = true
+						experiencesResult = ""
+						coroutineScope.launch {
+							try {
+								val experiences = experiencesTracker.fetchExperiences(
+									filterByType = selectedType,
+									filterByFamily = selectedFamily,
+									resolve = true,
+									url = experiencesUrl
+								)
+								lastExperiences = experiences
+								experimentsVersion++
+								experiencesResult = "Found ${experiences.size} experiences:\n" +
+									experiences.joinToString("\n") { exp ->
+										val resolved = if (exp.resolvedContent != null)
+											" [resolved: ${exp.resolvedContent!!.take(100)}...]"
+										else ""
+										val familyTag = exp.family?.let { " family=${it.key}" } ?: ""
+										"- [${exp.type.key}] ${exp.name}$familyTag$resolved"
+									}
+							} catch (e: Exception) {
+								experiencesResult = "Error: ${e.message}"
+							}
+							experiencesLoading = false
+						}
+					}
+				) {
+					Text(text = "Fetch + Resolve", color = Color.White)
+				}
+			}
+
+			if (experiencesLoading) {
+				Text(
+					text = "Loading...",
+					color = Color.Gray,
+					modifier = Modifier.padding(top = 8.dp)
+				)
+			}
+
+			if (experiencesResult.isNotEmpty()) {
+				Text(
+					text = experiencesResult,
+					color = Color.Black,
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(top = 8.dp)
+						.clip(RoundedCornerShape(4.dp))
+						.background(Color(0xFFF0F0F0))
+						.padding(12.dp),
+					style = TextStyle.Default.copy(fontSize = 12.sp)
+				)
+			}
+
+			if (lastExperiences.isNotEmpty()) {
+				Row(
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(top = 8.dp),
+					horizontalArrangement = Arrangement.SpaceEvenly
+				) {
+					FloatingActionButton(
+						backgroundColor = Color(0xFF00AA00),
+						onClick = {
+							lastExperiences.firstOrNull()?.let { exp ->
+								val links = listOf(
+									RecirculationLink(
+										url = exp.contentUrl ?: "",
+										position = 0
+									)
+								)
+								experiencesTracker.trackEligible(exp, links)
+							}
+						}
+					) {
+						Text(text = "Eligible", color = Color.White)
+					}
+					FloatingActionButton(
+						backgroundColor = Color(0xFFAA6600),
+						onClick = {
+							lastExperiences.firstOrNull()?.let { exp ->
+								val links = listOf(
+									RecirculationLink(
+										url = exp.contentUrl ?: "",
+										position = 0
+									)
+								)
+								experiencesTracker.trackImpression(exp, links)
+							}
+						}
+					) {
+						Text(text = "Impression", color = Color.White)
+					}
+					FloatingActionButton(
+						backgroundColor = Color(0xFFAA0000),
+						onClick = {
+							lastExperiences.firstOrNull()?.let { exp ->
+								experiencesTracker.trackClick(
+									exp,
+									RecirculationLink(
+										url = exp.contentUrl ?: "",
+										position = 0
+									)
+								)
+							}
+						}
+					) {
+						Text(text = "Click", color = Color.White)
+					}
+				}
+
+				var capsVersion by remember { mutableStateOf(0) }
+				Row(
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(top = 32.dp, bottom = 8.dp),
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.SpaceBetween
+				) {
+					Text(
+						text = "Frequency Caps",
+						color = Color.Black,
+						style = titleStyle
+					)
+					OutlinedButton(onClick = {
+						experiencesTracker.clearFrequencyCaps()
+						capsVersion++
+					}) {
+						Text(text = "Clear", style = TextStyle.Default.copy(fontSize = 12.sp))
+					}
+				}
+				Text(
+					text = "Only experiences declared in the response's targeting.frequencyCap are listed. Tap Impression/Close, then re-Fetch and inspect the `uexp` query param.",
+					color = Color.Gray,
+					modifier = Modifier.padding(bottom = 8.dp),
+					style = TextStyle.Default.copy(fontSize = 12.sp)
+				)
+				val capConfig = remember(capsVersion, lastExperiences) {
+					experiencesTracker.getFrequencyCapConfig()
+				}
+				val cappedExperiences = lastExperiences.filter { it.id in capConfig.keys }
+				if (cappedExperiences.isEmpty()) {
+					Text(
+						text = "No experiences capped in the current response.",
+						color = Color.Gray,
+						style = TextStyle.Default.copy(fontSize = 12.sp)
+					)
+				}
+				cappedExperiences.forEach { exp ->
+					val counts = remember(capsVersion, exp.id) {
+						experiencesTracker.getFrequencyCapCounts(exp.id)
+					}
+					Column(modifier = Modifier.padding(vertical = 4.dp)) {
+						Row(
+							modifier = Modifier.fillMaxWidth(),
+							verticalAlignment = Alignment.CenterVertically
+						) {
+							val capKeys = capConfig[exp.id].orEmpty().joinToString(",")
+							Text(
+								text = "${exp.type.key}/${exp.id.take(16)}… [$capKeys]",
+								color = Color.Black,
+								modifier = Modifier.weight(1f),
+								style = TextStyle.Default.copy(fontSize = 11.sp)
+							)
+							OutlinedButton(onClick = {
+								experiencesTracker.trackImpression(exp)
+								capsVersion++
+							}) {
+								Text(text = "Impression", style = TextStyle.Default.copy(fontSize = 11.sp))
+							}
+							Spacer(modifier = Modifier.width(4.dp))
+							OutlinedButton(onClick = {
+								experiencesTracker.trackClose(exp)
+								capsVersion++
+							}) {
+								Text(text = "Close", style = TextStyle.Default.copy(fontSize = 11.sp))
+							}
+						}
+						Text(
+							text = "l=${counts["l"]} cl=${counts["cl"]} m=${counts["m"]} cm=${counts["cm"]} w=${counts["w"]} cw=${counts["cw"]} d=${counts["d"]} cd=${counts["cd"]} ls=${counts["ls"]}",
+							color = Color.Gray,
+							style = TextStyle.Default.copy(fontSize = 10.sp)
+						)
+					}
+				}
+			}
+
+			Text(
+				text = "Experiments",
+				color = Color.Black,
+				style = titleStyle,
+				modifier = Modifier.padding(top = 32.dp, bottom = 8.dp)
+			)
+			Text(
+				text = "Draws happen during Fetch. Force a variant to pin a branch; Clear to re-roll on next Fetch. Targeting is sent as trg=experiment::groupId=variantId.",
+				color = Color.Gray,
+				modifier = Modifier.padding(bottom = 8.dp),
+				style = TextStyle.Default.copy(fontSize = 12.sp)
+			)
+
+			val experimentAssignments = remember(experimentsVersion) {
+				experiencesTracker.getExperimentAssignments()
+			}
+
+			if (experimentAssignments.isEmpty()) {
+				Text(
+					text = "No assignments yet. Fetch experiences to draw, or force one below.",
+					color = Color.Gray,
+					style = TextStyle.Default.copy(fontSize = 12.sp)
+				)
+			} else {
+				experimentAssignments.forEach { (groupId, variantId) ->
+					Text(
+						text = "$groupId → $variantId",
+						color = Color.Black,
+						modifier = Modifier.padding(vertical = 2.dp),
+						style = TextStyle.Default.copy(fontSize = 11.sp)
+					)
+				}
+			}
+
+			var forceGroupId by remember { mutableStateOf("") }
+			var forceVariantId by remember { mutableStateOf("") }
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(top = 8.dp),
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				TextField(
+					modifier = Modifier.weight(1f),
+					value = forceGroupId,
+					onValueChange = { forceGroupId = it },
+					label = { Text("groupId") }
+				)
+				Spacer(modifier = Modifier.width(8.dp))
+				TextField(
+					modifier = Modifier.weight(1f),
+					value = forceVariantId,
+					onValueChange = { forceVariantId = it },
+					label = { Text("variantId") }
+				)
+			}
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(top = 8.dp),
+				horizontalArrangement = Arrangement.SpaceEvenly
+			) {
+				OutlinedButton(onClick = {
+					if (forceGroupId.isNotBlank() && forceVariantId.isNotBlank()) {
+						experiencesTracker.setExperimentAssignment(forceGroupId.trim(), forceVariantId.trim())
+						forceGroupId = ""
+						forceVariantId = ""
+						experimentsVersion++
+					}
+				}) {
+					Text(text = "Force variant")
+				}
+				OutlinedButton(onClick = {
+					experiencesTracker.clearExperimentAssignments()
+					experimentsVersion++
+				}) {
+					Text(text = "Clear assignments")
+				}
+			}
+
+			Text(
+				text = "Generic Recirculation",
+				color = Color.Black,
+				style = titleStyle,
+				modifier = Modifier.padding(top = 32.dp, bottom = 16.dp)
+			)
+
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(top = 8.dp),
+				horizontalArrangement = Arrangement.SpaceEvenly
+			) {
+				FloatingActionButton(
+					backgroundColor = Color(0xFF00AA00),
+					onClick = {
+						recirculationTracker.trackEligible(
+							"demo-module",
+							listOf(
+								RecirculationLink(url = "https://example.com/1", position = 0),
+								RecirculationLink(url = "https://example.com/2", position = 1)
+							)
+						)
+					}
+				) {
+					Text(text = "Eligible", color = Color.White)
+				}
+				FloatingActionButton(
+					backgroundColor = Color(0xFFAA6600),
+					onClick = {
+						recirculationTracker.trackImpression(
+							"demo-module",
+							listOf(
+								RecirculationLink(url = "https://example.com/1", position = 0)
+							)
+						)
+					}
+				) {
+					Text(text = "Impression", color = Color.White)
+				}
+				FloatingActionButton(
+					backgroundColor = Color(0xFFAA0000),
+					onClick = {
+						recirculationTracker.trackClick(
+							"demo-module",
+							RecirculationLink(url = "https://example.com/1", position = 0)
+						)
+					}
+				) {
+					Text(text = "Click", color = Color.White)
 				}
 			}
 		}

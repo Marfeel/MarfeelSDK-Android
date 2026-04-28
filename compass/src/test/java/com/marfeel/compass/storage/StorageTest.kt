@@ -1,20 +1,19 @@
 package com.marfeel.compass.storage
 
-import androidx.test.core.app.ApplicationProvider
+import android.content.Context
 import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
+import io.mockk.every
+import io.mockk.mockk
 import junit.framework.Assert.assertNull
 
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import java.security.Security
 import java.util.*
 
-@RunWith(RobolectricTestRunner::class)
 internal class StorageTest {
 
 	private lateinit var storage: Storage
@@ -29,8 +28,9 @@ internal class StorageTest {
 
 	@Before
 	fun setup() {
-		storage =
-			Storage(ApplicationProvider.getApplicationContext())
+		val context = mockk<Context>()
+		every { context.getSharedPreferences(any(), any()) } returns MockSharedPreference()
+		storage = Storage(context)
 	}
 
 	@Test
