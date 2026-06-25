@@ -2,6 +2,11 @@ package com.marfeel.compass.di
 
 import android.annotation.SuppressLint
 import android.content.Context
+import com.marfeel.compass.cdp.CdpApiClient
+import com.marfeel.compass.cdp.CdpManager
+import com.marfeel.compass.cdp.MeteredCounter
+import com.marfeel.compass.cdp.store.CdpMetersStore
+import com.marfeel.compass.cdp.store.CdpSegmentsStore
 import com.marfeel.compass.core.ping.IngestPingEmitter
 import com.marfeel.compass.core.ping.MultimediaPingEmitter
 import com.marfeel.compass.experiences.ContentResolver
@@ -128,6 +133,44 @@ internal object CompassComponent : CompassServiceLocator {
             networkInfoProvider = networkInfoProvider
         )
     }
+
+    override val cdpApiClient: CdpApiClient by lazy {
+        CdpApiClient(httpClient = experiencesHttpClient)
+    }
+
+    private val cdpMirrorPrefs by lazy {
+        val context = this.context
+        checkNotNull(context)
+        context.getSharedPreferences("CompassCdpMirror", Context.MODE_PRIVATE)
+    }
+
+    override val cdpSegmentsStore: CdpSegmentsStore by lazy { CdpSegmentsStore(cdpMirrorPrefs) }
+    override val cdpMetersStore: CdpMetersStore by lazy { CdpMetersStore(cdpMirrorPrefs) }
+
+    override val cdpManager: CdpManager by lazy {
+        CdpManager(
+            isEnabled = { sessionStorage.readCdpEnabled() },
+            api = cdpApiClient,
+            accountId = { sessionStorage.readAccountId() },
+            getMasterId = storage::readCdpMasterId,
+            writeMasterId = { storage.writeCdpMasterId(it) },
+            getUserId = storage::readOriginalUserId,
+            getCachedIdentity = storage::readCdpCachedIdentity,
+            setCachedIdentity = storage::writeCdpCachedIdentity,
+            getConsent = storage::readUserConsent,
+            getSessionId = { sessionStorage.readSession().id },
+            segmentsStore = cdpSegmentsStore
+        ).apply {
+            // Reset the meter mirror whenever a write adopts a different master_id, so
+            // the previous identity's counts never surface (plan §13.2). Referencing
+            // meteredCounter lazily avoids a circular init.
+            onMasterIdChanged = { _, _ -> meteredCounter.reset() }
+        }
+    }
+
+    override val meteredCounter: MeteredCounter by lazy {
+        MeteredCounter(cdpManager = cdpManager, metersStore = cdpMetersStore, api = cdpApiClient)
+    }
 }
 
 internal interface CompassServiceLocator {
@@ -144,6 +187,11 @@ internal interface CompassServiceLocator {
     val networkInfoProvider: NetworkInfoProvider
     val recirculationApiClient: RecirculationApiClient
     val experiencesApiClient: ExperiencesApiClient
+    val cdpApiClient: CdpApiClient
+    val cdpSegmentsStore: CdpSegmentsStore
+    val cdpMetersStore: CdpMetersStore
+    val cdpManager: CdpManager
+    val meteredCounter: MeteredCounter
     fun getPing(): IngestPing
     fun getRFV(): GetRFV
     fun getPingMultimedia(): MultimediaPing

@@ -7,6 +7,7 @@ import android.widget.FrameLayout
 import android.widget.ScrollView
 import androidx.core.view.ScrollingView
 import androidx.recyclerview.widget.RecyclerView
+import com.marfeel.compass.cdp.CdpTracker
 import com.marfeel.compass.core.model.compass.*
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.androidCorePageTypes
@@ -20,6 +21,7 @@ import com.marfeel.compass.usecase.GetRFV
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.TimeZone
 
 internal const val compassNotInitializedErrorMessage =
     "Compass not initialized. Make sure CompassTracking::initialize has been called"
@@ -247,13 +249,19 @@ interface CompassTracking {
          * @param context The Android Context.
          * @param accountId Compass account id.
          * @param tech PageTechnology. Only values greater than 100 or 4 or 11, which represents android, are accepted.
+         * @param enableCdp opt-in to the CDP subsystem. When false (default) the whole subsystem is inert
          */
-        fun initialize(context: Context, accountId: String, tech: Int = androidPageType) {
+        fun initialize(
+            context: Context,
+            accountId: String,
+            tech: Int = androidPageType,
+            enableCdp: Boolean = false
+        ) {
             require(tech > 100 || androidCorePageTypes.contains(tech)) { bannedPageTechnologyValue }
 
             CompassComponent.context = context.applicationContext
             if (!CompassTracker.initialized) {
-                CompassTracker.initialize(accountId, tech)
+                CompassTracker.initialize(accountId, tech, enableCdp)
             }
         }
 
@@ -284,23 +292,39 @@ internal object CompassTracker : CompassTracking {
     internal val initialized: Boolean
         get() = sessionStorage.readAccountId() != null
 
-    internal fun initialize(accountId: String, tech: Int) {
+    internal fun initialize(accountId: String, tech: Int, enableCdp: Boolean = false) {
         sessionStorage.updateAccountId(accountId)
         sessionStorage.setPageTechnology(tech)
+        sessionStorage.setCdpEnabled(enableCdp)
+
+        if (enableCdp) {
+            CdpTracker.registerOnIdentityResolved(
+                userVars = { storage.readUserVars() },
+                timezone = TimeZone.getDefault().id
+            )
+        }
+
         configureSession()
         pingEmitter.onResumeCallback = ::configureSession
     }
 
     private fun configureSession() {
         val session = storage.readSession()
+        val startedNewSession: Boolean
         if (session == null) {
             sessionStorage.updateSession()
-            return
+            startedNewSession = true
+        } else {
+            val lastPing = storage.readLastPingTimeStamp() ?: 0L
+            val lastActivity = maxOf(session.timeStamp, lastPing)
+            startedNewSession = lastActivity < thirtyMinsAgoInSeconds()
+            if (startedNewSession) {
+                sessionStorage.updateSession()
+            }
         }
-        val lastPing = storage.readLastPingTimeStamp() ?: 0L
-        val lastActivity = maxOf(session.timeStamp, lastPing)
-        if (lastActivity < thirtyMinsAgoInSeconds()) {
-            sessionStorage.updateSession()
+
+        if (startedNewSession && sessionStorage.readCdpEnabled()) {
+            CdpTracker.onSessionStart()
         }
     }
 
@@ -319,6 +343,7 @@ internal object CompassTracker : CompassTracking {
         sessionStorage.updateRecirculationSource(rs)
         pingEmitter.start(url, page.pageId, sessionStorage.readSession().id)
         MultimediaTracking.reset()
+        CdpTracker.onNewPage()
     }
 
     @Deprecated("Use trackNewPage(url, scrollView) method", replaceWith = ReplaceWith("trackNewPage(url, scrollView)"))
@@ -427,6 +452,7 @@ internal object CompassTracker : CompassTracking {
     override fun setSiteUserId(userId: String) {
         check(initialized) { compassNotInitializedErrorMessage }
         storage.updateUserId(userId)
+        CdpTracker.onSiteUserId(userId)
     }
 
     override fun setUserType(userType: UserType) {
@@ -502,6 +528,7 @@ internal object CompassTracker : CompassTracking {
 
     override fun setUserConsent(hasConsent: Boolean) {
         storage.updateUserConsent(hasConsent)
+        CdpTracker.onConsentChanged()
     }
 
     override fun getUserId(): String {

@@ -25,6 +25,7 @@ internal class SessionStorage(private val storage: Storage) {
 	private var pageMetrics: MutableMap<String, Int> = ConcurrentHashMap()
 	private var pageTechnology: Int? = null
 	private var recirculationSource: String? = null
+	private var cdpEnabled: Boolean = false
 
 	fun updateAccountId(id: String) {
 		accountId = id
@@ -154,4 +155,11 @@ internal class SessionStorage(private val storage: Storage) {
 
 	fun readRecirculationSource(): String? =
 		recirculationSource
+
+	fun setCdpEnabled(enabled: Boolean) {
+		cdpEnabled = enabled
+	}
+
+	fun readCdpEnabled(): Boolean =
+		cdpEnabled
 }

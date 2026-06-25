@@ -5,6 +5,7 @@ import com.marfeel.compass.core.model.compass.ConversionOptions
 import com.marfeel.compass.core.model.compass.ConversionScope
 import com.marfeel.compass.core.model.compass.IngestPingData
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
+import com.marfeel.compass.di.CompassComponent
 import com.marfeel.compass.storage.Conversion
 import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.network.ApiClient
@@ -60,6 +61,12 @@ internal class IngestPing(
 
 		val pingData = getData() ?: return null
 
+		// CDP beacon fields: attached only when personalization consent is present AND
+		// a master_id exists (mirrors the web `if (consent) { if (masterId) {...} }`).
+		// When CDP is disabled getData() returns a null master_id, so nothing is added.
+		val cdpData = CompassComponent.cdpManager.getData(serialized = true)
+		val attachCdp = CompassComponent.cdpManager.hasConsent() && cdpData.masterId != null
+
 		return IngestPingData(
 			accountId = pingData.accountId,
 			sessionTimeStamp = pingData.sessionTimeStamp,
@@ -88,7 +95,10 @@ internal class IngestPing(
 			landingPage =  sessionStorage.readLandingPage(),
 			recirculationSource = sessionStorage.readRecirculationSource(),
 			cc = getCc(storage.readUserConsent()),
-			pageMetrics = sessionStorage.readPageMetrics()
+			pageMetrics = sessionStorage.readPageMetrics(),
+			cdpMasterId = if (attachCdp) cdpData.masterId else null,
+			cdpRfv = if (attachCdp) cdpData.rfvSerialized.ifEmpty { null } else null,
+			cdpCohorts = if (attachCdp) cdpData.cohortsSerialized else null
 		)
 	}
 
