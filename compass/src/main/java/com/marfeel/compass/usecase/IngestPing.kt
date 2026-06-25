@@ -60,9 +60,6 @@ internal class IngestPing(
 		if (currentPageId != input.pageId) return null
 
 		val pingData = getData() ?: return null
-
-		// CDP beacon fields: attached only when personalization consent is present AND
-		// a master_id exists (mirrors the web `if (consent) { if (masterId) {...} }`).
 		// When CDP is disabled getData() returns a null master_id, so nothing is added.
 		val cdpData = CompassComponent.cdpManager.getData(serialized = true)
 		val attachCdp = CompassComponent.cdpManager.hasConsent() && cdpData.masterId != null

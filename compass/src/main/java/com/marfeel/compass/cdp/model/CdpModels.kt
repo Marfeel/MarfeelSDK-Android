@@ -2,12 +2,6 @@ package com.marfeel.compass.cdp.model
 
 import com.google.gson.annotations.SerializedName
 
-/**
- * Composite Recency/Frequency/Value score plus its components, returned by the
- * backend on every identity/profile response. Read-only — never written by the SDK.
- * This is the master_id-keyed CDP RFV (attached to beacons as `cdp_rfv`); it is
- * distinct from the legacy user-id-keyed RFV (`rfv`/`rfv_r`/...).
- */
 data class CdpRfv(
 	val rfv: Int,
 	val r: Int,
@@ -15,10 +9,6 @@ data class CdpRfv(
 	val v: Int
 )
 
-/**
- * The shared response shape of `/cdp/identity/resolve`, `/link` and `/update`.
- * `cohorts` defaults to empty (never null on the SDK side).
- */
 internal data class CdpIdentityResponse(
 	@SerializedName("master_id")
 	val masterId: String?,
@@ -32,12 +22,6 @@ internal data class CdpCachedIdentity(
 	val cohorts: List<Int>
 )
 
-/**
- * Body for `POST /cdp/identity/resolve/`.
- *
- * `site_id` is serialized as a JSON **number** (not a string) — the backend rejects a
- * string `site_id` with 400. See the spec's example payloads (`"site_id": 1234`).
- */
 internal data class CdpResolveParams(
 	@SerializedName("site_id")
 	val siteId: Long,
@@ -47,7 +31,6 @@ internal data class CdpResolveParams(
 	val masterId: String? = null
 )
 
-/** Body for `POST /cdp/identity/link/`. `site_id` is a JSON number (see [CdpResolveParams]). */
 internal data class CdpLinkParams(
 	@SerializedName("site_id")
 	val siteId: Long,
@@ -61,11 +44,6 @@ internal data class CdpLinkParams(
 	val masterId: String? = null
 )
 
-/**
- * Body for `POST /cdp/identity/update/` — serves both property writes and segment
- * writes. The backend treats absent fields as no-ops, so only the keys the caller
- * cares about are sent (null fields are omitted by Gson).
- */
 internal data class CdpProfileUpdateParams(
 	@SerializedName("site_id")
 	val siteId: Long,

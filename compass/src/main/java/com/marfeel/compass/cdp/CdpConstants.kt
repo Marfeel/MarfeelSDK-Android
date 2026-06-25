@@ -16,8 +16,7 @@ internal const val LOCAL_MID_SENTINEL = "local"
 
 /**
  * Matches Scylla DefaultAnonymousTTL. After this window the backend forgets data for
- * anonymous master_ids, so retaining the local mirror past this point serves no
- * purpose.
+ * anonymous master_ids
  */
 internal const val CDP_MIRROR_TTL_MS = 180L * 24 * 60 * 60 * 1000
 

@@ -161,9 +161,7 @@ internal object CompassComponent : CompassServiceLocator {
             getSessionId = { sessionStorage.readSession().id },
             segmentsStore = cdpSegmentsStore
         ).apply {
-            // Reset the meter mirror whenever a write adopts a different master_id, so
-            // the previous identity's counts never surface (plan §13.2). Referencing
-            // meteredCounter lazily avoids a circular init.
+            // Reset the meter mirror whenever a write adopts a different master_id
             onMasterIdChanged = { _, _ -> meteredCounter.reset() }
         }
     }

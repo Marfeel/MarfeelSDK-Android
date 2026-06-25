@@ -5,11 +5,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-/**
- * ISO-8601 (de)serialization for meter `started_at` / `expires_at`. The SDK both
- * parses the backend's wire form and round-trips its own persisted form, so parsing
- * tolerates a few common shapes; serialization always emits UTC with milliseconds.
- */
+
 private val isoFormats: List<SimpleDateFormat> by lazy {
 	listOf(
 		"yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
@@ -33,7 +29,6 @@ internal fun parseIsoDate(value: String?): Date? {
 		try {
 			return format.parse(value)
 		} catch (_: Exception) {
-			// try the next pattern
 		}
 	}
 	return null

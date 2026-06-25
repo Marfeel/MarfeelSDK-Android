@@ -12,10 +12,6 @@ import kotlinx.coroutines.launch
  * Public entry point for the Customer Data Platform (CDP) subsystem: stable visitor
  * identity (master_id), read-only RFV/cohorts attached to beacons, host-pushed
  * segments + properties, and server-authoritative meters.
- *
- * The whole subsystem is inert unless CDP was enabled at [com.marfeel.compass.tracker.CompassTracking.Companion.initialize]
- * **and** personalization consent is present — every method below then no-ops or
- * returns empty, and no network call is made.
  */
 interface Cdp {
 	/** Link an external identifier (e.g. a login id) to the current visitor. */
@@ -102,23 +98,17 @@ internal object CdpTracker : Cdp {
 
 	/**
 	 * Revalidate the master_id at the start of every new SDK session (app open after the
-	 * session window, fresh launch, etc.). The resolve memo and the cached rfv/cohorts are
-	 * session-scoped, so a new session is a cache miss — `resolveIdentity()` re-sends the
-	 * existing master_id to `/cdp/identity/resolve/` and refreshes rfv/cohorts. The
-	 * permanent master_id is preserved (revalidated, not discarded). Fired from
-	 * `CompassTracker.configureSession` whenever a session rotates.
+	 * session window, fresh launch, etc.).
 	 */
 	internal fun onSessionStart() {
 		meteredCounter.invalidate()
 		coroutineScope.launch { cdpManager.resolveIdentity() }
 	}
 
-	/** Re-resolve on a consent change and fire the one-shot if now ready. */
 	internal fun onConsentChanged() {
 		coroutineScope.launch { cdpManager.onConsentChanged() }
 	}
 
-	/** Login path: link the registered user id (see plan §8). */
 	internal fun onSiteUserId(userId: String) {
 		coroutineScope.launch { cdpManager.linkIdentity("registered_user_id", userId, isDeterministic = true) }
 	}

@@ -13,9 +13,7 @@ import kotlinx.coroutines.sync.withLock
 /**
  * Stale-while-revalidate cache over the server-authoritative meters. Sync `get`/`list`
  * read the in-memory mirror (seeded from persistence so they have a last-known value
- * before any network); [getMeterSnapshot] refreshes once per page (dedup via
- * [inflight]) and is fail-open. The mirror is reset on a master_id change so the old
- * identity's counts never leak.
+ * before any network);
  */
 internal class MeteredCounter(
 	private val cdpManager: CdpManager,
@@ -84,7 +82,7 @@ internal class MeteredCounter(
 		return api.fetchMeters(account, masterId)
 	}
 
-	/** Cheap: mark the mirror stale so the next snapshot re-fetches. */
+	/** mark the mirror stale so the next snapshot re-fetches. */
 	fun invalidate() {
 		fresh = false
 	}
@@ -118,7 +116,6 @@ internal class MeteredCounter(
 		metersStore.cleanupExpired(account, activeMid)
 	}
 
-	/** Discard the previous identity's in-memory state (called on a master_id change). */
 	fun reset() {
 		meters = emptyList()
 		fresh = false

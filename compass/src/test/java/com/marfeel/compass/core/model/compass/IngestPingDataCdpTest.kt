@@ -8,11 +8,6 @@ import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import org.junit.Test
 
-/**
- * Verifies that the CDP beacon fields are serialized only when populated, so a disabled
- * CDP (or one gated off by consent / no master_id) contributes nothing to the wire form
- * (plan §12.3), while the legacy `useg` field is unaffected.
- */
 class IngestPingDataCdpTest {
 	private val gson = GsonBuilder()
 		.registerTypeAdapter(IngestPingData::class.java, IngestPingDataSerializer())

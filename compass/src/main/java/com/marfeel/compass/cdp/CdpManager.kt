@@ -16,17 +16,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/**
- * The CDP identity state machine: resolves/links the master_id, carries read-only
- * rfv/cohorts, and owns the local-first segment + profile writes. Everything is gated
- * behind [isEnabled] (the per-site `hasCdp` flag) **and** personalization consent, and
- * is strictly fail-open — a CDP outage must never break tracking.
- *
- * Native lifecycle (see plan §13): the resolve memo and the one-shot latch are
- * session-scoped — when the SDK session rotates ([getSessionId] changes) they are
- * cleared so identity + rfv/cohorts refresh roughly once per 30-min activity window,
- * mirroring the web's session-cookie expiry without any timer.
- */
 internal class CdpManager(
 	private val isEnabled: () -> Boolean,
 	private val api: CdpApiClient,
@@ -51,7 +40,6 @@ internal class CdpManager(
 	private var identityResolved = false
 	private var oneShotCallback: (() -> Unit)? = null
 
-	/** Fired when a write adopts a *different* master_id; DI uses it to reset meters. */
 	var onMasterIdChanged: ((oldId: String?, newId: String) -> Unit)? = null
 
 	fun hasConsent(): Boolean = isEnabled() && getConsent() != false
@@ -62,13 +50,11 @@ internal class CdpManager(
 
 	private fun getStorageMid(): String = getMasterId() ?: LOCAL_MID_SENTINEL
 
-	/** The account id as a number for JSON request bodies — null if absent/non-numeric. */
 	private fun numericSiteId(): Long? = accountId()?.toLongOrNull()
 
 	/**
 	 * Register a one-shot that fires when identity is ready (enabled + consent +
-	 * master_id). It re-arms once per session (the latch resets on session rotation)
-	 * and is re-checked on consent changes. Fires immediately if already ready.
+	 * master_id). It re-arms once per session
 	 */
 	fun onIdentityResolved(callback: () -> Unit) {
 		oneShotCallback = callback
@@ -223,7 +209,6 @@ internal class CdpManager(
 		}
 	}
 
-	/** Push the locally-stored segments for the real master_id (adds only, idempotent). */
 	suspend fun reconcileSegments() {
 		if (!hasConsent()) return
 		val masterId = getMasterId() ?: return
@@ -252,10 +237,6 @@ internal class CdpManager(
 		updateState(result, getSessionId())
 	}
 
-	/**
-	 * Carry segments from the previous bucket into the new master_id bucket on a
-	 * master_id change (fresh resolve or backend merge). Best-effort — swallow errors.
-	 */
 	internal fun transferCdpSegments(account: String?, oldId: String?, newId: String) {
 		if (account.isNullOrEmpty()) return
 		try {
@@ -272,7 +253,7 @@ internal class CdpManager(
 			segmentsStore.setActiveMid(account, newId)
 			segmentsStore.cleanupExpired(account, newId)
 		} catch (_: Exception) {
-			// best-effort
+
 		}
 	}
 

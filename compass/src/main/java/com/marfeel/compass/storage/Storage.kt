@@ -401,11 +401,6 @@ internal class Storage(
 
 	// region CDP identity
 
-	/**
-	 * Reads the stored CDP master_id, validating it as a UUID on read: a corrupt /
-	 * non-UUID value is transparently treated as "no master_id present" so a fresh
-	 * resolve is triggered.
-	 */
 	fun readCdpMasterId(): String? =
 		preferences.getString(cdpMasterIdKey, null)?.takeIf { uuidRegex.matches(it) }
 
@@ -419,13 +414,6 @@ internal class Storage(
 		return old
 	}
 
-	/**
-	 * Reads the cached read-only identity (rfv + cohorts). Returns null — forcing a
-	 * re-resolve — when:
-	 *  - the cache belongs to a previous session ([currentSessionId] tag mismatch),
-	 *  - both rfv and cohorts are absent, or
-	 *  - cohorts is not a JSON array (corrupt-cache guard).
-	 */
 	fun readCdpCachedIdentity(currentSessionId: String): CdpCachedIdentity? {
 		if (preferences.getString(cdpCacheSessionIdKey, null) != currentSessionId) return null
 

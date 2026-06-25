@@ -18,14 +18,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
-/** Result of a meter increment, carrying the HTTP status so the caller can map 404. */
 internal data class IncrementResult(val status: Int, val state: MeterState?)
 
-/**
- * Low-level HTTP for the CDP. Identity/profile calls are **fail-open**: any network
- * error, non-2xx, or unparseable body resolves to [UNKNOWN_CDP_IDENTITY] rather than
- * throwing, so a CDP outage never breaks tracking.
- */
 internal class CdpApiClient(
 	private val httpClient: OkHttpClient,
 	baseUrl: String = BuildConfig.CDP_BASE_URL
