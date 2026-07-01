@@ -92,7 +92,12 @@ internal data class IngestPingEmitterState(
     val pageStartTimeStamp: Long,
     val timeOnBackground: Long,
 ) {
-    val activeTimeOnPage = currentTimeStampInSeconds() - pageStartTimeStamp - timeOnBackground
+    // Computed on every read (not a stored val): each ping must reflect the current
+    // elapsed-minus-background time. A stored property would freeze at construction and
+    // only advance when the state is copied (scroll increase / background return), so
+    // `l` would stop counting once the reader stops scrolling (e.g. at the article end).
+    val activeTimeOnPage: Long
+        get() = currentTimeStampInSeconds() - pageStartTimeStamp - timeOnBackground
 
     fun addTimeOnBackground(timeOnBackground: Long): IngestPingEmitterState {
         return this.copy(timeOnBackground = this.timeOnBackground + timeOnBackground)
