@@ -37,8 +37,6 @@ class IngestPingEmitterStateTest {
 
 	@Test
 	fun `activeTimeOnPage advances on each read without a state copy`() {
-		// Regression: it used to be a stored val frozen at construction, so `l` stopped
-		// counting once the reader stopped scrolling (e.g. at the article end).
 		val state = stateStartedAtSecond(1000)
 
 		every { currentTimeStampInSeconds() } returns 1030
@@ -54,7 +52,6 @@ class IngestPingEmitterStateTest {
 		val state = stateStartedAtSecond(1000, timeOnBackground = 20)
 
 		every { currentTimeStampInSeconds() } returns 1060
-		// 60s elapsed − 20s background = 40s.
 		assertEquals(40L, state.activeTimeOnPage)
 	}
 }
