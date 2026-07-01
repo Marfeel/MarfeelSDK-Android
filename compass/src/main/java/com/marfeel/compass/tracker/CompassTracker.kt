@@ -300,7 +300,9 @@ internal object CompassTracker : CompassTracking {
         if (enableCdp) {
             CdpTracker.registerOnIdentityResolved(
                 userVars = { storage.readUserVars() },
-                timezone = TimeZone.getDefault().id
+                timezone = TimeZone.getDefault().id,
+                legacySegments = { storage.readUserSegments() },
+                writeLegacySegments = { storage.setUserSegment(it) }
             )
         }
 
@@ -512,18 +514,22 @@ internal object CompassTracker : CompassTracking {
 
     override fun addUserSegment(name: String) {
         storage.setUserSegment(name)
+        if (sessionStorage.readCdpEnabled()) CdpTracker.addCdpSegment(name)
     }
 
     override fun setUserSegments(segments: List<String>) {
         storage.setUserSegment(segments)
+        if (sessionStorage.readCdpEnabled()) CdpTracker.setCdpSegments(segments)
     }
 
     override fun removeUserSegment(name: String) {
         storage.removeUserSegment(name)
+        if (sessionStorage.readCdpEnabled()) CdpTracker.removeCdpSegment(name)
     }
 
     override fun clearUserSegments() {
         storage.clearUserSegments()
+        if (sessionStorage.readCdpEnabled()) CdpTracker.clearCdpSegments()
     }
 
     override fun setUserConsent(hasConsent: Boolean) {

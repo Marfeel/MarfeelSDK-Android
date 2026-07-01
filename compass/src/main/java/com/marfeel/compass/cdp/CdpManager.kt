@@ -218,6 +218,23 @@ internal class CdpManager(
 		}
 	}
 
+	/**
+	 * Bridge the legacy (`useg`) segment store into the CDP store on first identity
+	 * resolve, mirroring the web `mergeLegacySegmentsIntoCdpStorage` union. Returns the
+	 * merged union so the caller can write it back to the legacy store, keeping both
+	 * stores in sync (the web equally re-writes the permanent cookie). No-op without a
+	 * real master_id — the caller then keeps the legacy list untouched.
+	 */
+	fun mergeLegacySegments(legacy: List<String>): List<String> {
+		if (!isEnabled()) return legacy
+		val masterId = getMasterId() ?: return legacy
+		val account = accountId()
+		val stored = segmentsStore.read(account, masterId)
+		val merged = (stored + legacy).distinct()
+		if (merged != stored) segmentsStore.write(account, masterId, merged)
+		return merged
+	}
+
 	private suspend fun postSegmentChange(
 		segmentsAdd: List<String>? = null,
 		segmentsRemove: List<String>? = null

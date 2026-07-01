@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.marfeel.compass.cdp.Cdp
 import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.experiences.Experiences
 import com.marfeel.compass.experiences.Recirculation
@@ -57,6 +58,7 @@ import com.marfeel.compass.experiences.model.RecirculationLink
 import com.marfeel.compass.tracker.CompassTracking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
@@ -369,6 +371,79 @@ fun MainScreen(
 					}) {
 					Text(text = "RFV", color = Color.White)
 				}
+			}
+
+			Text(
+				text = "CDP Identity Link",
+				color = Color.Black,
+				style = titleStyle,
+				modifier = Modifier.padding(top = 32.dp, bottom = 8.dp)
+			)
+			Text(
+				text = "Link an email to the current visitor (deterministic). The CDP server resolves it to a master_id — linking the same email on another platform should yield the same id.",
+				color = Color.Gray,
+				modifier = Modifier.padding(bottom = 8.dp),
+				style = TextStyle.Default.copy(fontSize = 12.sp)
+			)
+
+			var linkEmail by remember { mutableStateOf("") }
+			var linkStatus by remember { mutableStateOf("") }
+			var masterId by remember { mutableStateOf(Cdp.getInstance().getCdpMasterId() ?: "—") }
+
+			TextField(
+				modifier = Modifier.fillMaxWidth(),
+				value = linkEmail,
+				onValueChange = { linkEmail = it },
+				label = { Text("Email") }
+			)
+			FloatingActionButton(
+				modifier = Modifier
+					.align(Alignment.CenterHorizontally)
+					.padding(top = 16.dp),
+				backgroundColor = Color(0xFF1A2149),
+				onClick = {
+					val email = linkEmail.trim()
+					if (email.isEmpty()) return@FloatingActionButton
+					linkStatus = "Linking…"
+					val before = Cdp.getInstance().getCdpMasterId()
+					// cdpDoIdentityLink is fire-and-forget; the master_id is written
+					// asynchronously once the server responds. Poll until it settles.
+					Cdp.getInstance().cdpDoIdentityLink("email", email, isDeterministic = true)
+					coroutineScope.launch {
+						repeat(20) {
+							delay(500)
+							val current = Cdp.getInstance().getCdpMasterId()
+							if (current != null && current != before) {
+								masterId = current
+								linkStatus = "Linked"
+								return@launch
+							}
+						}
+						masterId = Cdp.getInstance().getCdpMasterId() ?: "—"
+						linkStatus = "No change (already linked or pending)"
+					}
+				}
+			) {
+				Text(text = "Link email", color = Color.White)
+			}
+			Text(
+				text = "master_id: $masterId",
+				color = Color.Black,
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(top = 8.dp)
+					.clip(RoundedCornerShape(4.dp))
+					.background(Color(0xFFF0F0F0))
+					.padding(12.dp),
+				style = TextStyle.Default.copy(fontSize = 12.sp)
+			)
+			if (linkStatus.isNotEmpty()) {
+				Text(
+					text = linkStatus,
+					color = Color.Gray,
+					modifier = Modifier.padding(top = 4.dp),
+					style = TextStyle.Default.copy(fontSize = 12.sp)
+				)
 			}
 
 			Text(

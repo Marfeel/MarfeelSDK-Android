@@ -117,9 +117,18 @@ internal object CdpTracker : Cdp {
 	 * Register the one-shot work that runs once identity is ready: reconcile local
 	 * segments, push the current user vars + timezone, and seed/cleanup meters.
 	 */
-	internal fun registerOnIdentityResolved(userVars: () -> Map<String, String>, timezone: String) {
+	internal fun registerOnIdentityResolved(
+		userVars: () -> Map<String, String>,
+		timezone: String,
+		legacySegments: () -> List<String>,
+		writeLegacySegments: (List<String>) -> Unit
+	) {
 		cdpManager.onIdentityResolved {
 			coroutineScope.launch {
+				// Bridge legacy `useg` segments into the CDP store, then reconcile so the
+				// unioned set is what gets pushed as segments_add (matches web ordering).
+				val merged = cdpManager.mergeLegacySegments(legacySegments())
+				writeLegacySegments(merged)
 				cdpManager.reconcileSegments()
 				val properties = userVars().toList() + ("timezone" to timezone)
 				cdpManager.updateProfile(properties)
