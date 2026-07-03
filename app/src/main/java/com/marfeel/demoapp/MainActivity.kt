@@ -13,7 +13,7 @@ class MainActivity : FragmentActivity() {
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		CompassTracking.initialize(this, "1659", 11)
+		CompassTracking.initialize(this, "1659", 11, enableCdp = true)
 		CompassTracking.getInstance().setLandingPage("landing Page")
 
 		setContent {
