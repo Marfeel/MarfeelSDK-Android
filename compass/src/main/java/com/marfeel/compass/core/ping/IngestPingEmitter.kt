@@ -92,7 +92,8 @@ internal data class IngestPingEmitterState(
     val pageStartTimeStamp: Long,
     val timeOnBackground: Long,
 ) {
-    val activeTimeOnPage = currentTimeStampInSeconds() - pageStartTimeStamp - timeOnBackground
+    val activeTimeOnPage: Long
+        get() = currentTimeStampInSeconds() - pageStartTimeStamp - timeOnBackground
 
     fun addTimeOnBackground(timeOnBackground: Long): IngestPingEmitterState {
         return this.copy(timeOnBackground = this.timeOnBackground + timeOnBackground)
