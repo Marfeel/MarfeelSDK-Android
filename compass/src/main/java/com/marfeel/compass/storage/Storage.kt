@@ -6,7 +6,10 @@ import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
+import com.marfeel.compass.cdp.model.CdpCachedIdentity
+import com.marfeel.compass.cdp.model.CdpRfv
 import com.marfeel.compass.core.model.compass.Session
 import java.lang.reflect.Type
 import com.marfeel.compass.core.model.compass.UserType
@@ -35,6 +38,13 @@ internal class Storage(
 		private const val sessionKey = "session_key"
 		private const val sessionVarsKey = "sessionVars_key";
 		private const val landingPageKey = "landingPage_key"
+		private const val cdpMasterIdKey = "cdpMasterId_key"
+		private const val cdpRfvKey = "cdpRfv_key"
+		private const val cdpCohortsKey = "cdpCohorts_key"
+		private const val cdpCacheSessionIdKey = "cdpCacheSessionId_key"
+
+		private val uuidRegex =
+			Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 	}
 
 	private val gson:Gson by lazy { Gson() }
@@ -388,4 +398,54 @@ internal class Storage(
 
 	private fun getLandingPage(): String? =
 		preferences.getString(landingPageKey, null)
+
+	// region CDP identity
+
+	fun readCdpMasterId(): String? =
+		preferences.getString(cdpMasterIdKey, null)?.takeIf { uuidRegex.matches(it) }
+
+	/**
+	 * Persists a new CDP master_id and returns the **old** (validated) value — needed
+	 * for segment carry-over when the master_id changes.
+	 */
+	fun writeCdpMasterId(newMasterId: String): String? {
+		val old = readCdpMasterId()
+		preferences.edit { putString(cdpMasterIdKey, newMasterId) }
+		return old
+	}
+
+	fun readCdpCachedIdentity(currentSessionId: String): CdpCachedIdentity? {
+		if (preferences.getString(cdpCacheSessionIdKey, null) != currentSessionId) return null
+
+		val rfvJson = preferences.getString(cdpRfvKey, null)
+		val cohortsJson = preferences.getString(cdpCohortsKey, null)
+
+		if (rfvJson == null && cohortsJson == null) return null
+
+		val cohorts = parseCohorts(cohortsJson) ?: return null
+		val rfv = rfvJson?.let { runCatching { gson.fromJson(it, CdpRfv::class.java) }.getOrNull() }
+
+		return CdpCachedIdentity(rfv, cohorts)
+	}
+
+	fun writeCdpCachedIdentity(rfv: CdpRfv?, cohorts: List<Int>, currentSessionId: String) {
+		preferences.edit {
+			putString(cdpRfvKey, rfv?.let { gson.toJson(it) })
+			putString(cdpCohortsKey, gson.toJson(cohorts))
+			putString(cdpCacheSessionIdKey, currentSessionId)
+		}
+	}
+
+	private fun parseCohorts(json: String?): List<Int>? {
+		if (json == null) return null
+		return try {
+			val element = JsonParser.parseString(json)
+			if (!element.isJsonArray) return null
+			element.asJsonArray.map { it.asInt }
+		} catch (_: Exception) {
+			null
+		}
+	}
+
+	// endregion
 }

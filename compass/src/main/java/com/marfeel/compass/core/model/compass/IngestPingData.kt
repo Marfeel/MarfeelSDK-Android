@@ -47,7 +47,13 @@ internal class IngestPingData(
 	@SerializedName("cc")
 	val cc: Int,
 	@SerializedName("pm")
-	val pageMetrics: Map<String, Int>
+	val pageMetrics: Map<String, Int>,
+	@SerializedName("cdp_mid")
+	val cdpMasterId: String? = null,
+	@SerializedName("cdp_rfv")
+	val cdpRfv: String? = null,
+	@SerializedName("cdp_cohorts")
+	val cdpCohorts: String? = null
 ): PingData(
 	accountId,
 	sessionTimeStamp,
@@ -101,7 +107,10 @@ internal class IngestPingData(
 		landingPage: String? = this.landingPage,
 		recirculationSource: String? = this.recirculationSource,
 		cc: Int = this.cc,
-		pm: Map<String, Int> = this.pageMetrics
+		pm: Map<String, Int> = this.pageMetrics,
+		cdpMasterId: String? = this.cdpMasterId,
+		cdpRfv: String? = this.cdpRfv,
+		cdpCohorts: String? = this.cdpCohorts
 	) = IngestPingData(
 		accountId,
 		sessionTimeStamp,
@@ -132,7 +141,10 @@ internal class IngestPingData(
 		landingPage,
 		recirculationSource,
 		cc,
-		pm
+		pm,
+		cdpMasterId,
+		cdpRfv,
+		cdpCohorts
 	)
 }
 

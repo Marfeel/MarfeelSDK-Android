@@ -71,6 +71,16 @@ Persistence is SharedPreferences-based, one file per concern: `CompassExperience
 
 `storage/` holds both persistent (`Storage` — EncryptedSharedPreferences) and in-memory-per-session (`SessionStorage`) state. Several deprecated `startPageView` overloads are kept for binary compatibility — new code should use `trackNewPage` / `trackScreen`.
 
+### CDP subsystem (`cdp/`)
+
+A Customer Data Platform layer accessed via the **`Cdp`** singleton (`Cdp.getInstance()`): stable visitor `master_id`, read-only RFV/cohorts attached to beacons (`cdp_mid` / `cdp_rfv` / `cdp_cohorts`), host-pushed segments + properties, and server-authoritative meters. Read `docs/cdp-api.md` before non-trivial changes. Key invariants:
+
+- **Gated behind two independent conditions**: the `enableCdp` flag on `initialize` (stored in `SessionStorage`) **and** personalization consent (`storage.readUserConsent() != false`, so unknown allows). When either is off the whole subsystem is inert — no network. `CdpManager.hasConsent()` is the single gate.
+- **Strictly fail-open** — identity/profile calls resolve to `UNKNOWN_CDP_IDENTITY` on any error; a CDP outage never breaks tracking.
+- **Native cache invalidation** (`docs/cdp-api.md` §lifecycle): the resolve memo + one-shot latch are session-scoped (cleared on session rotation), cached rfv/cohorts are session-tagged in `Storage`, the meter mirror resets on a master_id change (`CdpManager.onMasterIdChanged`, wired in `di.kt`). `master_id` is the **only** intentionally-permanent cache (UUID-validated on read).
+- **Separate from legacy segments**: the CDP segment methods (`addCdpSegment` etc.) and the legacy `addUserSegment` family (`useg`) are independent stores — do not conflate. Likewise CDP RFV (`cdp_rfv`) is distinct from the legacy `rfv*` beacon fields.
+- Mirror store (`CompassCdpMirror` prefs) is one file with prefixed keys per `(account, masterId)`, 180-day TTL; the active master_id bucket is never purged.
+
 ## Gotchas
 
 - `CompassTracking.initialize` is idempotent on subsequent calls (guarded by `CompassTracker.initialized`). The check reads `sessionStorage.readAccountId()`, so deleting the account id externally will re-enter initialization logic.
@@ -83,4 +93,5 @@ Persistence is SharedPreferences-based, one file per concern: `CompassExperience
 
 - `docs/experiences-public-docs.md` — customer-facing docs for the Experiences / Recirculation API (matches the iOS public surface)
 - `docs/experiences-api.md` — internal architecture reference (wire formats, frequency caps, experiments, recirculation payload)
+- `docs/cdp-api.md` — internal architecture reference for the CDP subsystem (identity, segments, meters, gating, native lifecycle invalidation, beacon fields)
 - `docs/swift-implementation-guide.md` — parity spec for the Swift port
