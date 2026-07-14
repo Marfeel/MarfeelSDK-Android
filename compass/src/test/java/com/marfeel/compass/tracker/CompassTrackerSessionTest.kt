@@ -60,4 +60,13 @@ internal class CompassTrackerSessionTest {
 
 		assertEquals(sessionAfterInit, sessionAfterResume)
 	}
+
+	@Test
+	fun `getSessionId returns the id from session storage`() {
+		CompassTracker.initialize("acct-id", 4)
+
+		val sessionId = CompassTracker.getSessionId()
+
+		assertEquals(sessionHolder.get()!!.id, sessionId)
+	}
 }
