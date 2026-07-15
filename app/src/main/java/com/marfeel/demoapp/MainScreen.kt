@@ -72,6 +72,7 @@ fun MainScreen(
 	val scaffoldState = rememberScaffoldState()
 	val backgroundColor = Color.White
 	var showExtendedItem by remember { mutableStateOf(false) }
+	var sessionId by remember { mutableStateOf("") }
 	val titleStyle = TextStyle.Default.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold)
 	val coroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -371,6 +372,29 @@ fun MainScreen(
 					}) {
 					Text(text = "RFV", color = Color.White)
 				}
+				FloatingActionButton(
+					backgroundColor = Color(0xFF117263),
+					onClick = {
+						val currentSessionId = tracker.getSessionId()
+						Log.d("Compass", "sessionId = $currentSessionId")
+						sessionId = currentSessionId
+					}) {
+					Text(text = "SessionId", color = Color.White)
+				}
+			}
+
+			if (sessionId.isNotEmpty()) {
+				Text(
+					text = "sessionId: $sessionId",
+					color = Color.Black,
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(top = 8.dp)
+						.clip(RoundedCornerShape(4.dp))
+						.background(Color(0xFFF0F0F0))
+						.padding(12.dp),
+					style = TextStyle.Default.copy(fontSize = 12.sp)
+				)
 			}
 
 			Text(
