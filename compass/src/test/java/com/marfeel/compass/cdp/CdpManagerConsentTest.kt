@@ -237,6 +237,26 @@ internal class CdpManagerConsentTest {
 		assertEquals("3", env.consentMemory.getRemembered(account)["privacy"]?.versionId)
 	}
 
+	@Test
+	fun `canonical master - a record that started before clearIdentity never adopts the winner`() = runBlocking {
+		env.masterId = UUID_A
+		var release: (() -> Unit)? = null
+		coEvery { api.recordConsent(any()) } coAnswers {
+			kotlinx.coroutines.suspendCancellableCoroutine { cont ->
+				release = { cont.resume(recorded.copy(masterId = UUID_B), null) }
+			}
+		}
+		val record = GlobalScope.async { manager.trackCdpConsent(decision()) }
+		while (release == null) delay(5)
+
+		manager.clearIdentity()
+		release!!.invoke()
+		record.await()
+
+		assertNull(env.masterId)
+		assertTrue(env.masterIdChanges.isEmpty())
+	}
+
 	// endregion
 
 	// region local memory

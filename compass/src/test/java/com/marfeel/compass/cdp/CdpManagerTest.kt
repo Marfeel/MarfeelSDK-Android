@@ -525,6 +525,49 @@ internal class CdpManagerTest {
 	}
 
 	@Test
+	fun `an update that started before clearIdentity does not resurrect the old master`() = runBlocking {
+		env.consent = true
+		env.masterId = UUID_A
+		var releaseUpdate: (() -> Unit)? = null
+		coEvery { api.update(any()) } coAnswers {
+			kotlinx.coroutines.suspendCancellableCoroutine { cont ->
+				releaseUpdate = { cont.resume(CdpIdentityResponse(UUID_A, null, emptyList()), null) }
+			}
+		}
+		val profile = GlobalScope.async { manager.updateProfile(listOf("plan" to "gold")) }
+		while (releaseUpdate == null) delay(5)
+
+		manager.clearIdentity()
+		releaseUpdate!!.invoke()
+		profile.await()
+
+		assertNull(env.masterId)
+		assertNull(env.cached)
+		assertTrue(env.masterIdChanges.isEmpty())
+	}
+
+	@Test
+	fun `a segment change that started before clearIdentity does not resurrect the old master`() = runBlocking {
+		env.consent = true
+		env.masterId = UUID_A
+		var releaseUpdate: (() -> Unit)? = null
+		coEvery { api.update(any()) } coAnswers {
+			kotlinx.coroutines.suspendCancellableCoroutine { cont ->
+				releaseUpdate = { cont.resume(CdpIdentityResponse(UUID_A, null, emptyList()), null) }
+			}
+		}
+		val change = GlobalScope.async { manager.addSegment("sports") }
+		while (releaseUpdate == null) delay(5)
+
+		manager.clearIdentity()
+		releaseUpdate!!.invoke()
+		change.await()
+
+		assertNull(env.masterId)
+		assertEquals(LOCAL_MID_SENTINEL, env.segmentsStore.getActiveMid(account))
+	}
+
+	@Test
 	fun `resetRemoteIdentity posts the site id and is inert when disabled`() = runBlocking {
 		coEvery { api.reset(456L) } returns com.marfeel.compass.cdp.model.CdpResetResponse(true, 456L, emptyList())
 		assertTrue(manager.resetRemoteIdentity()!!.reset)

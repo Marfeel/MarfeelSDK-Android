@@ -1,7 +1,13 @@
 package com.marfeel.compass.tracker
 
 import android.content.Context
+import com.marfeel.compass.cdp.CdpTestEnv
+import com.marfeel.compass.cdp.LOCAL_MID_SENTINEL
+import com.marfeel.compass.cdp.UUID_A
 import com.marfeel.compass.cdp.model.CdpRfv
+import com.marfeel.compass.cdp.model.CdpRememberedConsentDecision
+import com.marfeel.compass.cdp.model.CdpConsentStatus
+import io.mockk.coVerify
 import com.marfeel.compass.core.model.compass.RFV
 import com.marfeel.compass.core.model.compass.Session
 import com.marfeel.compass.core.model.compass.UserType
@@ -146,6 +152,67 @@ internal class UserRotationTest {
 		assertNotNull(storage.readOriginalUserId())
 		assertNotNull(storage.readSession())
 		assertNull(storage.readRegisteredUserId())
+	}
+
+	/**
+	 * With a real [com.marfeel.compass.cdp.CdpManager] reading the master through this
+	 * very [Storage]: the wipe must run **before** the storage reset, or it can never
+	 * see which master's buckets to clear.
+	 */
+	private fun realCdpEnv(): CdpTestEnv {
+		val env = CdpTestEnv()
+		env.consent = true
+		return env
+	}
+
+	@Test
+	fun `the CDP wipe targets the buckets of the live previous master, not the pointer`() {
+		val env = realCdpEnv()
+		storage.writeCdpMasterId(UUID_A)
+		env.segmentsStore.write(env.account, UUID_A, listOf("mine"))
+		env.serverSegmentsStore.write(env.account, UUID_A, listOf("srv"))
+		env.serverPropertiesStore.write(env.account, UUID_A, mapOf("a" to "b"))
+		env.consentMemory.remember(env.account, "privacy", CdpRememberedConsentDecision("1", CdpConsentStatus.ACCEPTED, 1L))
+		// a stale pointer, as after a swallowed transfer failure
+		env.segmentsStore.setActiveMid(env.account, "stale-mid")
+		val rotation = UserRotation(
+			storage = storage,
+			sessionStorage = sessionStorage,
+			updateEmitterSession = {},
+			clearRfvCache = {},
+			clearCdpIdentity = {
+				// what the tracker wires: the manager reads the master from Storage itself
+				env.masterId = storage.readCdpMasterId()
+				env.manager.clearIdentity()
+				storage.clearCdpMasterId()
+			}
+		)
+
+		rotation.rotate()
+
+		assertEquals(listOf(env.account to UUID_A), env.clearedBuckets)
+		assertEquals(emptyList<String>(), env.segmentsStore.read(env.account, UUID_A))
+		assertNull(env.serverSegmentsStore.read(env.account, UUID_A))
+		assertNull(env.serverPropertiesStore.read(env.account, UUID_A))
+		assertTrue(env.consentMemory.getRemembered(env.account).isEmpty())
+		assertEquals(LOCAL_MID_SENTINEL, env.segmentsStore.getActiveMid(env.account))
+		assertNull(storage.readCdpMasterId())
+	}
+
+	@Test
+	fun `the rotation never resolves a new identity itself`() {
+		val env = realCdpEnv()
+		storage.writeCdpMasterId(UUID_A)
+		UserRotation(
+			storage = storage,
+			sessionStorage = sessionStorage,
+			updateEmitterSession = {},
+			clearRfvCache = {},
+			clearCdpIdentity = { env.manager.clearIdentity() }
+		).rotate()
+
+		coVerify(exactly = 0) { env.api.resolve(any()) }
+		coVerify(exactly = 0) { env.api.link(any()) }
 	}
 
 	@Test
