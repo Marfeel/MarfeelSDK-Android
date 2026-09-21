@@ -8,6 +8,9 @@ import android.widget.ScrollView
 import androidx.core.view.ScrollingView
 import androidx.recyclerview.widget.RecyclerView
 import com.marfeel.compass.cdp.CdpTracker
+import com.marfeel.compass.cdp.SegmentOwnership
+import com.marfeel.compass.cdp.SegmentTrimmer
+import com.marfeel.compass.cdp.UserDataMerger
 import com.marfeel.compass.core.model.compass.*
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.androidCorePageTypes
@@ -20,6 +23,7 @@ import com.marfeel.compass.tracker.multimedia.MultimediaTracking
 import com.marfeel.compass.usecase.GetRFV
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.TimeZone
 
@@ -224,6 +228,58 @@ interface CompassTracking {
     fun clearUserSegments()
 
     /**
+     * The user segments as a beacon sends them (`useg`): the device-owned segments
+     * unioned with the Server Segments the CDP asserts, server first, deduplicated and
+     * capped at 100. When the union overflows the user var `mrf_tooManySegments` is set
+     * and device-owned segments are the ones dropped. Storage itself is never trimmed.
+     *
+     * Reads whatever Server Segments are known right now; see [getUserSegmentsAsync] to
+     * resolve identity first.
+     */
+    fun getUserSegments(): List<String>
+
+    /**
+     * @see getUserSegments — resolves identity first so the Server Segments are current.
+     */
+    suspend fun getUserSegmentsAsync(): List<String>
+
+    /**
+     * The user vars as a beacon sends them (`uvar`): the device-owned vars followed by
+     * the Server Properties the CDP computed for this user. Device-owned wins on a key
+     * collision. Reads whatever Server Properties are known right now.
+     */
+    fun getUserVars(): Map<String, String>
+
+    /**
+     * @see getUserVars — resolves identity first so the Server Properties are current.
+     */
+    suspend fun getUserVarsAsync(): Map<String, String>
+
+    /**
+     * Turns this device into a **new visitor**. Call it on sign-out.
+     *
+     * Synchronously — before this function first suspends — the registered user id is
+     * dropped, a new internal user id, first visit and session are minted, user vars and
+     * segments are emptied, the cached RFV is dropped and the whole local CDP state
+     * (master_id, cached rfv/cohorts, mirrors, meters, anonymous consent memory) is wiped.
+     * The remaining suspension is a best-effort remote CDP reset bounded to five seconds.
+     *
+     * It never throws and never re-resolves identity: the next [trackNewPage] does. The
+     * current page keeps its page id, so a sign-out that stays on screen should be
+     * followed by a new [trackNewPage] / [trackScreen]. Concurrent calls share one run.
+     */
+    suspend fun resetUser()
+
+    /**
+     * @see resetUser — callback form. The local rotation still happens synchronously
+     * before this returns; [onComplete] fires once the remote tail settles.
+     */
+    fun resetUser(onComplete: () -> Unit)
+
+    @Deprecated("Use resetUser()", ReplaceWith("resetUser()"))
+    suspend fun resetIdentity()
+
+    /**
      * Sets user consent value.
      * @param hasConsent user consent
      */
@@ -291,7 +347,42 @@ internal object CompassTracker : CompassTracking {
     private val storage: Storage by lazy { CompassComponent.storage }
     private val sessionStorage: SessionStorage by lazy { CompassComponent.sessionStorage }
     private val getRFV: GetRFV by lazy { CompassComponent.getRFV() }
-    private val coroutineScope = CoroutineScope(Dispatchers.IO)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * The merged, trimmed read-side views the beacon sends as `useg` / `uvar`; keeps
+     * `mrf_tooManySegments` in step with the segment union on every read.
+     */
+    private val userData: UserDataMerger by lazy {
+        UserDataMerger(
+            cdpEnabled = { sessionStorage.readCdpEnabled() },
+            readOwnedSegments = { storage.readUserSegments() },
+            readOwnedVars = { storage.readUserVars() },
+            listServerSegments = CdpTracker::listServerSegments,
+            getServerSegments = { CdpTracker.getServerSegments() },
+            listServerProperties = CdpTracker::listServerProperties,
+            getServerProperties = { CdpTracker.getServerProperties() },
+            trimmer = SegmentTrimmer(
+                readOwnedUserVars = { storage.readUserVars() },
+                setUserVar = { name, value -> writeUserVar(name, value) },
+                removeUserVar = { name -> writeUserVar(name, null) }
+            )
+        )
+    }
+
+    private val userResetter: UserResetter by lazy {
+        val rotation = UserRotation(
+            storage = storage,
+            sessionStorage = sessionStorage,
+            updateEmitterSession = pingEmitter::updateSessionId,
+            clearRfvCache = getRFV::clearCache,
+            clearCdpIdentity = CdpTracker::clearIdentity
+        )
+        UserResetter(
+            rotateLocalUser = rotation::rotate,
+            clearRemoteState = { CdpTracker.resetRemoteIdentity() }
+        )
+    }
 
 
     internal val initialized: Boolean
@@ -514,7 +605,16 @@ internal object CompassTracker : CompassTracking {
     override fun setUserVar(name: String, value: String) {
         check(initialized) { compassNotInitializedErrorMessage }
 
-        storage.setUserVar(name, value)
+        writeUserVar(name, value)
+    }
+
+    /**
+     * The one write path for device-owned user vars: persists, then pushes the owned
+     * set to the CDP profile (debounced). A null [value] removes the var.
+     */
+    private fun writeUserVar(name: String, value: String?) {
+        if (value == null) storage.removeUserVar(name) else storage.setUserVar(name, value)
+        if (sessionStorage.readCdpEnabled()) CdpTracker.flushUserVars { storage.readUserVars() }
     }
 
     override fun addUserSegment(name: String) {
@@ -522,9 +622,53 @@ internal object CompassTracker : CompassTracking {
         if (sessionStorage.readCdpEnabled()) CdpTracker.addCdpSegment(name)
     }
 
+    /**
+     * Bulk replace is the one shape where intent is ambiguous — an echo of
+     * [getUserSegments] and a deliberate assertion look the same — so a requested key
+     * that only the server asserts is dropped (with a warning) instead of becoming
+     * device-owned. [addUserSegment] is the unambiguous way to claim ownership.
+     */
     override fun setUserSegments(segments: List<String>) {
-        storage.setUserSegment(segments)
-        if (sessionStorage.readCdpEnabled()) CdpTracker.setCdpSegments(segments)
+        val cdpEnabled = sessionStorage.readCdpEnabled()
+        val next = if (cdpEnabled) {
+            SegmentOwnership.rejectUnownedSegments(
+                requested = segments,
+                owned = storage.readUserSegments(),
+                server = CdpTracker.listServerSegments()
+            )
+        } else {
+            segments
+        }
+        storage.setUserSegment(next)
+        if (cdpEnabled) CdpTracker.setCdpSegments(next)
+    }
+
+    override fun getUserSegments(): List<String> = userData.segments()
+
+    override suspend fun getUserSegmentsAsync(): List<String> = userData.segmentsAsync()
+
+    override fun getUserVars(): Map<String, String> = userData.vars()
+
+    override suspend fun getUserVarsAsync(): Map<String, String> = userData.varsAsync()
+
+    override suspend fun resetUser() {
+        userResetter.reset()
+    }
+
+    override fun resetUser(onComplete: () -> Unit) {
+        val run = userResetter.start()
+        coroutineScope.launch {
+            try {
+                run.await()
+            } catch (_: Exception) {
+            }
+            onComplete()
+        }
+    }
+
+    @Deprecated("Use resetUser()", ReplaceWith("resetUser()"))
+    override suspend fun resetIdentity() {
+        resetUser()
     }
 
     override fun removeUserSegment(name: String) {

@@ -5,8 +5,11 @@ import android.content.Context
 import com.marfeel.compass.cdp.CdpApiClient
 import com.marfeel.compass.cdp.CdpManager
 import com.marfeel.compass.cdp.MeteredCounter
+import com.marfeel.compass.cdp.store.CdpConsentMemoryStore
 import com.marfeel.compass.cdp.store.CdpMetersStore
 import com.marfeel.compass.cdp.store.CdpSegmentsStore
+import com.marfeel.compass.cdp.store.CdpServerPropertiesStore
+import com.marfeel.compass.cdp.store.CdpServerSegmentsStore
 import com.marfeel.compass.core.ping.IngestPingEmitter
 import com.marfeel.compass.core.ping.MultimediaPingEmitter
 import com.marfeel.compass.experiences.ContentResolver
@@ -146,6 +149,9 @@ internal object CompassComponent : CompassServiceLocator {
 
     override val cdpSegmentsStore: CdpSegmentsStore by lazy { CdpSegmentsStore(cdpMirrorPrefs) }
     override val cdpMetersStore: CdpMetersStore by lazy { CdpMetersStore(cdpMirrorPrefs) }
+    override val cdpServerSegmentsStore: CdpServerSegmentsStore by lazy { CdpServerSegmentsStore(cdpMirrorPrefs) }
+    override val cdpServerPropertiesStore: CdpServerPropertiesStore by lazy { CdpServerPropertiesStore(cdpMirrorPrefs) }
+    override val cdpConsentMemoryStore: CdpConsentMemoryStore by lazy { CdpConsentMemoryStore(cdpMirrorPrefs) }
 
     override val cdpManager: CdpManager by lazy {
         CdpManager(
@@ -154,15 +160,26 @@ internal object CompassComponent : CompassServiceLocator {
             accountId = { sessionStorage.readAccountId() },
             getMasterId = storage::readCdpMasterId,
             writeMasterId = { storage.writeCdpMasterId(it) },
+            clearMasterId = storage::clearCdpMasterId,
             getUserId = storage::readOriginalUserId,
             getCachedIdentity = storage::readCdpCachedIdentity,
             setCachedIdentity = storage::writeCdpCachedIdentity,
+            clearCachedIdentity = storage::clearCdpCachedIdentity,
             getConsent = storage::readUserConsent,
             getSessionId = { sessionStorage.readSession().id },
-            segmentsStore = cdpSegmentsStore
+            segmentsStore = cdpSegmentsStore,
+            serverSegmentsStore = cdpServerSegmentsStore,
+            serverPropertiesStore = cdpServerPropertiesStore,
+            consentMemory = cdpConsentMemoryStore,
+            getOwnedSegments = storage::readUserSegments
         ).apply {
             // Reset the meter mirror whenever a write adopts a different master_id
             onMasterIdChanged = { _, _ -> meteredCounter.reset() }
+            // A user reset wipes the meters too: the in-memory mirror and the bucket of the previous master
+            onIdentityCleared = { account, previousMid ->
+                meteredCounter.reset()
+                cdpMetersStore.clear(account, previousMid)
+            }
         }
     }
 
@@ -188,6 +205,9 @@ internal interface CompassServiceLocator {
     val cdpApiClient: CdpApiClient
     val cdpSegmentsStore: CdpSegmentsStore
     val cdpMetersStore: CdpMetersStore
+    val cdpServerSegmentsStore: CdpServerSegmentsStore
+    val cdpServerPropertiesStore: CdpServerPropertiesStore
+    val cdpConsentMemoryStore: CdpConsentMemoryStore
     val cdpManager: CdpManager
     val meteredCounter: MeteredCounter
     fun getPing(): IngestPing

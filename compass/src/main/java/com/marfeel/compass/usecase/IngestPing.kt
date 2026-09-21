@@ -10,11 +10,20 @@ import com.marfeel.compass.storage.Conversion
 import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.network.ApiClient
 import com.marfeel.compass.storage.Storage
+import com.marfeel.compass.tracker.CompassTracker
 
 internal class IngestPing(
 	override val api: ApiClient,
 	override val sessionStorage: SessionStorage,
 	override val storage: Storage,
+	/**
+	 * What the beacon sends as `useg`: the device-owned segments unioned with the Server
+	 * Segments, server first, trimmed to the cap. Injectable so the payload can be
+	 * tested without the tracker singleton.
+	 */
+	private val userSegmentsProvider: () -> List<String> = { CompassTracker.getUserSegments() },
+	/** What the beacon sends as `uvar`: device-owned vars plus the Server Properties. */
+	private val userVarsProvider: () -> Map<String, String> = { CompassTracker.getUserVars() }
 ) : Ping<IngestPingEmitterState, IngestPingData>(api, sessionStorage, storage) {
 	private var tick = 0;
 
@@ -59,10 +68,11 @@ internal class IngestPing(
 		val currentPageId = sessionStorage.readPage()?.pageId
 		if (currentPageId != input.pageId) return null
 
-		val pingData = getData() ?: return null
-		// When CDP is disabled getData() returns a null master_id, so nothing is added.
-		val cdpData = CompassComponent.cdpManager.getData(serialized = true)
-		val attachCdp = CompassComponent.cdpManager.hasConsent() && cdpData.masterId != null
+		val pingData = getData(userVars = userVarsProvider(), userSegments = userSegmentsProvider()) ?: return null
+		// When CDP is disabled getUserProfile() returns a null master_id, so nothing is added.
+		val cdpManager = CompassComponent.cdpManager
+		val cdpData = cdpManager.getUserProfile(serialized = true)
+		val attachCdp = cdpManager.hasConsent() && cdpData.masterId != null
 
 		return IngestPingData(
 			accountId = pingData.accountId,
@@ -85,8 +95,8 @@ internal class IngestPing(
 			version = pingData.version,
 			pageVars = sessionStorage.readPageVars(),
 			sessionVars = sessionStorage.readSessionVars(),
-			userVars = storage.readUserVars(),
-			userSegments = storage.readUserSegments(),
+			userVars = pingData.userVars,
+			userSegments = pingData.userSegments,
 			pageType = sessionStorage.readPageTechnology()!!,
 			userConsent = storage.readUserConsent(),
 			landingPage =  sessionStorage.readLandingPage(),
@@ -95,7 +105,8 @@ internal class IngestPing(
 			pageMetrics = sessionStorage.readPageMetrics(),
 			cdpMasterId = if (attachCdp) cdpData.masterId else null,
 			cdpRfv = if (attachCdp) cdpData.rfvSerialized.ifEmpty { null } else null,
-			cdpCohorts = if (attachCdp) cdpData.cohortsSerialized else null
+			cdpCohorts = if (attachCdp) cdpData.cohortsSerialized else null,
+			cdpFresh = if (attachCdp && cdpData.identityFresh) "1" else null
 		)
 	}
 
