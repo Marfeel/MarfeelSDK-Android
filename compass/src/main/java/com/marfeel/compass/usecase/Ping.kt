@@ -21,7 +21,14 @@ internal abstract class Ping<T, Y: PingData>(open val api: ApiClient, open val s
 
     abstract fun getData(input: T): Y?
 
-    fun getData(): PingData? {
+    /**
+     * [userVars] / [userSegments] default to the raw device-owned stores; `IngestPing`
+     * passes its merged views instead so the beacon does not read and parse them twice.
+     */
+    fun getData(
+        userVars: Map<String, String> = storage.readUserVars(),
+        userSegments: List<String> = storage.readUserSegments()
+    ): PingData? {
         val currentTimeStamp = currentTimeStampInSeconds()
         val currentSession = sessionStorage.readSession()
         val page = sessionStorage.readPage() ?: return null
@@ -41,10 +48,10 @@ internal abstract class Ping<T, Y: PingData>(open val api: ApiClient, open val s
             firsVisitTimeStamp = storage.readFirstSessionTimeStamp(),
             previousSessionTimeStamp = storage.readPreviousSessionLastPingTimeStamp(),
             version = BuildConfig.API_VERSION,
-            userVars = storage.readUserVars(),
+            userVars = userVars,
             pageVars = sessionStorage.readPageVars(),
             sessionVars = sessionStorage.readSessionVars(),
-            userSegments = storage.readUserSegments(),
+            userSegments = userSegments,
             pageType = sessionStorage.readPageTechnology()!!,
             userConsent = storage.readUserConsent()
         )

@@ -62,6 +62,15 @@ internal class IngestPingEmitter(
         pingEmitterState = null
     }
 
+    /**
+     * Re-points the running page at a new session without restarting it. Used by
+     * `resetUser()` so the beacons for the rest of this page carry the rotated `s`
+     * instead of the signed-out user's.
+     */
+    fun updateSessionId(sessionId: String) {
+        pingEmitterState = pingEmitterState?.copy(sessionId = sessionId)
+    }
+
     fun updateScrollPercentage(scrollPosition: Int) {
         if (scrollPosition > (pingEmitterState?.scrollPercent ?: 0)) {
             pingEmitterState = pingEmitterState?.copy(scrollPercent = scrollPosition)

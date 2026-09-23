@@ -17,7 +17,8 @@ class IngestPingDataCdpTest {
 	private fun pingData(
 		cdpMasterId: String? = null,
 		cdpRfv: String? = null,
-		cdpCohorts: String? = null
+		cdpCohorts: String? = null,
+		cdpFresh: String? = null
 	) = IngestPingData(
 		accountId = "1",
 		sessionTimeStamp = 0L,
@@ -51,7 +52,8 @@ class IngestPingDataCdpTest {
 		pageMetrics = emptyMap(),
 		cdpMasterId = cdpMasterId,
 		cdpRfv = cdpRfv,
-		cdpCohorts = cdpCohorts
+		cdpCohorts = cdpCohorts,
+		cdpFresh = cdpFresh
 	)
 
 	private fun serialize(data: IngestPingData): JsonObject =
@@ -77,6 +79,15 @@ class IngestPingDataCdpTest {
 		assertFalse(json.has("cdp_mid"))
 		assertFalse(json.has("cdp_rfv"))
 		assertFalse(json.has("cdp_cohorts"))
+		assertFalse(json.has("cdp_fresh"))
+	}
+
+	@Test
+	fun `cdp_fresh is sent as 1 only when set`() {
+		val fresh = serialize(pingData(cdpMasterId = "550e8400-e29b-41d4-a716-446655440000", cdpFresh = "1"))
+		assertEquals("1", fresh.get("cdp_fresh").asString)
+		val stale = serialize(pingData(cdpMasterId = "550e8400-e29b-41d4-a716-446655440000"))
+		assertFalse(stale.has("cdp_fresh"))
 	}
 
 	@Test
