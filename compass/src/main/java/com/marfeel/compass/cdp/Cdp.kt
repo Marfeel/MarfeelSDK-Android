@@ -37,7 +37,8 @@ interface Cdp {
 	/**
 	 * Link an external identifier to the current visitor and adopt the master the CDP
 	 * resolves it to. Suspends until the link round-trip completes (or is skipped for
-	 * lack of consent). See [CdpIdentityTypes] for the well-known [type]s.
+	 * lack of consent). See [CdpIdentityTypes] for the well-known [type]s. Throws
+	 * [IllegalArgumentException] on an empty [type] or [value] instead of posting them.
 	 *
 	 * @param isDeterministic forces a device-bound type to make the user registered.
 	 */
@@ -172,7 +173,13 @@ internal object CdpTracker : Cdp {
 
 	// region identity
 
+	/**
+	 * An empty value is rejected rather than posted: the request would fail, be swallowed
+	 * into [UNKNOWN_CDP_IDENTITY], and its empty rfv/cohorts cached over the real ones.
+	 */
 	override suspend fun setIdentity(type: String, value: String, isDeterministic: Boolean) {
+		require(type.isNotEmpty()) { "Cdp.setIdentity: type is required" }
+		require(value.isNotEmpty()) { "Cdp.setIdentity: value is required" }
 		cdpManager.linkIdentity(type, value, isDeterministic)
 	}
 

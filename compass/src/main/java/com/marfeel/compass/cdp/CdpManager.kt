@@ -224,11 +224,17 @@ internal class CdpManager(
 		if (!result.masterId.isNullOrEmpty()) identityFresh = true
 	}
 
+	/**
+	 * The generation is pinned **before** the resolve: a [clearIdentity] that lands while
+	 * the link waits behind a resolve cancels the link instead of re-identifying the
+	 * visitor the reset just deleted.
+	 */
 	suspend fun linkIdentity(type: String, value: String, isDeterministic: Boolean) {
 		if (!hasConsent()) return
-		resolveIdentity()
-		val siteId = numericSiteId() ?: return
 		val startGeneration = generation.get()
+		resolveIdentity()
+		if (generation.get() != startGeneration) return
+		val siteId = numericSiteId() ?: return
 
 		val result = api.link(
 			CdpLinkParams(
@@ -253,10 +259,11 @@ internal class CdpManager(
 	 */
 	suspend fun deleteIdentity(type: String, value: String?) {
 		if (!hasConsent()) return
+		val startGeneration = generation.get()
 		resolveIdentity()
+		if (generation.get() != startGeneration) return
 		val masterId = getMasterId() ?: return
 		val siteId = numericSiteId() ?: return
-		val startGeneration = generation.get()
 
 		val result = api.delete(
 			CdpDeleteParams(siteId = siteId, masterId = masterId, idType = type, idValue = value)

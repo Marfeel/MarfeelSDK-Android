@@ -568,6 +568,26 @@ internal class CdpManagerTest {
 	}
 
 	@Test
+	fun `a link waiting behind a resolve is cancelled by clearIdentity instead of re-identifying the new visitor`() = runBlocking {
+		env.consent = true
+		var releaseResolve: (() -> Unit)? = null
+		coEvery { api.resolve(any()) } coAnswers {
+			kotlinx.coroutines.suspendCancellableCoroutine { cont ->
+				releaseResolve = { cont.resume(CdpIdentityResponse(UUID_A, null, emptyList()), null) }
+			}
+		}
+		val link = GlobalScope.async { manager.linkIdentity("email", "old@user.com", true) }
+		while (releaseResolve == null) delay(5)
+
+		manager.clearIdentity()
+		releaseResolve!!.invoke()
+		link.await()
+
+		coVerify(exactly = 0) { api.link(any()) }
+		assertNull(env.masterId)
+	}
+
+	@Test
 	fun `resetRemoteIdentity posts the site id and is inert when disabled`() = runBlocking {
 		coEvery { api.reset(456L) } returns com.marfeel.compass.cdp.model.CdpResetResponse(true, 456L, emptyList())
 		assertTrue(manager.resetRemoteIdentity()!!.reset)
