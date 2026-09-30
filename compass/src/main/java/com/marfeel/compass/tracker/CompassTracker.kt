@@ -25,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.TimeZone
 
 internal const val compassNotInitializedErrorMessage =
@@ -272,7 +273,8 @@ interface CompassTracking {
 
     /**
      * @see resetUser — callback form. The local rotation still happens synchronously
-     * before this returns; [onComplete] fires once the remote tail settles.
+     * before this returns; [onComplete] fires on the **main thread** once the remote
+     * tail settles (at most ~5 s), so it is safe to navigate or update UI from it.
      */
     fun resetUser(onComplete: () -> Unit)
 
@@ -662,7 +664,7 @@ internal object CompassTracker : CompassTracking {
                 run.await()
             } catch (_: Exception) {
             }
-            onComplete()
+            withContext(Dispatchers.Main) { onComplete() }
         }
     }
 

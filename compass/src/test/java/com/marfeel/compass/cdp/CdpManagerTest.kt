@@ -152,6 +152,18 @@ internal class CdpManagerTest {
 		assertEquals(UUID_B, env.masterId)
 	}
 
+	@Test
+	fun `link with an empty value or type is skipped without touching the network or cache`() = runBlocking {
+		env.warmVisitor()
+
+		manager.linkIdentity(CdpIdentityTypes.REGISTERED_USER_ID, "", isDeterministic = true)
+		manager.linkIdentity("", "u@x.com", isDeterministic = true)
+
+		coVerify(exactly = 0) { api.resolve(any()) }
+		coVerify(exactly = 0) { api.link(any()) }
+		assertEquals(1, env.cached?.rfv?.rfv)
+	}
+
 	// endregion
 
 	// region identityFresh
@@ -711,6 +723,29 @@ internal class CdpManagerTest {
 		assertEquals(UUID_A, data.masterId)
 		assertTrue(data.rfvSerialized.contains("\"rfv\":42"))
 		assertEquals("[101,204]", data.cohortsSerialized)
+	}
+
+	@Test
+	fun `a failed update keeps the cached rfv and cohorts`() = runBlocking {
+		env.warmVisitor()
+		coEvery { api.update(any()) } returns UNKNOWN_CDP_IDENTITY
+
+		manager.updateProfile(listOf("plan" to "premium"))
+		manager.addSegment("sports")
+
+		coVerify(exactly = 2) { api.update(any()) }
+		assertEquals(CdpCachedIdentity(CdpRfv(1, 1, 1, 1), listOf(1)), env.cached)
+		assertEquals(UUID_A, env.masterId)
+	}
+
+	@Test
+	fun `a successful update refreshes the cached rfv and cohorts`() = runBlocking {
+		env.warmVisitor()
+		coEvery { api.update(any()) } returns CdpIdentityResponse(UUID_A, CdpRfv(7, 2, 3, 4), listOf(9))
+
+		manager.updateProfile(listOf("plan" to "premium"))
+
+		assertEquals(CdpCachedIdentity(CdpRfv(7, 2, 3, 4), listOf(9)), env.cached)
 	}
 
 	// endregion

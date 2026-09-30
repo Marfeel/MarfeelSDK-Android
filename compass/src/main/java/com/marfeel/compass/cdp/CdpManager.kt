@@ -229,7 +229,14 @@ internal class CdpManager(
 	 * the link waits behind a resolve cancels the link instead of re-identifying the
 	 * visitor the reset just deleted.
 	 */
+	/**
+	 * An empty [type] or [value] is skipped, not posted: `setSiteUserId("")` (sent by
+	 * integrations on anonymous pageviews) and the deprecated `cdpDoIdentityLink` reach
+	 * here unvalidated, and the failed request would cache empty rfv/cohorts over the
+	 * real ones. Matches the web, which only links a truthy site user id.
+	 */
 	suspend fun linkIdentity(type: String, value: String, isDeterministic: Boolean) {
+		if (type.isEmpty() || value.isEmpty()) return
 		if (!hasConsent()) return
 		val startGeneration = generation.get()
 		resolveIdentity()
@@ -455,13 +462,25 @@ internal class CdpManager(
 		if (properties.isEmpty()) return
 		val startGeneration = generation.get()
 
-		val result = api.update(
+		postUpdate(
 			CdpProfileUpdateParams(
 				siteId = siteId,
 				masterId = masterId,
 				properties = properties.associate { it.first to it.second }
-			)
+			),
+			startGeneration
 		)
+	}
+
+	/**
+	 * `/update/` is only ever sent with a master, and a successful answer always echoes
+	 * one; an answer without it is the fail-open [UNKNOWN_CDP_IDENTITY] and is dropped so
+	 * a failed write (every `setUserVar`, every segment change) can't blank the cached
+	 * rfv/cohorts for the rest of the session.
+	 */
+	private suspend fun postUpdate(params: CdpProfileUpdateParams, startGeneration: Int) {
+		val result = api.update(params)
+		if (result.masterId.isNullOrEmpty()) return
 		updateState(result, getSessionId(), startGeneration)
 	}
 
@@ -584,15 +603,15 @@ internal class CdpManager(
 		val siteId = numericSiteId() ?: return
 		val startGeneration = generation.get()
 
-		val result = api.update(
+		postUpdate(
 			CdpProfileUpdateParams(
 				siteId = siteId,
 				masterId = masterId,
 				segmentsAdd = segmentsAdd,
 				segmentsRemove = segmentsRemove
-			)
+			),
+			startGeneration
 		)
-		updateState(result, getSessionId(), startGeneration)
 	}
 
 	internal fun transferCdpSegments(account: String?, oldId: String?, newId: String) {
