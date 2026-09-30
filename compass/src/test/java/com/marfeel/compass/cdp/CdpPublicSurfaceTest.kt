@@ -27,7 +27,7 @@ class CdpPublicSurfaceTest {
 	)
 
 	private val trackingNames = listOf(
-		"resetUser", "resetIdentity", "getUserSegments", "getUserSegmentsAsync", "getUserVars", "getUserVarsAsync",
+		"resetUser", "getUserSegments", "getUserSegmentsAsync", "getUserVars", "getUserVarsAsync",
 		"setSiteUserId", "setUserVar", "addUserSegment", "setUserSegments", "removeUserSegment", "clearUserSegments",
 		"setUserConsent", "getUserId", "getSessionId"
 	)

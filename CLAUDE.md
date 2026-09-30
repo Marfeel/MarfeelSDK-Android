@@ -10,6 +10,8 @@ Module layout:
 - `:compass` — the SDK library (`com.android.library`), the only artifact consumers install
 - `:app` — sample/host application used for manual testing, depends on `:compass` via `project(":compass")`
 
+Main branch is **`master`** — PRs target it and diffs compare against it. `develop` is retired; a stale `origin/develop` still exists on the remote, so ignore it.
+
 ## Build & Test
 
 Gradle wrapper is checked in — use `./gradlew`.

@@ -110,7 +110,7 @@ Server mirrors store only keys the device does **not** own (filtered in `syncSer
 
 ## `resetUser()`
 
-`CompassTracking.resetUser()` (suspend) / `resetUser(onComplete)` / deprecated `resetIdentity()`. Called by the host on sign-out; **not** inferred from `setSiteUserId("")`.
+`CompassTracking.resetUser()` (suspend) / `resetUser(onComplete)`. Called by the host on sign-out; **not** inferred from `setSiteUserId("")`.
 
 1. `UserResetter.start()` runs `UserRotation.rotate()` **synchronously in the caller's thread**, before any suspension:
    1. `CdpManager.clearIdentity()` — **first**, because it reads the live master_id to pick the buckets to wipe. Bumps the generation, clears master_id, cached rfv/cohorts (to **absent**, not empty), resolve memo, `identityFresh`, one-shot latch, in-memory mirrors, the previous master's `cdpsegs_` / `cdpsrvsegs_` / `cdpsrvprops_` buckets, anonymous consent memory, resets the active mid to `local`, and fires `onIdentityCleared` (meters).
@@ -131,7 +131,6 @@ Server mirrors store only keys the device does **not** own (filtered in `syncSer
 | `cdpDoIdentityLink` | `setIdentity` |
 | `getCdpData` | `getUserProfile` |
 | `getCdpMasterId` | `getMasterId` |
-| `CompassTracking.resetIdentity` | `resetUser` |
 
 `CdpIdentityTypes` documents the well-known types (stable vs device-bound) and deliberately omits `email_hash` / `phone_hash`: the server does not validate them and they would create a parallel user that never merges with `*_sha256`. Use `Cdp.hashEmail` / `hashPhone` (normalise per `cdp-core/pkg/identity/normalize.go`: email `trim + lowercase`, phone `trim` only) and send `email_sha256` / `phone_sha256`.
 

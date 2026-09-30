@@ -278,9 +278,6 @@ interface CompassTracking {
      */
     fun resetUser(onComplete: () -> Unit)
 
-    @Deprecated("Use resetUser()", ReplaceWith("resetUser()"))
-    suspend fun resetIdentity()
-
     /**
      * Sets user consent value.
      * @param hasConsent user consent
@@ -666,11 +663,6 @@ internal object CompassTracker : CompassTracking {
             }
             withContext(Dispatchers.Main) { onComplete() }
         }
-    }
-
-    @Deprecated("Use resetUser()", ReplaceWith("resetUser()"))
-    override suspend fun resetIdentity() {
-        resetUser()
     }
 
     override fun removeUserSegment(name: String) {
