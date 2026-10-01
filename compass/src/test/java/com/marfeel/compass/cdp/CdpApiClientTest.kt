@@ -1,9 +1,14 @@
 package com.marfeel.compass.cdp
 
+import com.marfeel.compass.cdp.model.CdpConsentCheckParams
+import com.marfeel.compass.cdp.model.CdpConsentRecordParams
+import com.marfeel.compass.cdp.model.CdpConsentStatus
+import com.marfeel.compass.cdp.model.CdpDeleteParams
 import com.marfeel.compass.cdp.model.CdpLinkParams
 import com.marfeel.compass.cdp.model.CdpProfileUpdateParams
 import com.marfeel.compass.cdp.model.CdpResolveParams
 import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking
@@ -173,4 +178,202 @@ class CdpApiClientTest {
 		assertTrue(request.path!!.startsWith("/cdp/meters/paywall/increment"))
 		assertEquals(4, result.state?.count)
 	}
+
+	// region identity response extras
+
+	@Test
+	fun `identity responses parse segments and coerce non-string properties`() = runBlocking {
+		server.enqueue(
+			MockResponse().setBody(
+				"""{"master_id":"m","rfv":null,"cohorts":[1],"segments":["a","b"],"properties":{"plan":"premium","age":42,"vip":true,"nested":{"x":1},"gone":null}}"""
+			)
+		)
+		val result = apiClient.resolve(CdpResolveParams(siteId = 1L, cookieId = "u"))
+		assertEquals(listOf("a", "b"), result.segments)
+		assertEquals("premium", result.properties?.get("plan"))
+		assertEquals("42", result.properties?.get("age"))
+		assertEquals("true", result.properties?.get("vip"))
+		assertEquals("""{"x":1}""", result.properties?.get("nested"))
+		assertFalse(result.properties!!.containsKey("gone"))
+	}
+
+	@Test
+	fun `identity responses leave segments and properties null when absent`() = runBlocking {
+		server.enqueue(MockResponse().setBody("""{"master_id":"m"}"""))
+		val result = apiClient.resolve(CdpResolveParams(siteId = 1L, cookieId = "u"))
+		assertNull(result.segments)
+		assertNull(result.properties)
+	}
+
+	// endregion
+
+	// region delete / reset
+
+	@Test
+	fun `delete posts the snake_case body and parses the count`() = runBlocking {
+		server.enqueue(MockResponse().setBody("""{"master_id":"m","rfv":null,"cohorts":[],"segments":["s"],"deleted":2}"""))
+		val result = apiClient.delete(CdpDeleteParams(siteId = 1L, masterId = "m", idType = "email", idValue = "x@y.z"))!!
+		val request = server.takeRequest()
+		assertEquals("POST", request.method)
+		assertEquals("/cdp/identity/delete/", request.path)
+		val body = request.body.readUtf8()
+		assertTrue(body.contains("\"site_id\":1"))
+		assertTrue(body.contains("\"master_id\":\"m\""))
+		assertTrue(body.contains("\"id_type\":\"email\""))
+		assertTrue(body.contains("\"id_value\":\"x@y.z\""))
+		assertEquals(2, result.deleted)
+		assertEquals(listOf("s"), result.identity.segments)
+	}
+
+	@Test
+	fun `delete omits id_value entirely when null`() = runBlocking {
+		server.enqueue(MockResponse().setBody("""{"master_id":"m","deleted":0}"""))
+		apiClient.delete(CdpDeleteParams(siteId = 1L, masterId = "m", idType = "crm_id"))
+		val body = server.takeRequest().body.readUtf8()
+		assertFalse(body.contains("id_value"))
+	}
+
+	@Test
+	fun `delete returns null, not the unknown identity, on failure`() = runBlocking {
+		server.enqueue(MockResponse().setResponseCode(500))
+		assertNull(apiClient.delete(CdpDeleteParams(siteId = 1L, masterId = "m", idType = "email", idValue = "v")))
+	}
+
+	@Test
+	fun `reset posts only the site id and parses the cleared list`() = runBlocking {
+		server.enqueue(MockResponse().setBody("""{"reset":true,"site_id":1,"cleared":["1_u","1_s"]}"""))
+		val result = apiClient.reset(1L)!!
+		val request = server.takeRequest()
+		assertEquals("/cdp/identity/reset/", request.path)
+		assertEquals("""{"site_id":1}""", request.body.readUtf8())
+		assertTrue(result.reset)
+		assertEquals(1L, result.siteId)
+		assertEquals(listOf("1_u", "1_s"), result.cleared)
+	}
+
+	@Test
+	fun `reset returns null on failure`() = runBlocking {
+		server.enqueue(MockResponse().setResponseCode(503))
+		assertNull(apiClient.reset(1L))
+	}
+
+	// endregion
+
+	// region consents
+
+	@Test
+	fun `recordConsent sends an explicit null master_id and omits the optional keys`() = runBlocking {
+		server.enqueue(MockResponse().setBody("""{"consent_id":"p","consent_version_id":"1","status":"accept","recorded":true,"stored":true}"""))
+		val result = apiClient.recordConsent(
+			CdpConsentRecordParams(siteId = 1L, masterId = null, consentId = "p", consentVersionId = "1", status = CdpConsentStatus.ACCEPTED)
+		)!!
+		val request = server.takeRequest()
+		assertEquals("/cdp/consents/record/", request.path)
+		val body = request.body.readUtf8()
+		assertTrue(body.contains("\"master_id\":null"))
+		assertTrue(body.contains("\"status\":\"accepted\""))
+		assertTrue(body.contains("\"consent_version_id\":\"1\""))
+		assertFalse(body.contains("metadata"))
+		assertFalse(body.contains("timezone"))
+		assertFalse(body.contains("id_type"))
+		assertTrue(result.recorded)
+		assertEquals("accept", result.status)
+		assertNull(result.masterId)
+	}
+
+	@Test
+	fun `recordConsent sends metadata, timezone and the email subject when given`() = runBlocking {
+		server.enqueue(MockResponse().setBody("""{"master_id":"m","recorded":true,"stored":true}"""))
+		apiClient.recordConsent(
+			CdpConsentRecordParams(
+				siteId = 1L, masterId = "m", consentId = "p", consentVersionId = "1", status = CdpConsentStatus.REJECTED,
+				metadata = mapOf("source" to "footer"), timezone = "Europe/Madrid", idType = "email_sha256", idValue = "abc"
+			)
+		)
+		val body = server.takeRequest().body.readUtf8()
+		assertTrue(body.contains("\"master_id\":\"m\""))
+		assertTrue(body.contains("\"metadata\":{\"source\":\"footer\"}"))
+		assertTrue(body.contains("\"timezone\":\"Europe/Madrid\""))
+		assertTrue(body.contains("\"id_type\":\"email_sha256\""))
+		assertTrue(body.contains("\"id_value\":\"abc\""))
+		assertTrue(body.contains("\"status\":\"rejected\""))
+		assertFalse(body.contains("ip"))
+		assertFalse(body.contains("user_agent"))
+	}
+
+	@Test
+	fun `recordConsent returns null on failure`() = runBlocking {
+		server.enqueue(MockResponse().setResponseCode(500))
+		assertNull(apiClient.recordConsent(CdpConsentRecordParams(1L, null, "p", "1", CdpConsentStatus.ACCEPTED)))
+	}
+
+	@Test
+	fun `fetchConsentCatalog is a GET with the version as a query param, omitted when absent`() = runBlocking {
+		server.enqueue(MockResponse().setBody("""{"site_id":1,"consents":[]}"""))
+		apiClient.fetchConsentCatalog(1L, "privacy policy", "3")
+		var request = server.takeRequest()
+		assertEquals("GET", request.method)
+		assertTrue(request.path!!.startsWith("/cdp/consents/catalog/?"))
+		assertTrue(request.path!!.contains("site_id=1"))
+		assertTrue(request.path!!.contains("consent_id=privacy%20policy"))
+		assertTrue(request.path!!.contains("consent_version_id=3"))
+
+		server.enqueue(MockResponse().setBody("""{"site_id":1,"consents":[]}"""))
+		apiClient.fetchConsentCatalog(1L, "privacy", null)
+		request = server.takeRequest()
+		assertFalse(request.path!!.contains("consent_version_id"))
+	}
+
+	@Test
+	fun `fetchConsentCatalog parses the wire item`() = runBlocking {
+		server.enqueue(
+			MockResponse().setBody(
+				"""{"site_id":1,"consents":[{"consent_id":"privacy","name":"Privacy","purpose":null,"mandatory":true,"accept_method":"form-submit","show_policy":"if-not-accepted","version":{"consent_version_id":7,"label":"v7","date":"2026-01-01","display_prompt":null,"error_message":"nope","metadata":{"a":"b"}}}]}"""
+			)
+		)
+		val item = apiClient.fetchConsentCatalog(1L, "privacy", null)!!.single()
+		assertEquals("privacy", item.consentId)
+		assertEquals("Privacy", item.name)
+		assertNull(item.purpose)
+		assertTrue(item.mandatory)
+		assertEquals("form-submit", item.acceptMethod)
+		assertEquals("if-not-accepted", item.showPolicy)
+		assertEquals("7", item.version?.versionId)
+		assertEquals("v7", item.version?.label)
+		assertNull(item.version?.displayPrompt)
+		assertEquals("nope", item.version?.errorMessage)
+		assertEquals(mapOf("a" to "b"), item.version?.metadata)
+	}
+
+	@Test
+	fun `fetchConsentCatalog returns an empty list for an unknown version and null on failure`() = runBlocking {
+		server.enqueue(MockResponse().setBody("""{"site_id":1,"consents":[]}"""))
+		assertEquals(emptyList<Any>(), apiClient.fetchConsentCatalog(1L, "privacy", "99"))
+		server.enqueue(MockResponse().setResponseCode(500))
+		assertNull(apiClient.fetchConsentCatalog(1L, "privacy", null))
+	}
+
+	@Test
+	fun `fetchConsentStatus is a POST carrying only the present subject keys`() = runBlocking {
+		server.enqueue(MockResponse().setBody("""{"master_id":"m","consent_id":"p","consent_version_id":"1","granted":true,"answered":true,"status":"accepted","answered_version_id":"1"}"""))
+		val result = apiClient.fetchConsentStatus(CdpConsentCheckParams(siteId = 1L, consentId = "p", consentVersionId = "1", masterId = "m"))!!
+		val request = server.takeRequest()
+		assertEquals("POST", request.method)
+		assertEquals("/cdp/consents/check/", request.path)
+		val body = request.body.readUtf8()
+		assertTrue(body.contains("\"master_id\":\"m\""))
+		assertFalse(body.contains("id_type"))
+		assertTrue(result.granted)
+		assertTrue(result.answered)
+		assertEquals("accepted", result.status)
+		assertEquals("1", result.answeredVersionId)
+	}
+
+	@Test
+	fun `fetchConsentStatus returns null on failure`() = runBlocking {
+		server.enqueue(MockResponse().setResponseCode(500))
+		assertNull(apiClient.fetchConsentStatus(CdpConsentCheckParams(siteId = 1L, consentId = "p", masterId = "m")))
+	}
+
+	// endregion
 }

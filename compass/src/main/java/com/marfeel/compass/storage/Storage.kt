@@ -258,10 +258,22 @@ internal class Storage(
 	private fun getPreviousSessionLastPingTimeStamp(): Long =
 		preferences.getLong(previousSessionLastPingTimeStampKey, 0L)
 
-	fun setUserVar(name: String, value: String) {
+	/**
+	 * The user var / segment maps are read-modify-write; the ping loop now writes the
+	 * `mrf_tooManySegments` flag from a worker thread while the host may call
+	 * `setUserVar` from the main thread, so the mutations are serialised here.
+	 */
+	private val userDataLock = Any()
+
+	fun setUserVar(name: String, value: String) = synchronized(userDataLock) {
 		val vars = getUserVars().toMutableMap()
 		vars[name] = value
 		setUserVars(vars)
+	}
+
+	fun removeUserVar(name: String) = synchronized(userDataLock) {
+		val vars = getUserVars().toMutableMap()
+		if (vars.remove(name) != null) setUserVars(vars)
 	}
 
 	private fun setUserVars(vars: Map<String, String>) {
@@ -280,7 +292,7 @@ internal class Storage(
 	}
 
 
-	fun setUserSegment(name: String) {
+	fun setUserSegment(name: String) = synchronized(userDataLock) {
 		val userSegments = getUserSegments().toMutableList()
 		if (!userSegments.contains(name)) {
 			userSegments.add(name)
@@ -288,17 +300,17 @@ internal class Storage(
 		}
 	}
 
-	fun setUserSegment(segments: List<String>) {
+	fun setUserSegment(segments: List<String>) = synchronized(userDataLock) {
 		setUserSegments(segments)
 	}
 
-	fun removeUserSegment(name: String) {
+	fun removeUserSegment(name: String) = synchronized(userDataLock) {
 		val userSegments = getUserSegments().toMutableList()
 		userSegments.remove(name)
 		setUserSegments(userSegments)
 	}
 
-	fun clearUserSegments() {
+	fun clearUserSegments() = synchronized(userDataLock) {
 		setUserSegments(listOf())
 	}
 
@@ -414,6 +426,19 @@ internal class Storage(
 		return old
 	}
 
+	fun clearCdpMasterId() {
+		preferences.edit { remove(cdpMasterIdKey) }
+	}
+
+	/** Cached rfv/cohorts read back as **absent** afterwards, so the next resolve mints. */
+	fun clearCdpCachedIdentity() {
+		preferences.edit {
+			remove(cdpRfvKey)
+			remove(cdpCohortsKey)
+			remove(cdpCacheSessionIdKey)
+		}
+	}
+
 	fun readCdpCachedIdentity(currentSessionId: String): CdpCachedIdentity? {
 		if (preferences.getString(cdpCacheSessionIdKey, null) != currentSessionId) return null
 
@@ -444,6 +469,41 @@ internal class Storage(
 			element.asJsonArray.map { it.asInt }
 		} catch (_: Exception) {
 			null
+		}
+	}
+
+	// endregion
+
+	// region user reset
+
+	fun clearRegisteredUserId() {
+		preferences.edit { remove(registeredUserIdKey) }
+	}
+
+	/**
+	 * Blanks everything that identifies or describes the current user so the next read
+	 * re-runs the genuine first-install bootstrap: a new `originalUserId` is minted by
+	 * [readOriginalUserId], a new first-visit timestamp by [readFirstSessionTimeStamp].
+	 * The CMP consent value is **kept** — it belongs to the device, not the user.
+	 * The session itself is rotated by the caller through `SessionStorage.updateSession`.
+	 */
+	fun resetUser() {
+		preferences.edit {
+			remove(registeredUserIdKey)
+			remove(originalUserIdKey)
+			remove(userTypeKey)
+			remove(firstSessionTimeStampKey)
+			remove(previousSessionLastPingTimeStampKey)
+			remove(lastPingTimeStampKey)
+			remove(userVarsKey)
+			remove(userSegmentsKey)
+			remove(sessionKey)
+			remove(sessionVarsKey)
+			remove(landingPageKey)
+			remove(cdpMasterIdKey)
+			remove(cdpRfvKey)
+			remove(cdpCohortsKey)
+			remove(cdpCacheSessionIdKey)
 		}
 	}
 

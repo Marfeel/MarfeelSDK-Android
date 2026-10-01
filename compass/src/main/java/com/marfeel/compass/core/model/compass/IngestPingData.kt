@@ -53,7 +53,10 @@ internal class IngestPingData(
 	@SerializedName("cdp_rfv")
 	val cdpRfv: String? = null,
 	@SerializedName("cdp_cohorts")
-	val cdpCohorts: String? = null
+	val cdpCohorts: String? = null,
+	/** `"1"` only when this process resolved the identity itself; absent must read as not-fresh. */
+	@SerializedName("cdp_fresh")
+	val cdpFresh: String? = null
 ): PingData(
 	accountId,
 	sessionTimeStamp,
@@ -110,7 +113,8 @@ internal class IngestPingData(
 		pm: Map<String, Int> = this.pageMetrics,
 		cdpMasterId: String? = this.cdpMasterId,
 		cdpRfv: String? = this.cdpRfv,
-		cdpCohorts: String? = this.cdpCohorts
+		cdpCohorts: String? = this.cdpCohorts,
+		cdpFresh: String? = this.cdpFresh
 	) = IngestPingData(
 		accountId,
 		sessionTimeStamp,
@@ -144,7 +148,8 @@ internal class IngestPingData(
 		pm,
 		cdpMasterId,
 		cdpRfv,
-		cdpCohorts
+		cdpCohorts,
+		cdpFresh
 	)
 }
 

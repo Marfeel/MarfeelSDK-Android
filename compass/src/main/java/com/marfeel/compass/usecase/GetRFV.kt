@@ -33,4 +33,10 @@ internal class GetRFV(
 
 		return cachedRFV
 	}
+
+	/** Drops the memoised RFV so a rotated user is never served the previous one. */
+	fun clearCache() {
+		rfvTs = null
+		cachedRFV = null
+	}
 }

@@ -48,6 +48,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.marfeel.compass.cdp.Cdp
+import com.marfeel.compass.cdp.CdpIdentityTypes
 import com.marfeel.compass.core.model.compass.UserType
 import com.marfeel.compass.experiences.Experiences
 import com.marfeel.compass.experiences.Recirculation
@@ -412,7 +413,7 @@ fun MainScreen(
 
 			var linkEmail by remember { mutableStateOf("") }
 			var linkStatus by remember { mutableStateOf("") }
-			var masterId by remember { mutableStateOf(Cdp.getInstance().getCdpMasterId() ?: "—") }
+			var masterId by remember { mutableStateOf(Cdp.getInstance().getMasterId() ?: "—") }
 
 			TextField(
 				modifier = Modifier.fillMaxWidth(),
@@ -420,35 +421,42 @@ fun MainScreen(
 				onValueChange = { linkEmail = it },
 				label = { Text("Email") }
 			)
-			FloatingActionButton(
+			Row(
 				modifier = Modifier
-					.align(Alignment.CenterHorizontally)
+					.fillMaxWidth()
 					.padding(top = 16.dp),
-				backgroundColor = Color(0xFF1A2149),
-				onClick = {
-					val email = linkEmail.trim()
-					if (email.isEmpty()) return@FloatingActionButton
-					linkStatus = "Linking…"
-					val before = Cdp.getInstance().getCdpMasterId()
-					// cdpDoIdentityLink is fire-and-forget; the master_id is written
-					// asynchronously once the server responds. Poll until it settles.
-					Cdp.getInstance().cdpDoIdentityLink("email", email, isDeterministic = true)
-					coroutineScope.launch {
-						repeat(20) {
-							delay(500)
-							val current = Cdp.getInstance().getCdpMasterId()
-							if (current != null && current != before) {
-								masterId = current
-								linkStatus = "Linked"
-								return@launch
-							}
-						}
-						masterId = Cdp.getInstance().getCdpMasterId() ?: "—"
-						linkStatus = "No change (already linked or pending)"
-					}
-				}
+				horizontalArrangement = Arrangement.SpaceEvenly
 			) {
-				Text(text = "Link email", color = Color.White)
+				FloatingActionButton(
+					backgroundColor = Color(0xFF1A2149),
+					onClick = {
+						val email = linkEmail.trim()
+						if (email.isEmpty()) return@FloatingActionButton
+						linkStatus = "Linking…"
+						coroutineScope.launch {
+							// setIdentity suspends until the link round-trip completes.
+							Cdp.getInstance().setIdentity(CdpIdentityTypes.EMAIL, email, isDeterministic = true)
+							masterId = Cdp.getInstance().getMasterId() ?: "—"
+							linkStatus = "Linked"
+						}
+					}
+				) {
+					Text(text = "Link email", color = Color.White)
+				}
+				FloatingActionButton(
+					backgroundColor = Color(0xFF641172),
+					onClick = {
+						linkStatus = "Resetting…"
+						coroutineScope.launch {
+							// Sign-out: rotates the visitor locally at once, then a bounded remote tail.
+							tracker.resetUser()
+							masterId = Cdp.getInstance().getMasterId() ?: "—"
+							linkStatus = "Reset (master-less until the next page)"
+						}
+					}
+				) {
+					Text(text = "Reset user", color = Color.White)
+				}
 			}
 			Text(
 				text = "master_id: $masterId",
