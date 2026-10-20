@@ -1,8 +1,6 @@
 package com.marfeel.compass.usecase
 
 import com.marfeel.compass.core.ping.IngestPingEmitterState
-import com.marfeel.compass.core.model.compass.ConversionOptions
-import com.marfeel.compass.core.model.compass.ConversionScope
 import com.marfeel.compass.core.model.compass.IngestPingData
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
 import com.marfeel.compass.di.CompassComponent
@@ -11,6 +9,12 @@ import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.network.ApiClient
 import com.marfeel.compass.storage.Storage
 import com.marfeel.compass.tracker.CompassTracker
+
+/**
+ * A page as it was when it was left, kept while conversions tracked on it are pending.
+ * Their pings carry it instead of the current page and continue its tick sequence.
+ */
+private class ClosedPage(val data: IngestPingData, var nextTick: Int)
 
 internal class IngestPing(
 	override val api: ApiClient,
@@ -26,42 +30,64 @@ internal class IngestPing(
 	private val userVarsProvider: () -> Map<String, String> = { CompassTracker.getUserVars() }
 ) : Ping<IngestPingEmitterState, IngestPingData>(api, sessionStorage, storage) {
 	private var tick = 0;
+	private val closedPagesLock = Any()
+	private val closedPages = mutableMapOf<String, ClosedPage>()
 
+	/**
+	 * One ping per pending conversion no other ping is sending, plus the plain ping unless a
+	 * conversion of the current page carries it. A conversion stays queued until its ping
+	 * reaches the server, so a failed ping or a page change never drops it.
+	 */
 	override fun invoke(input: IngestPingData) {
-		val conversions = sessionStorage.readPendingConversions()
 		val currentTimeStamp = currentTimeStampInSeconds()
+		var pingedCurrentPage = false
 
-		if (conversions.isEmpty()) {
-			api.ingestPing(input.copy(pingCounter = tick++))
+		sessionStorage.claimPendingConversions().forEach { claimed ->
+			val conversion = claimed.conversion
+			val ping = closedPagePing(conversion, input.pageId, currentTimeStamp)
+				?: input.copy(conversion = conversion, conversionId = conversion.id, pingCounter = tick++)
+					.also { pingedCurrentPage = true }
 
-		} else {
-			conversions.forEach { conversion ->
-				val updatedInput = input.copy(
-					conversion = conversion,
-					conversionId = getConversionId(conversion.options, input.sessionId, input.pageId),
-					pingCounter = tick++
-				)
-				api.ingestPing(updatedInput)
-			}
+			sessionStorage.settleConversion(claimed.key, api.ingestPing(ping))
 		}
 
-		sessionStorage.clearTrackedConversions(conversions)
+		if (!pingedCurrentPage) {
+			api.ingestPing(input.copy(pingCounter = tick++))
+		}
+
+		pruneClosedPages()
 		storage.updateLastPingTimeStamp(currentTimeStamp)
 	}
 
-	private fun getConversionId(
-		options: ConversionOptions?,
-		sessionId: String,
-		pageId: String?
-	): String? {
-		if (options == null) return null
-		if (options.id != null) return options.id
-		return when (options.scope) {
-			ConversionScope.User -> storage.readRegisteredUserId()
-			ConversionScope.Session -> sessionId
-			ConversionScope.Page -> pageId
-			null -> null
+	/** The ping of a conversion tracked on a page already left, or null when it belongs to the current one. */
+	private fun closedPagePing(conversion: Conversion, currentPageId: String, currentTimeStamp: Long): IngestPingData? =
+		synchronized(closedPagesLock) {
+			val pageId = conversion.pageId?.takeIf { it != currentPageId } ?: return null
+			val page = closedPages[pageId] ?: return null
+
+			page.data.copy(
+				currentTimeStamp = currentTimeStamp,
+				conversion = conversion,
+				conversionId = conversion.id,
+				pingCounter = page.nextTick++
+			)
 		}
+
+	/**
+	 * Keeps the page being left while conversions tracked on it are pending. Call it before
+	 * the session storage moves to the next page.
+	 */
+	fun closePage(input: IngestPingEmitterState) {
+		if (!sessionStorage.hasPendingConversions(input.pageId)) return
+		val data = getData(input) ?: return
+
+		synchronized(closedPagesLock) {
+			closedPages.getOrPut(input.pageId) { ClosedPage(data, tick) }
+		}
+	}
+
+	private fun pruneClosedPages() = synchronized(closedPagesLock) {
+		closedPages.keys.retainAll { sessionStorage.hasPendingConversions(it) }
 	}
 
 	override fun getData(input: IngestPingEmitterState): IngestPingData? {

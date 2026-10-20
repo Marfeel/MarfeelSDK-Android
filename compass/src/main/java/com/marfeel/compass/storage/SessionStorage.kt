@@ -1,26 +1,41 @@
 package com.marfeel.compass.storage
 
 import com.marfeel.compass.core.model.compass.ConversionOptions
+import com.marfeel.compass.core.model.compass.ConversionScope
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.Session
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.CopyOnWriteArraySet
 
 internal data class Conversion(
 	val name: String,
-	val options: ConversionOptions? = null
+	val options: ConversionOptions? = null,
+	/** Resolved when tracked: `options.id`, or the id its scope stands for. */
+	val id: String? = null,
+	/** The page it was tracked on, so that a later page sending it does not get the credit. */
+	val pageId: String? = null
 )
+
+/** A pending conversion a ping is sending; settle it by [key] once the ping returns. */
+internal class ClaimedConversion(val key: Long, val conversion: Conversion)
+
+/**
+ * A conversion waiting to be sent. It leaves the queue only once a ping carrying it reaches
+ * the server; [sending] keeps a second ping from picking it up meanwhile.
+ */
+private class PendingConversion(val key: Long, val conversion: Conversion) {
+	var sending = false
+}
 
 internal class SessionStorage(private val storage: Storage) {
 
 	private var accountId: String? = null
 	private var page: Page? = null
 	private var previousUrl: String? = null
-	private var pendingConversions: MutableList<Conversion> = CopyOnWriteArrayList()
-	private val trackedConversionIds: MutableSet<String> = CopyOnWriteArraySet()
+	private val conversionsLock = Any()
+	private val pendingConversions = mutableListOf<PendingConversion>()
+	private var nextConversionKey = 0L
 	private var pageVars: MutableMap<String, String> = ConcurrentHashMap()
 	private var pageMetrics: MutableMap<String, Int> = ConcurrentHashMap()
 	private var pageTechnology: Int? = null
@@ -67,36 +82,68 @@ internal class SessionStorage(private val storage: Storage) {
 	}
 
 	fun addPendingConversion(conversion: String) {
-		pendingConversions.add(Conversion(conversion))
+		enqueueConversion(Conversion(conversion, pageId = page?.pageId))
 	}
 
-	private fun shouldAddConversion(conversion: String, id: String?): Boolean {
-		if (id == null) {
-			return true
+	/**
+	 * Queues the conversion on the current page unless one with the same name and id was
+	 * already sent or is waiting to be. It is only marked as tracked once it is sent.
+	 */
+	fun addPendingConversion(conversion: String, options: ConversionOptions): Boolean =
+		enqueueConversion(Conversion(conversion, options, conversionId(options), page?.pageId))
+
+	private fun conversionId(options: ConversionOptions): String? =
+		options.id ?: when (options.scope) {
+			ConversionScope.User -> storage.readOriginalUserId()
+			ConversionScope.Session -> readSession().id
+			ConversionScope.Page -> page?.pageId
+			null -> null
 		}
 
-		val key = "$conversion:$id"
+	private fun conversionKey(name: String, id: String) = "$name:$id"
 
-		return !trackedConversionIds.contains(key)
-	}
-
-	fun addPendingConversion(conversion: String, options: ConversionOptions) {
-		val conversionId = options.id
-
-		if (shouldAddConversion(conversion, conversionId)) {
-			if (conversionId != null) {
-				val key = "$conversion:$conversionId"
-				trackedConversionIds.add(key)
+	private fun enqueueConversion(conversion: Conversion): Boolean = synchronized(conversionsLock) {
+		conversion.id?.let { id ->
+			val isPending = pendingConversions.any { it.conversion.name == conversion.name && it.conversion.id == id }
+			if (isPending || conversionKey(conversion.name, id) in storage.readTrackedConversions()) {
+				return false
 			}
-			pendingConversions.add(Conversion(conversion, options))
+		}
+
+		pendingConversions.add(PendingConversion(nextConversionKey++, conversion))
+		true
+	}
+
+	fun readPendingConversions(): List<Conversion> = synchronized(conversionsLock) {
+		pendingConversions.map { it.conversion }
+	}
+
+	fun hasPendingConversions(pageId: String): Boolean = synchronized(conversionsLock) {
+		pendingConversions.any { it.conversion.pageId == pageId }
+	}
+
+	/** The pending conversions no other ping is sending, now marked as being sent. */
+	fun claimPendingConversions(): List<ClaimedConversion> = synchronized(conversionsLock) {
+		pendingConversions.filter { !it.sending }.map {
+			it.sending = true
+			ClaimedConversion(it.key, it.conversion)
 		}
 	}
 
-	fun readPendingConversions(): List<Conversion> =
-		pendingConversions.toList()
+	/** A sent conversion leaves the queue and is marked as tracked; an unsent one is retried by the next ping. */
+	fun settleConversion(key: Long, sent: Boolean) {
+		synchronized(conversionsLock) {
+			val index = pendingConversions.indexOfFirst { it.key == key }
+			if (index < 0) return
 
-	fun clearTrackedConversions(conversions: List<Conversion>) {
-		pendingConversions.removeAll(conversions)
+			if (!sent) {
+				pendingConversions[index].sending = false
+				return
+			}
+
+			val conversion = pendingConversions.removeAt(index).conversion
+			conversion.id?.let { storage.addTrackedConversion(conversionKey(conversion.name, it)) }
+		}
 	}
 
 	fun addPageVar(name: String, value: String) {

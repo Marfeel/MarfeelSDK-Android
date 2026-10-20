@@ -1,9 +1,10 @@
 package com.marfeel.compass.sessionStorage
 
+import com.marfeel.compass.core.model.compass.ConversionOptions
+import com.marfeel.compass.core.model.compass.ConversionScope
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.Session
 import com.marfeel.compass.core.model.compass.currentTimeStampInSeconds
-import com.marfeel.compass.storage.Conversion
 import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.storage.Storage
 import io.mockk.Runs
@@ -11,6 +12,8 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertFalse
+import junit.framework.TestCase.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.*
@@ -22,6 +25,7 @@ internal class SessionStorageTest {
 	private val storage = mockk<Storage>(relaxUnitFun = true)
 	private val sessionVars = mutableMapOf<String, String>()
 	private var storedSession: Session? = null
+	private val trackedConversions = mutableSetOf<String>()
 
 	@Before
 	fun setup() {
@@ -36,6 +40,10 @@ internal class SessionStorageTest {
 			sessionVars[firstArg()] = secondArg()
 		}
 		every { storage.clearSessionVars() } answers { sessionVars.clear() }
+		trackedConversions.clear()
+		every { storage.readTrackedConversions() } answers { trackedConversions.toSet() }
+		every { storage.addTrackedConversion(any()) } answers { trackedConversions.add(firstArg()) }
+		every { storage.readOriginalUserId() } returns "original-user"
 		sessionStorage = SessionStorage(storage)
 	}
 
@@ -115,16 +123,75 @@ internal class SessionStorageTest {
 	}
 
 	@Test
-	fun `clearTrackedConversions will not remove not tracked conversions`() {
-		val trackedConversions = listOf("First item", "Second item").map { Conversion(it) }
-		val notTrackedConversion = "Another not tracked conversion"
-		sessionStorage.addPendingConversion(trackedConversions[0].name)
-		sessionStorage.addPendingConversion(trackedConversions[1].name)
-		sessionStorage.addPendingConversion(notTrackedConversion)
+	fun `settling a sent conversion removes only that one`() {
+		sessionStorage.addPendingConversion("First item")
+		sessionStorage.addPendingConversion("First item")
+		val claimed = sessionStorage.claimPendingConversions()
 
-		sessionStorage.clearTrackedConversions(trackedConversions)
-		assertEquals(1, sessionStorage.readPendingConversions().size)
-		assertEquals(notTrackedConversion, sessionStorage.readPendingConversions().first().name)
+		sessionStorage.settleConversion(claimed[0].key, sent = true)
+
+		assertEquals(listOf("First item"), sessionStorage.readPendingConversions().map { it.name })
+	}
+
+	@Test
+	fun `a claimed conversion is not claimed again until it is settled unsent`() {
+		sessionStorage.addPendingConversion("purchase")
+		val claimed = sessionStorage.claimPendingConversions().single()
+
+		assertTrue(sessionStorage.claimPendingConversions().isEmpty())
+
+		sessionStorage.settleConversion(claimed.key, sent = false)
+
+		assertEquals("purchase", sessionStorage.claimPendingConversions().single().conversion.name)
+	}
+
+	@Test
+	fun `a conversion id is marked as tracked only once it is sent`() {
+		assertTrue(sessionStorage.addPendingConversion("purchase", ConversionOptions(id = "tx1")))
+		val claimed = sessionStorage.claimPendingConversions().single()
+		assertTrue(trackedConversions.isEmpty())
+
+		sessionStorage.settleConversion(claimed.key, sent = true)
+
+		assertEquals(setOf("purchase:tx1"), trackedConversions)
+		assertTrue(sessionStorage.readPendingConversions().isEmpty())
+	}
+
+	@Test
+	fun `a conversion id is rejected while pending and once tracked`() {
+		assertTrue(sessionStorage.addPendingConversion("purchase", ConversionOptions(id = "tx1")))
+		assertFalse(sessionStorage.addPendingConversion("purchase", ConversionOptions(id = "tx1")))
+		assertTrue(sessionStorage.addPendingConversion("signup", ConversionOptions(id = "tx1")))
+
+		trackedConversions.add("lead:tx2")
+		assertFalse(sessionStorage.addPendingConversion("lead", ConversionOptions(id = "tx2")))
+
+		assertEquals(listOf("purchase", "signup"), sessionStorage.readPendingConversions().map { it.name })
+	}
+
+	@Test
+	fun `scope ids resolve when the conversion is tracked`() {
+		val page = Page("https://x.com/paywall")
+		sessionStorage.updatePage(page)
+
+		sessionStorage.addPendingConversion("byPage", ConversionOptions(scope = ConversionScope.Page))
+		sessionStorage.addPendingConversion("bySession", ConversionOptions(scope = ConversionScope.Session))
+		sessionStorage.addPendingConversion("byUser", ConversionOptions(scope = ConversionScope.User))
+		sessionStorage.updatePage(Page("https://x.com/home"))
+
+		val ids = sessionStorage.readPendingConversions().associate { it.name to it.id }
+		assertEquals(page.pageId, ids["byPage"])
+		assertEquals(sessionStorage.readSession().id, ids["bySession"])
+		assertEquals("original-user", ids["byUser"])
+		assertTrue(sessionStorage.readPendingConversions().all { it.pageId == page.pageId })
+	}
+
+	@Test
+	fun `a scope id dedups like an explicit id`() {
+		sessionStorage.updatePage(Page("https://x.com/paywall"))
+
+		assertTrue(sessionStorage.addPendingConversion("purchase", ConversionOptions(scope = ConversionScope.Page)))
+		assertFalse(sessionStorage.addPendingConversion("purchase", ConversionOptions(scope = ConversionScope.Page)))
 	}
 
 	@Test

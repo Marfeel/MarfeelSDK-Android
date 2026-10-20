@@ -42,6 +42,7 @@ internal class Storage(
 		private const val cdpRfvKey = "cdpRfv_key"
 		private const val cdpCohortsKey = "cdpCohorts_key"
 		private const val cdpCacheSessionIdKey = "cdpCacheSessionId_key"
+		private const val trackedConversionsKey = "trackedConversions_key"
 
 		private val uuidRegex =
 			Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
@@ -470,6 +471,34 @@ internal class Storage(
 		} catch (_: Exception) {
 			null
 		}
+	}
+
+	// endregion
+
+	// region conversions
+
+	private val trackedConversionsLock = Any()
+
+	/**
+	 * Keys (`conversion:id`) of the conversions already sent; another call with one of them
+	 * is not sent again. Kept across [resetUser], like on iOS.
+	 */
+	fun readTrackedConversions(): Set<String> =
+		getTrackedConversions()
+
+	fun addTrackedConversion(key: String) = synchronized(trackedConversionsLock) {
+		val tracked = getTrackedConversions()
+		if (key !in tracked) {
+			preferences.edit {
+				putString(trackedConversionsKey, gson.toJson(tracked + key).toString())
+			}
+		}
+	}
+
+	private fun getTrackedConversions(): Set<String> {
+		val listType: Type = object : TypeToken<List<String>>() {}.type
+
+		return gson.fromJson<List<String>>(preferences.getString(trackedConversionsKey, "[]"), listType).toSet()
 	}
 
 	// endregion

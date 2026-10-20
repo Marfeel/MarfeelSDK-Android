@@ -434,6 +434,7 @@ internal object CompassTracker : CompassTracking {
         check(initialized) { compassNotInitializedErrorMessage }
 
         val page = Page(url)
+        pingEmitter.closePage()
         sessionStorage.updatePage(page)
         sessionStorage.clearPageVars()
         sessionStorage.clearPageMetrics()
@@ -538,6 +539,7 @@ internal object CompassTracker : CompassTracking {
 
     override fun stopTracking() {
         check(initialized) { compassNotInitializedErrorMessage }
+        pingEmitter.closePage()
         pingEmitter.stop()
     }
 

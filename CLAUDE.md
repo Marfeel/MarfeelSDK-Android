@@ -71,6 +71,8 @@ Persistence is SharedPreferences-based, one file per concern: `CompassExperience
 
 `CompassTracker` owns the page lifecycle. `IngestPingEmitter` runs a timed ping loop while a page is tracked; `BackgroundWatcher` hooks `ProcessLifecycleOwner` so backgrounding resets the session if `> 30 min` have elapsed since the last ping. Scroll tracking attaches `OnScrollChangeListener` to `ScrollView` / `RecyclerView` / `FrameLayout+ScrollingView`; for non-native scroll containers (Flutter, Compose) consumers call `updateScrollPercentage(Int)` manually.
 
+Conversions (same model as iOS): `trackConversion` resolves the id (`options.id`, else the scope's id — `User` is the original user id) and the page **when called**, and queues it in `SessionStorage`. Each ping claims the queued conversions no other ping is sending (`claimPendingConversions`) and settles each one by the `ApiClient.ingestPing` result: a sent one leaves the queue and only then writes its `conversion:id` dedup key to `Storage` (persisted, kept across `resetUser`); an unsent one is retried by the next ping. `trackNewPage` / `stopTracking` call `IngestPingEmitter.closePage()` **before** the page changes, so `IngestPing` can send conversions tracked on the old page with that page's data and tick sequence.
+
 `storage/` holds both persistent (`Storage` — EncryptedSharedPreferences) and in-memory-per-session (`SessionStorage`) state. Several deprecated `startPageView` overloads are kept for binary compatibility — new code should use `trackNewPage` / `trackScreen`.
 
 ### CDP subsystem (`cdp/`)
