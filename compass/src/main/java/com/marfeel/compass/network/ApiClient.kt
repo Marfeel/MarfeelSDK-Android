@@ -57,7 +57,8 @@ internal class ApiClient(
 	private var pingOrigin: OriginType = OriginType.ORIGIN
 	private var fallbackResetJob: Job? = null
 
-	fun ping(path: PingPaths, pingData: PingData) {
+	/** Whether the ping reached a server, through the fallback origin included. */
+	fun ping(path: PingPaths, pingData: PingData): Boolean {
 		val contentType = if (path == PingPaths.INGEST) ContentType.FORM_DATA else ContentType.JSON
 
 		val request = Request.Builder()
@@ -65,10 +66,11 @@ internal class ApiClient(
 			.ping(pingData, contentType)
 			.build()
 
-		try {
+		return try {
 			httpClient.newCall(request).execute().use { response ->
 				if (!response.isSuccessful) throw IOException("Unexpected code $response")
 			}
+			true
 		} catch (exception: IOException) {
 			val canSwitchOrigin = pingFallbackUrl != null && pingOrigin == OriginType.ORIGIN
 
@@ -77,14 +79,14 @@ internal class ApiClient(
 				ping(path, pingData)
 			} else {
 				println("Ping failed (origin=$pingOrigin): ${exception.message}")
+				false
 			}
 		}
 	}
 
 
-	fun ingestPing(pingData: IngestPingData) {
+	fun ingestPing(pingData: IngestPingData): Boolean =
 		ping(PingPaths.INGEST, pingData)
-	}
 
 	fun multimediaPing(pingData: MultimediaPingData) {
 		ping(PingPaths.MULTIMEDIA, pingData)

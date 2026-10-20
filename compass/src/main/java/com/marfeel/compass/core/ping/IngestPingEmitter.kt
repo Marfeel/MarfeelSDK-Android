@@ -55,6 +55,11 @@ internal class IngestPingEmitter(
         }
     }
 
+    /** Keeps the page being left for its pending conversions; see [IngestPing.closePage]. */
+    fun closePage() {
+        pingEmitterState?.let(doPing::closePage)
+    }
+
     fun stop() {
         stopBackgroundWatcher()
         job.cancelChildren()
