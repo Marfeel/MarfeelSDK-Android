@@ -12,10 +12,10 @@ internal val androidCorePageTypes = intArrayOf(androidPageType, androidPressRead
 /**
  *  Possible types of users.
  *
- * @property numericValue numeric representation of the user type. Values 1, 2, and 3 are reserved for the [Anonymous], [Logged], and [Paid] types.
+ * @property numericValue numeric representation of the user type. Values 0 and 1 are reserved for the [Anonymous] type (it is sent as 0; 1 is the legacy value), and 2 and 3 for the [Logged] and [Paid] types.
  */
 sealed class UserType(open val numericValue: Int) {
-	object Anonymous : UserType(1)
+	object Anonymous : UserType(0)
 	object Logged : UserType(2)
 	object Paid : UserType(3)
 	data class Custom(val customValue: Int) : UserType(customValue)
