@@ -89,6 +89,17 @@ internal class StorageTest {
 	}
 
 	@Test
+	fun `readUserType returns Anonymous for the legacy stored value 1`() {
+		storage.updateUserType(UserType.Custom(1))
+		assertEquals(UserType.Anonymous, storage.readUserType())
+	}
+
+	@Test
+	fun `Anonymous is sent as 0`() {
+		assertEquals(0, UserType.Anonymous.numericValue)
+	}
+
+	@Test
 	fun `updates userType`() {
 		val savedUserType = UserType.Paid
 		storage.updateUserType(savedUserType)

@@ -97,6 +97,7 @@ A Customer Data Platform layer accessed via the **`Cdp`** singleton (`Cdp.getIns
 - `tech` argument to `initialize` is validated: it must be `> 100` or one of the `androidCorePageTypes` constants. Anything else throws.
 - `fetchExperiences` reads the URL from the currently-tracked page (set by `trackNewPage`/`trackScreen`). If no page is active it returns an empty list rather than throwing — don't add a `check(initialized)` to the happy path.
 - `resolve` defaults to **false** on `fetchExperiences`. Content is only fetched when explicitly requested or via `experience.resolve()`.
+- `UserType` wire values (`ut` in pings, `utyp` in experiences, `ut` in recirculation): `Anonymous = 0`, `Logged = 2`, `Paid = 3`, anything else is `Custom`. `1` is the legacy anonymous value — the backend treats 0 and 1 the same, and `Storage.readUserType` still maps a stored `1` to `Anonymous`. Same values on iOS and in the RN / Flutter bridges.
 - Don't break public API shape without coordinating with the iOS SDK — `docs/swift-implementation-guide.md` is the cross-platform contract.
 
 ## Docs

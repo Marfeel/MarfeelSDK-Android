@@ -121,7 +121,7 @@ class RecirculationApiClientTest {
 		val body = decodedBody()
 		assertTrue(body.contains("ac=2223"))
 		assertTrue(body.contains("url=https://example.com/article"))
-		assertTrue(body.contains("ut=1"))
+		assertTrue(body.contains("ut=0"))
 		assertTrue(body.contains("fv=1700000000"))
 		assertTrue(body.contains("u=user-abc"))
 		assertTrue(body.contains("s=session-123"))

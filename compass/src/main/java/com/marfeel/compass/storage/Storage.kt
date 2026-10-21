@@ -28,6 +28,8 @@ internal class Storage(
 		private const val originalUserIdKey = "originalUserId_key"
 		private const val registeredUserIdKey = "registeredUserId_key"
 		private const val userTypeKey = "userType_key"
+		// Anonymous was stored as 1 before it was sent as 0.
+		private const val legacyAnonymousUserType = 1
 		private const val firstSessionTimeStampKey = "firstSessionTimeStamp_key"
 		private const val previousSessionLastPingTimeStampKey =
 			"previousSessionLastPingTimeStamp_key"
@@ -211,7 +213,8 @@ internal class Storage(
 	private fun getUserType(): UserType =
 		when (val type = preferences.getString(userTypeKey, null)?.toInt()) {
 			null,
-			UserType.Anonymous.numericValue -> UserType.Anonymous
+			UserType.Anonymous.numericValue,
+			legacyAnonymousUserType -> UserType.Anonymous
 			UserType.Logged.numericValue -> UserType.Logged
 			UserType.Paid.numericValue -> UserType.Paid
 			else -> UserType.Custom(type)
