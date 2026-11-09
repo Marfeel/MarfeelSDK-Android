@@ -77,4 +77,19 @@ class WholeModuleAugmenterTest {
         val result = augmenter.onEligible(listOf(original))
         assertEquals(original.links, result[0].links.dropLast(1))
     }
+
+    @Test
+    fun `eligible augmentation preserves test version`() {
+        val original = module("mod-a", 0).copy(testVersion = "control")
+        val result = augmenter.onEligible(listOf(original))
+        assertEquals("control", result[0].testVersion)
+    }
+
+    @Test
+    fun `impression augmentation preserves test version`() {
+        augmenter.onEligible(listOf(module("mod-a", 0)))
+        val result = augmenter.onImpression(module("mod-a", 0).copy(testVersion = "Original"))
+        assertTrue(result.links.contains(wholeModule))
+        assertEquals("Original", result.testVersion)
+    }
 }

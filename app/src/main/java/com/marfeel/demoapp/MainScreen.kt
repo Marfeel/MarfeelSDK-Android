@@ -584,7 +584,7 @@ fun MainScreen(
 								experiencesResult = "Found ${experiences.size} experiences:\n" +
 									experiences.joinToString("\n") { exp ->
 										val familyTag = exp.family?.let { " family=${it.key}" } ?: ""
-										"- [${exp.type.key}] ${exp.name}$familyTag (id=${exp.id})"
+										"- [${exp.type.key}] ${exp.name}$familyTag${experimentationTag(exp)} (id=${exp.id})"
 									}
 							} catch (e: Exception) {
 								experiencesResult = "Error: ${e.message}"
@@ -616,7 +616,7 @@ fun MainScreen(
 											" [resolved: ${exp.resolvedContent!!.take(100)}...]"
 										else ""
 										val familyTag = exp.family?.let { " family=${it.key}" } ?: ""
-										"- [${exp.type.key}] ${exp.name}$familyTag$resolved"
+										"- [${exp.type.key}] ${exp.name}$familyTag${experimentationTag(exp)}$resolved"
 									}
 							} catch (e: Exception) {
 								experiencesResult = "Error: ${e.message}"
@@ -926,4 +926,10 @@ fun MainScreenPreview() {
 	MaterialTheme {
 		MainScreen(CompassTracking.getInstance(), {}, {}, {})
 	}
+}
+
+private fun experimentationTag(experience: Experience): String {
+	val experimentation = experience.experimentation ?: return ""
+	val arm = if (experimentation.isControl) "control" else "test"
+	return " ab=$arm tv=${experimentation.name}"
 }

@@ -80,19 +80,19 @@ class RecirculationTrackerTest {
         )
 
     private fun trackEligibleViaExperiences(experience: Experience, links: List<RecirculationLink>) {
-        tracker.trackEligible(experience.id, links)
+        tracker.trackEligible(ExperimentEvaluator.baseExperienceId(experience.id), links)
     }
 
     private fun trackImpressionViaExperiences(experience: Experience, links: List<RecirculationLink>) {
-        tracker.trackImpression(experience.id, links)
+        tracker.trackImpression(ExperimentEvaluator.baseExperienceId(experience.id), links)
     }
 
     private fun trackClickViaExperiences(experience: Experience, link: RecirculationLink) {
-        tracker.trackClick(experience.id, link)
+        tracker.trackClick(ExperimentEvaluator.baseExperienceId(experience.id), link)
     }
 
     @Test
-    fun `trackEligible maps experience id to module name`() {
+    fun `trackEligible maps base experience id to module name`() {
         val links = listOf(RecirculationLink("https://a.com", 0))
         val exp = makeExperience("exp-1")
 
@@ -104,7 +104,7 @@ class RecirculationTrackerTest {
     }
 
     @Test
-    fun `trackRecirculationImpression maps experience id to module name with links`() {
+    fun `trackRecirculationImpression maps base experience id to module name with links`() {
         val links = listOf(RecirculationLink("https://a.com", 0), RecirculationLink("https://b.com", 1))
         val experience = makeExperience("exp-42")
 
@@ -114,7 +114,7 @@ class RecirculationTrackerTest {
     }
 
     @Test
-    fun `trackClick maps experience id to module name with single link`() {
+    fun `trackClick maps base experience id to module name with single link`() {
         val link = RecirculationLink("https://clicked.com", 3)
         val experience = makeExperience("exp-99")
 
@@ -136,5 +136,14 @@ class RecirculationTrackerTest {
                 listOf(RecirculationModule("exp-1", clientLinks))
             )
         }
+    }
+
+    @Test
+    fun `variant experience shares the module name of its base experience`() {
+        val links = listOf(RecirculationLink("https://a.com", 0))
+
+        trackEligibleViaExperiences(makeExperience("IL_1~v1"), links)
+
+        verify { apiClient.send("elegible", listOf(RecirculationModule("IL_1", links))) }
     }
 }

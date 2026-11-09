@@ -4,6 +4,7 @@ import com.marfeel.compass.di.CompassComponent
 import com.marfeel.compass.experiences.model.Experience
 import com.marfeel.compass.experiences.model.ExperienceFamily
 import com.marfeel.compass.experiences.model.ExperienceType
+import com.marfeel.compass.experiences.model.Experimentation
 import com.marfeel.compass.experiences.model.RecirculationLink
 import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.tracker.CompassTracker
@@ -51,9 +52,29 @@ internal object ExperiencesTracker : Experiences {
 	private val frequencyCapManager: FrequencyCapManager by lazy { CompassComponent.frequencyCapManager }
 	private val readEditorialsManager: ReadEditorialsManager by lazy { CompassComponent.readEditorialsManager }
 	private val sessionStorage: SessionStorage by lazy { CompassComponent.sessionStorage }
-	private val recirculationTracker: Recirculation = RecirculationTracker
+	private val recirculationTracker = RecirculationTracker
+
+	// Experimentation of fetched experiences, so tracking calls made with a rebuilt
+	// Experience (e.g. from the Flutter / React Native bridges) still send the test version.
+	private val experimentationById = ConcurrentHashMap<String, Experimentation>()
 
 	private val customTargeting = ConcurrentHashMap<String, String>()
+
+	private fun storeExperimentation(experiences: List<Experience>) {
+		experiences.forEach { experience ->
+			experience.experimentation?.let { experimentationById[experience.id] = it }
+		}
+	}
+
+	private fun testVersion(experience: Experience): String? =
+		(experience.experimentation ?: experimentationById[experience.id])?.name
+
+	/**
+	 * Same module name as the web SDK (`data-mrf-recirculation`): the base experience id,
+	 * shared by every arm of an A/B test so they can be compared.
+	 */
+	private fun moduleName(experience: Experience): String =
+		ExperimentEvaluator.baseExperienceId(experience.id)
 
 	override fun addTargeting(key: String, value: String) {
 		customTargeting[key] = value
@@ -62,7 +83,7 @@ internal object ExperiencesTracker : Experiences {
 	override fun trackImpression(experience: Experience, links: List<RecirculationLink>) {
 		frequencyCapManager.trackImpression(experience.id)
 		if (links.isNotEmpty()) {
-			recirculationTracker.trackImpression(experience.id, links)
+			recirculationTracker.trackImpression(moduleName(experience), links, testVersion(experience))
 		}
 	}
 
@@ -101,11 +122,11 @@ internal object ExperiencesTracker : Experiences {
 	}
 
 	override fun trackEligible(experience: Experience, links: List<RecirculationLink>) {
-		recirculationTracker.trackEligible(experience.id, links)
+		recirculationTracker.trackEligible(moduleName(experience), links, testVersion(experience))
 	}
 
 	override fun trackClick(experience: Experience, link: RecirculationLink) {
-		recirculationTracker.trackClick(experience.id, link)
+		recirculationTracker.trackClick(moduleName(experience), link, testVersion(experience))
 	}
 
 	override suspend fun fetchExperiences(
@@ -127,7 +148,8 @@ internal object ExperiencesTracker : Experiences {
 
 		experimentManager.handleExperimentGroups(parseResult.experimentGroups)
 
-		var experiences = experimentManager.filterByExperiments(parseResult.experiences)
+		var experiences = experimentManager.evaluate(parseResult.experiences)
+		storeExperimentation(experiences)
 
 		if (filterByType != null) {
 			experiences = experiences.filter { it.type == filterByType }
