@@ -4,7 +4,6 @@ import com.marfeel.compass.experiences.model.Experience
 import com.marfeel.compass.experiences.model.ExperimentType
 import com.marfeel.compass.experiences.model.Experimentation
 import java.util.IdentityHashMap
-import java.util.zip.CRC32
 import kotlin.random.Random
 
 /**
@@ -235,7 +234,6 @@ internal class ExperimentEvaluator(
 		private const val VARIANT_SEPARATOR = '~'
 		private const val CONTROL_NAME = "control"
 		private const val ORIGINAL_NAME = "Original"
-		private const val UNSIGNED_INT_RANGE = 4_294_967_296.0
 
 		/** JS string ordering (UTF-16 code units), used by the web SDK. */
 		private val BY_ID = Comparator<Experience> { a, b -> a.id.compareTo(b.id) }
@@ -246,11 +244,8 @@ internal class ExperimentEvaluator(
 		private fun slot(experience: Experience): String? =
 			experience.selectors?.firstOrNull()?.selector ?: experience.placement
 
-		/** Must stay in lockstep with the web SDK `deterministic.ts` (hash version 1). */
-		internal fun seededPercentage(userId: String, seed: String): Double {
-			val crc = CRC32().apply { update("$seed:$userId".toByteArray(Charsets.UTF_8)) }
-			return crc.value / UNSIGNED_INT_RANGE * 100
-		}
+		internal fun seededPercentage(userId: String, seed: String): Double =
+			DeterministicHash.seededPercentage(userId, seed)
 
 		private fun identitySet(): MutableSet<Experience> =
 			java.util.Collections.newSetFromMap(IdentityHashMap())

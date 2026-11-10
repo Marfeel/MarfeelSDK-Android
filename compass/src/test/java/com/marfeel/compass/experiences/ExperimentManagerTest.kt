@@ -21,12 +21,35 @@ import kotlin.random.Random
 class ExperimentManagerTest {
 	private lateinit var prefs: MockSharedPreference
 	private lateinit var manager: ExperimentManager
+	private val userVars = mutableMapOf<String, String>()
+	private val userVarWrites = mutableListOf<Pair<String, String>>()
+
+	private val seedA = "eFmyf219Q3qh6OzYsZOdyw"
+	private val mixedUid = "4a4ffef6-8d7e-4484-9fd4-7a3abd4c7bb0"
 
 	@Before
 	fun setUp() {
 		prefs = MockSharedPreference()
-		manager = ExperimentManager(prefs)
+		userVars.clear()
+		userVarWrites.clear()
+		manager = makeManager()
 	}
+
+	private fun makeManager(
+		userId: String? = null,
+		siteUserId: String? = null,
+		random: Random = Random.Default,
+	) = ExperimentManager(
+		preferences = prefs,
+		random = random,
+		userIdProvider = { userId },
+		siteUserIdProvider = { siteUserId },
+		readUserVars = { userVars.toMap() },
+		writeUserVar = { name, value ->
+			userVars[name] = value
+			userVarWrites.add(name to value)
+		},
+	)
 
 	private fun makeExperimentGroups(): JsonObject {
 		val groups = JsonObject()
@@ -48,6 +71,34 @@ class ExperimentManagerTest {
 		groups.add("testGroup", group)
 		return groups
 	}
+
+	private fun makeGroups(
+		key: String,
+		id: String?,
+		hashVersion: Int? = null,
+		variants: List<Pair<String, Number>>,
+	): JsonObject {
+		val group = JsonObject()
+		id?.let { group.addProperty("id", it) }
+		group.addProperty("name", key)
+		hashVersion?.let { group.addProperty("hashVersion", it) }
+		val array = JsonArray()
+		variants.forEach { (variantId, weight) ->
+			array.add(JsonObject().apply {
+				addProperty("id", variantId)
+				addProperty("name", variantId)
+				addProperty("weight", weight)
+			})
+		}
+		group.add("variants", array)
+		return JsonObject().apply { add(key, group) }
+	}
+
+	private fun hashedTestGroupVariant(userId: String): String =
+		DeterministicHash.selectVariant(
+			listOf(WeightedVariant("variant_a", 50.0), WeightedVariant("variant_b", 50.0)),
+			userId, "testGroup", null
+		)!!
 
 	private fun makeExperience(
 		id: String,
@@ -77,10 +128,16 @@ class ExperimentManagerTest {
 		override fun nextDouble(): Double = throw AssertionError("random must not be used")
 	}
 
+	private class FixedRandom(private val value: Double) : Random() {
+		override fun nextBits(bitCount: Int): Int = throw AssertionError("only nextDouble is expected")
+		override fun nextDouble(): Double = value
+	}
+
+	// region Assignment
+
 	@Test
 	fun `handleExperimentGroups assigns a variant`() {
-		val groups = makeExperimentGroups()
-		manager.handleExperimentGroups(groups)
+		manager.handleExperimentGroups(makeExperimentGroups())
 		val assignments = manager.getAssignments()
 		assertTrue(assignments.containsKey("testGroup"))
 		assertTrue(assignments["testGroup"] in listOf("variant_a", "variant_b"))
@@ -97,19 +154,173 @@ class ExperimentManagerTest {
 	}
 
 	@Test
-	fun `handleExperimentGroups with seeded random is deterministic`() {
+	fun `handleExperimentGroups without user id uses the random draw`() {
 		val groups = makeExperimentGroups()
-		val manager1 = ExperimentManager(prefs, Random(42))
+		val manager1 = makeManager(random = FixedRandom(0.25))
 		manager1.handleExperimentGroups(groups)
 		val assignment1 = manager1.getAssignments()["testGroup"]
 
-		prefs.edit().clear().apply()
-		val manager2 = ExperimentManager(prefs, Random(42))
+		manager1.clear()
+		val manager2 = makeManager(random = FixedRandom(0.25))
 		manager2.handleExperimentGroups(groups)
 		val assignment2 = manager2.getAssignments()["testGroup"]
 
+		assertEquals("variant_a", assignment1)
 		assertEquals(assignment1, assignment2)
 	}
+
+	@Test
+	fun `handleExperimentGroups hashes with the user id`() {
+		val manager = makeManager(userId = "user-1", random = FailingRandom)
+
+		manager.handleExperimentGroups(makeExperimentGroups())
+
+		assertEquals(hashedTestGroupVariant("user-1"), manager.getAssignments()["testGroup"])
+	}
+
+	@Test
+	fun `handleExperimentGroups falls back to site user id when user id is empty`() {
+		val manager = makeManager(userId = "", siteUserId = "site-user", random = FailingRandom)
+
+		manager.handleExperimentGroups(makeExperimentGroups())
+
+		assertEquals(hashedTestGroupVariant("site-user"), manager.getAssignments()["testGroup"])
+	}
+
+	@Test
+	fun `handleExperimentGroups honours hashVersion`() {
+		val variants = listOf<Pair<String, Number>>("1" to 50, "2" to 50)
+		val legacy = makeManager(userId = mixedUid, random = FailingRandom)
+		legacy.handleExperimentGroups(makeGroups("group", seedA, variants = variants))
+		assertEquals("2", legacy.getAssignments()["group"])
+
+		legacy.clear()
+		val mixed = makeManager(userId = mixedUid, random = FailingRandom)
+		mixed.handleExperimentGroups(makeGroups("group", seedA, hashVersion = 2, variants = variants))
+		assertEquals("1", mixed.getAssignments()["group"])
+	}
+
+	@Test
+	fun `handleExperimentGroups uses the group key as seed without id`() {
+		val manager = makeManager(userId = mixedUid, random = FailingRandom)
+
+		manager.handleExperimentGroups(makeGroups(seedA, null, hashVersion = 2, variants = listOf("1" to 50, "2" to 50)))
+
+		assertEquals("1", manager.getAssignments()[seedA])
+	}
+
+	@Test
+	fun `handleExperimentGroups accepts decimal weights`() {
+		val manager = makeManager(userId = "user-1", random = FailingRandom)
+
+		manager.handleExperimentGroups(makeGroups("group", "group", variants = listOf("a" to 33.3, "b" to 66.7)))
+
+		val expected = DeterministicHash.selectVariant(
+			listOf(WeightedVariant("a", 33.3), WeightedVariant("b", 66.7)), "user-1", "group", null
+		)
+		assertEquals(expected, manager.getAssignments()["group"])
+	}
+
+	@Test
+	fun `handleExperimentGroups keeps a stored assignment over the hash`() {
+		val manager = makeManager(userId = "user-1", random = FailingRandom)
+		val notHashed = if (hashedTestGroupVariant("user-1") == "variant_a") "variant_b" else "variant_a"
+		manager.setAssignment("testGroup", notHashed)
+
+		manager.handleExperimentGroups(makeExperimentGroups())
+
+		assertEquals(notHashed, manager.getAssignments()["testGroup"])
+	}
+
+	@Test
+	fun `handleExperimentGroups re-hashes when the stored variant is gone`() {
+		val manager = makeManager(userId = "user-1", random = FailingRandom)
+		manager.setAssignment("testGroup", "variant_removed")
+
+		manager.handleExperimentGroups(makeExperimentGroups())
+
+		assertEquals(hashedTestGroupVariant("user-1"), manager.getAssignments()["testGroup"])
+	}
+
+	@Test
+	fun `handleExperimentGroups re-hashes when the stored variant has no weight`() {
+		val manager = makeManager(userId = "user-1", random = FailingRandom)
+		manager.setAssignment("group", "paused")
+
+		manager.handleExperimentGroups(makeGroups("group", "group", variants = listOf("paused" to 0, "live" to 100)))
+
+		assertEquals("live", manager.getAssignments()["group"])
+	}
+
+	@Test
+	fun `handleExperimentGroups drops groups missing from the response`() {
+		manager.setAssignment("finishedGroup", "v1")
+
+		manager.handleExperimentGroups(makeExperimentGroups())
+
+		val assignments = manager.getAssignments()
+		assertNull(assignments["finishedGroup"])
+		assertNotNull(assignments["testGroup"])
+	}
+
+	@Test
+	fun `handleExperimentGroups without groups keeps assignments`() {
+		manager.setAssignment("testGroup", "variant_a")
+
+		manager.handleExperimentGroups(null)
+
+		assertEquals(mapOf("testGroup" to "variant_a"), manager.getAssignments())
+	}
+
+	// endregion
+
+	// region User var
+
+	@Test
+	fun `handleExperimentGroups writes the assignment to the user var`() {
+		manager.handleExperimentGroups(makeExperimentGroups())
+
+		assertEquals(manager.getAssignments()["testGroup"], userVars["mrfExperiment_testGroup"])
+	}
+
+	@Test
+	fun `handleExperimentGroups writes a kept assignment to the user var`() {
+		manager.setAssignment("testGroup", "variant_b")
+		userVars.clear()
+
+		manager.handleExperimentGroups(makeExperimentGroups())
+
+		assertEquals("variant_b", userVars["mrfExperiment_testGroup"])
+	}
+
+	@Test
+	fun `handleExperimentGroups does not rewrite an unchanged user var`() {
+		manager.handleExperimentGroups(makeExperimentGroups())
+		manager.handleExperimentGroups(makeExperimentGroups())
+
+		assertEquals(1, userVarWrites.size)
+	}
+
+	@Test
+	fun `handleExperimentGroups overwrites a stale user var`() {
+		manager.setAssignment("testGroup", "variant_a")
+		userVars["mrfExperiment_testGroup"] = "stale"
+
+		manager.handleExperimentGroups(makeExperimentGroups())
+
+		assertEquals("variant_a", userVars["mrfExperiment_testGroup"])
+	}
+
+	@Test
+	fun `setAssignment writes the user var`() {
+		manager.setAssignment("testGroup", "variant_b")
+
+		assertEquals("variant_b", userVars["mrfExperiment_testGroup"])
+	}
+
+	// endregion
+
+	// region Evaluation
 
 	@Test
 	fun `evaluate keeps assigned variant and drops loser on same slot`() {
@@ -171,7 +382,7 @@ class ExperimentManagerTest {
 
 	@Test
 	fun `evaluate hashes user experiments with user id`() {
-		val manager = ExperimentManager(prefs, FailingRandom, { "user-1" }, { "site-user" })
+		val manager = makeManager(userId = "user-1", siteUserId = "site-user", random = FailingRandom)
 		val percentage = ExperimentEvaluator.seededPercentage("user-1", "A")
 
 		val result = manager.evaluate(listOf(
@@ -184,7 +395,7 @@ class ExperimentManagerTest {
 
 	@Test
 	fun `evaluate falls back to site user id when user id is empty`() {
-		val manager = ExperimentManager(prefs, FailingRandom, { "" }, { "site-user" })
+		val manager = makeManager(userId = "", siteUserId = "site-user", random = FailingRandom)
 		val percentage = ExperimentEvaluator.seededPercentage("site-user", "A")
 
 		val result = manager.evaluate(listOf(
@@ -194,6 +405,10 @@ class ExperimentManagerTest {
 
 		assertEquals(listOf(if (percentage <= 50) "A" else "A~v1"), result.map { it.id })
 	}
+
+	// endregion
+
+	// region Manual assignment and clear
 
 	@Test
 	fun `setAssignment writes the given variant`() {
@@ -226,20 +441,22 @@ class ExperimentManagerTest {
 	}
 
 	@Test
-	fun `handleExperimentGroups after clear re-assigns`() {
-		manager.handleExperimentGroups(makeExperimentGroups())
-		val first = manager.getAssignments()["testGroup"]
+	fun `handleExperimentGroups after clear re-assigns from the new user id`() {
+		manager.setAssignment("testGroup", "variant_a")
 		manager.clear()
+		val manager = makeManager(userId = "user-2", random = FailingRandom)
+
 		manager.handleExperimentGroups(makeExperimentGroups())
-		assertNotNull(manager.getAssignments()["testGroup"])
-		assertTrue(first in listOf("variant_a", "variant_b"))
+
+		assertEquals(hashedTestGroupVariant("user-2"), manager.getAssignments()["testGroup"])
 	}
 
 	@Test
 	fun `getTargetingEntries returns experiment assignments`() {
-		val groups = makeExperimentGroups()
-		manager.handleExperimentGroups(groups)
+		manager.handleExperimentGroups(makeExperimentGroups())
 		val entries = manager.getTargetingEntries()
 		assertNotNull(entries["experiment::testGroup"])
 	}
+
+	// endregion
 }

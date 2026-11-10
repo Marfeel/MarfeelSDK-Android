@@ -24,6 +24,7 @@ import com.marfeel.compass.experiences.RecirculationApiClient
 import com.marfeel.compass.storage.SessionStorage
 import com.marfeel.compass.network.ApiClient
 import com.marfeel.compass.storage.Storage
+import com.marfeel.compass.tracker.CompassTracker
 import com.marfeel.compass.usecase.GetRFV
 import com.marfeel.compass.usecase.IngestPing
 import com.marfeel.compass.usecase.MultimediaPing
@@ -115,6 +116,8 @@ internal object CompassComponent : CompassServiceLocator {
             preferences = context.getSharedPreferences("CompassExperiments", Context.MODE_PRIVATE),
             userIdProvider = { storage.readOriginalUserId() },
             siteUserIdProvider = { storage.readRegisteredUserId() },
+            readUserVars = storage::readUserVars,
+            writeUserVar = { name, value -> CompassTracker.writeUserVar(name, value) },
         )
     }
     override val networkInfoProvider: NetworkInfoProvider by lazy {

@@ -11,6 +11,7 @@ import io.mockk.coVerify
 import com.marfeel.compass.core.model.compass.RFV
 import com.marfeel.compass.core.model.compass.Session
 import com.marfeel.compass.core.model.compass.UserType
+import com.marfeel.compass.experiences.ExperimentManager
 import com.marfeel.compass.network.ApiClient
 import com.marfeel.compass.storage.MockSharedPreference
 import com.marfeel.compass.storage.SessionStorage
@@ -197,6 +198,31 @@ internal class UserRotationTest {
 		assertTrue(env.consentMemory.getRemembered(env.account).isEmpty())
 		assertEquals(LOCAL_MID_SENTINEL, env.segmentsStore.getActiveMid(env.account))
 		assertNull(storage.readCdpMasterId())
+	}
+
+	@Test
+	fun `the rotation clears experiment assignments after the user reset`() {
+		val events = mutableListOf<String>()
+		val prefs = MockSharedPreference()
+		val experiments = ExperimentManager(prefs)
+		experiments.setAssignment("testGroup", "variant_a")
+		signedInUser()
+		val oldUserId = storage.readOriginalUserId()
+
+		UserRotation(
+			storage = storage,
+			sessionStorage = sessionStorage,
+			updateEmitterSession = {},
+			clearRfvCache = {},
+			clearCdpIdentity = {},
+			clearExperimentAssignments = {
+				events.add(if (storage.readOriginalUserId() == oldUserId) "old user" else "new user")
+				experiments.clear()
+			}
+		).rotate()
+
+		assertEquals(listOf("new user"), events)
+		assertTrue(experiments.getAssignments().isEmpty())
 	}
 
 	@Test

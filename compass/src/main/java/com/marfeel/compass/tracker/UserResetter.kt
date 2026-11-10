@@ -32,11 +32,14 @@ internal class UserRotation(
 	private val sessionStorage: SessionStorage,
 	private val updateEmitterSession: (sessionId: String) -> Unit,
 	private val clearRfvCache: () -> Unit,
-	private val clearCdpIdentity: () -> Unit
+	private val clearCdpIdentity: () -> Unit,
+	private val clearExperimentAssignments: () -> Unit = {}
 ) {
 	fun rotate() {
 		clearCdpIdentity()
 		storage.resetUser()
+		// Test-group variants are hashed from the user id, so the new visitor is re-assigned.
+		clearExperimentAssignments()
 		storage.readOriginalUserId()
 		storage.readFirstSessionTimeStamp()
 		sessionStorage.updateSession()

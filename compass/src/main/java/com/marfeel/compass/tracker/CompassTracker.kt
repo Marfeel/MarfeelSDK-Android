@@ -375,7 +375,8 @@ internal object CompassTracker : CompassTracking {
             sessionStorage = sessionStorage,
             updateEmitterSession = pingEmitter::updateSessionId,
             clearRfvCache = getRFV::clearCache,
-            clearCdpIdentity = CdpTracker::clearIdentity
+            clearCdpIdentity = CdpTracker::clearIdentity,
+            clearExperimentAssignments = { CompassComponent.experimentManager.clear() }
         )
         UserResetter(
             rotateLocalUser = rotation::rotate,
@@ -611,9 +612,10 @@ internal object CompassTracker : CompassTracking {
 
     /**
      * The one write path for device-owned user vars: persists, then pushes the owned
-     * set to the CDP profile (debounced). A null [value] removes the var.
+     * set to the CDP profile (debounced). A null [value] removes the var. Internal so the
+     * experiment manager records `mrfExperiment_<groupId>` through the same path.
      */
-    private fun writeUserVar(name: String, value: String?) {
+    internal fun writeUserVar(name: String, value: String?) {
         if (value == null) storage.removeUserVar(name) else storage.setUserVar(name, value)
         if (sessionStorage.readCdpEnabled()) CdpTracker.flushUserVars { storage.readUserVars() }
     }
