@@ -381,4 +381,61 @@ class ExperimentEvaluatorTest {
 	}
 
 	// endregion
+
+	// region DeterministicHash (vectors shared with Croupier `DeterministicHashTest` and web `deterministic.test.ts`)
+
+	@Test
+	fun `hash matches croupier legacy vectors`() {
+		assertEquals(3_129_066_013L, DeterministicHash.crc32("seed:user"))
+		assertEquals(0.7285424538422376, DeterministicHash.fraction("seed:user"), 1e-15)
+		assertEquals(72.85424538422376, DeterministicHash.seededPercentage("user", "seed"), 1e-12)
+	}
+
+	@Test
+	fun `hash matches croupier mixed vectors`() {
+		assertEquals(18_576_395L, DeterministicHash.fmix32(DeterministicHash.crc32("seed:user").toInt()).toLong() and 0xFFFFFFFFL)
+		assertEquals(0.0043251540046185255, DeterministicHash.fraction("seed:user", 2), 1e-15)
+		assertEquals(0.9152210694737732, DeterministicHash.fraction("grüpo:üser-🎯", 2), 1e-15)
+	}
+
+	@Test
+	fun `hash version 1 and null keep the legacy hash`() {
+		assertEquals(DeterministicHash.fraction("seed:user"), DeterministicHash.fraction("seed:user", 1))
+	}
+
+	@Test
+	fun `selectVariant matches web legacy vectors`() {
+		val variants = listOf(WeightedVariant("variant-a", 50.0), WeightedVariant("variant-b", 50.0))
+
+		assertEquals("variant-a", DeterministicHash.selectVariant(variants, "user-1", "group-a", null))
+		assertEquals("variant-b", DeterministicHash.selectVariant(variants, "user-2", "group-a", null))
+	}
+
+	@Test
+	fun `selectVariant mixed hash decouples equal-length seeds`() {
+		val uid = "4a4ffef6-8d7e-4484-9fd4-7a3abd4c7bb0"
+		val variants = listOf(WeightedVariant("1", 50.0), WeightedVariant("2", 50.0))
+		val seedA = "eFmyf219Q3qh6OzYsZOdyw"
+		val seedB = "HfdplrMXRIKhGtvBUUZOoQ"
+
+		assertEquals("2", DeterministicHash.selectVariant(variants, uid, seedA, null))
+		assertEquals("2", DeterministicHash.selectVariant(variants, uid, seedB, null))
+		assertEquals("1", DeterministicHash.selectVariant(variants, uid, seedA, 2))
+		assertEquals("2", DeterministicHash.selectVariant(variants, uid, seedB, 2))
+	}
+
+	@Test
+	fun `selectVariant returns null without weighted variants`() {
+		assertNull(DeterministicHash.selectVariant(emptyList(), "user-1", "group-a", null))
+		assertNull(DeterministicHash.selectVariant(listOf(WeightedVariant("variant-a", 0.0)), "user-1", "group-a", null))
+	}
+
+	@Test
+	fun `selectVariant skips zero weight variants`() {
+		val variants = listOf(WeightedVariant("off", 0.0), WeightedVariant("on", 33.3))
+
+		assertEquals("on", DeterministicHash.selectVariant(variants, "user-1", "group-a", 2))
+	}
+
+	// endregion
 }
