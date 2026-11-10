@@ -19,6 +19,12 @@ data class Experience(
 	@Transient
 	internal var contentResolver: ContentResolver? = null
 
+	@Transient
+	internal var experiment: ExperienceExperiment? = null
+
+	var experimentation: Experimentation? = null
+		internal set
+
 	var resolvedContent: String? = null
 		private set
 

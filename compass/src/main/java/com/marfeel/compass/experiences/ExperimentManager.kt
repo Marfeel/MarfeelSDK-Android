@@ -6,18 +6,19 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import com.marfeel.compass.experiences.model.Experience
-import com.marfeel.compass.experiences.model.ExperienceFilterOperator
 import kotlin.random.Random
 
 internal class ExperimentManager(
 	private val preferences: SharedPreferences,
-	private val random: Random = Random.Default
+	private val random: Random = Random.Default,
+	private val userIdProvider: () -> String? = { null },
+	private val siteUserIdProvider: () -> String? = { null },
 ) {
 	private val gson = Gson()
+	private val evaluator = ExperimentEvaluator(random)
 
 	companion object {
 		private const val EXPERIMENTS_KEY = "experiences_experiments"
-		private const val EXPERIMENT_FILTER_PREFIX = "mrf_exp_"
 	}
 
 	fun handleExperimentGroups(groups: JsonObject?) {
@@ -50,23 +51,13 @@ internal class ExperimentManager(
 		saveAssignments(assignments)
 	}
 
-	fun filterByExperiments(experiences: List<Experience>): List<Experience> {
-		val assignments = getAssignments()
-		return experiences.filter { experience ->
-			val filters = experience.filters ?: return@filter true
-			val experimentFilters = filters.filter { it.key.startsWith(EXPERIMENT_FILTER_PREFIX) }
-			if (experimentFilters.isEmpty()) return@filter true
-
-			experimentFilters.all { filter ->
-				val groupId = filter.key.removePrefix(EXPERIMENT_FILTER_PREFIX)
-				val assignedVariant = assignments[groupId] ?: return@all false
-				when (filter.operator) {
-					ExperienceFilterOperator.EQUALS -> assignedVariant in filter.values
-					ExperienceFilterOperator.NOT_EQUALS -> assignedVariant !in filter.values
-					else -> true
-				}
-			}
-		}
+	/**
+	 * Applies the web SDK A/B semantics: keeps winners and the control arm (tagged with
+	 * `experimentation`), drops the losing variants.
+	 */
+	fun evaluate(experiences: List<Experience>): List<Experience> {
+		val userId = listOf(userIdProvider(), siteUserIdProvider()).firstOrNull { !it.isNullOrEmpty() }
+		return evaluator.evaluate(experiences, getAssignments(), userId)
 	}
 
 	fun getAssignments(): Map<String, String> {

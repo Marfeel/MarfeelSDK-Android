@@ -73,15 +73,11 @@ internal object RecirculationTracker : Recirculation {
     private val augmenter by lazy { WholeModuleAugmenter { sessionStorage.readPage()?.url } }
 
     override fun trackEligible(name: String, links: List<RecirculationLink>) {
-        val module = RecirculationModule(name, links)
-        val augmented = augmenter.onEligible(listOf(module))
-        scope.launch { recirculationApiClient.send("elegible", augmented) }
+        trackEligible(name, links, testVersion = null)
     }
 
     override fun trackImpression(name: String, links: List<RecirculationLink>) {
-        val module = RecirculationModule(name, links)
-        val augmented = augmenter.onImpression(module)
-        scope.launch { recirculationApiClient.send("impression", listOf(augmented)) }
+        trackImpression(name, links, testVersion = null)
     }
 
     override fun trackImpression(name: String, link: RecirculationLink) {
@@ -89,7 +85,23 @@ internal object RecirculationTracker : Recirculation {
     }
 
     override fun trackClick(name: String, link: RecirculationLink) {
-        val module = RecirculationModule(name, listOf(link))
+        trackClick(name, link, testVersion = null)
+    }
+
+    internal fun trackEligible(name: String, links: List<RecirculationLink>, testVersion: String?) {
+        val module = RecirculationModule(name, links, testVersion)
+        val augmented = augmenter.onEligible(listOf(module))
+        scope.launch { recirculationApiClient.send("elegible", augmented) }
+    }
+
+    internal fun trackImpression(name: String, links: List<RecirculationLink>, testVersion: String?) {
+        val module = RecirculationModule(name, links, testVersion)
+        val augmented = augmenter.onImpression(module)
+        scope.launch { recirculationApiClient.send("impression", listOf(augmented)) }
+    }
+
+    internal fun trackClick(name: String, link: RecirculationLink, testVersion: String?) {
+        val module = RecirculationModule(name, listOf(link), testVersion)
         scope.launch { recirculationApiClient.send("click", listOf(module)) }
     }
 }

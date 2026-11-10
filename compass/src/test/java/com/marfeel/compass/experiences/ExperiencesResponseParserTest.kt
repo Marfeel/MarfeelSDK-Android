@@ -3,6 +3,7 @@ package com.marfeel.compass.experiences
 import com.marfeel.compass.experiences.model.ExperienceContentType
 import com.marfeel.compass.experiences.model.ExperienceFilterOperator
 import com.marfeel.compass.experiences.model.ExperienceType
+import com.marfeel.compass.experiences.model.ExperimentType
 import com.marfeel.compass.experiences.model.ExperienceFamily
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
@@ -284,5 +285,53 @@ class ExperiencesResponseParserTest {
 		assertEquals(1, filters.size)
 		assertEquals("url", filters[0].key)
 		assertEquals(ExperienceFilterOperator.EQUALS, filters[0].operator)
+	}
+
+	private fun parseSingleAction(action: String): com.marfeel.compass.experiences.model.Experience =
+		parser.parse("""{ "inline": { "actions": { "action": $action } } }""").experiences.first()
+
+	@Test
+	fun `parses standalone REQUEST experiment`() {
+		val experience = parseSingleAction("""{ "id": "IL_1", "experiment": { "type": "REQUEST", "weight": 30 } }""")
+		assertEquals(ExperimentType.REQUEST, experience.experiment?.type)
+		assertEquals(30.0, experience.experiment?.weight)
+		assertNull(experience.experiment?.groupId)
+	}
+
+	@Test
+	fun `parses standalone USER experiment with decimal weight`() {
+		val experience = parseSingleAction("""{ "id": "IL_1~v1", "experiment": { "type": "USER", "weight": 12.5 } }""")
+		assertEquals(ExperimentType.USER, experience.experiment?.type)
+		assertEquals(12.5, experience.experiment?.weight)
+	}
+
+	@Test
+	fun `standalone experiment does not add experiment filter`() {
+		val experience = parseSingleAction("""{ "id": "IL_1", "experiment": { "type": "REQUEST", "weight": 30 } }""")
+		assertNull(experience.filters)
+	}
+
+	@Test
+	fun `parses test group experiment and keeps experiment filter`() {
+		val experience = parseSingleAction(
+			"""{ "id": "IL_1", "experiment": { "type": "GROUP", "groupId": "g1", "variantIds": ["va", "vb"] } }"""
+		)
+		assertEquals(ExperimentType.TEST_GROUP, experience.experiment?.type)
+		assertEquals("g1", experience.experiment?.groupId)
+		assertEquals(listOf("va", "vb"), experience.experiment?.variantIds)
+		assertEquals("mrf_exp_g1", experience.filters?.first()?.key)
+	}
+
+	@Test
+	fun `unknown experiment type is ignored`() {
+		val experience = parseSingleAction("""{ "id": "IL_1", "experiment": { "type": "SOMETHING", "weight": 30 } }""")
+		assertNull(experience.experiment)
+	}
+
+	@Test
+	fun `missing experiment is null`() {
+		val experience = parseSingleAction("""{ "id": "IL_1" }""")
+		assertNull(experience.experiment)
+		assertNull(experience.experimentation)
 	}
 }

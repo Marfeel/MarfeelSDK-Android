@@ -90,7 +90,7 @@ class ExperiencesTrackerTest {
 		frequencyCapManager.applyResponseConfig(result.frequencyCapConfig)
 		experimentManager.handleExperimentGroups(result.experimentGroups)
 
-		val filtered = experimentManager.filterByExperiments(result.experiences)
+		val filtered = experimentManager.evaluate(result.experiences)
 		assertEquals(result.experiences.size, filtered.size)
 	}
 
@@ -214,7 +214,7 @@ class ExperiencesTrackerTest {
 		frequencyCapManager.applyResponseConfig(result.frequencyCapConfig)
 		experimentManager.handleExperimentGroups(result.experimentGroups)
 
-		val filtered = experimentManager.filterByExperiments(result.experiences)
+		val filtered = experimentManager.evaluate(result.experiences)
 		assertTrue(filtered.isNotEmpty())
 	}
 

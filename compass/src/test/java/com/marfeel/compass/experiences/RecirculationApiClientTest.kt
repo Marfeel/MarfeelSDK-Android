@@ -1,5 +1,7 @@
 package com.marfeel.compass.experiences
 
+import com.google.gson.JsonArray
+import com.google.gson.JsonParser
 import com.marfeel.compass.core.model.compass.Page
 import com.marfeel.compass.core.model.compass.Session
 import com.marfeel.compass.core.model.compass.UserType
@@ -10,6 +12,7 @@ import com.marfeel.compass.storage.Storage
 import io.mockk.every
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
@@ -224,5 +227,41 @@ class RecirculationApiClientTest {
 		client.send("elegible", listOf(makeModule(links = emptyList())))
 		val body = decodedBody()
 		assertTrue(body.contains("\"e\":[]"))
+	}
+
+	@Test
+	fun `omits test version when module has none`() {
+		server.enqueue(MockResponse())
+		client.send("elegible", listOf(makeModule()))
+		val body = decodedBody()
+		assertFalse(body.contains("\"tv\""))
+		assertFalse(body.contains("\"meta\""))
+	}
+
+	@Test
+	fun `adds test version and meta tv to every link`() {
+		server.enqueue(MockResponse())
+		client.send("elegible", listOf(RecirculationModule(
+			name = "IL_1",
+			links = listOf(
+				RecirculationLink(url = "https://a.com/1", position = 0),
+				RecirculationLink(url = "https://a.com/2", position = 1)
+			),
+			testVersion = "control"
+		)))
+
+		val links = modulesParam()[0].asJsonObject.getAsJsonArray("e")
+		assertEquals(2, links.size())
+		links.forEach { element ->
+			val link = element.asJsonObject
+			assertEquals("control", link.get("tv").asString)
+			assertEquals("control", link.getAsJsonObject("meta").get("tv").asString)
+		}
+	}
+
+	private fun modulesParam(): JsonArray {
+		val rawBody = server.takeRequest().body.readUtf8()
+		val encoded = rawBody.split("&").first { it.startsWith("m=") }.removePrefix("m=")
+		return JsonParser.parseString(URLDecoder.decode(encoded, "UTF-8")).asJsonArray
 	}
 }

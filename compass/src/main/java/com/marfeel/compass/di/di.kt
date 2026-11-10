@@ -111,7 +111,11 @@ internal object CompassComponent : CompassServiceLocator {
     override val experimentManager: ExperimentManager by lazy {
         val context = this.context
         checkNotNull(context)
-        ExperimentManager(context.getSharedPreferences("CompassExperiments", Context.MODE_PRIVATE))
+        ExperimentManager(
+            preferences = context.getSharedPreferences("CompassExperiments", Context.MODE_PRIVATE),
+            userIdProvider = { storage.readOriginalUserId() },
+            siteUserIdProvider = { storage.readRegisteredUserId() },
+        )
     }
     override val networkInfoProvider: NetworkInfoProvider by lazy {
         val context = this.context

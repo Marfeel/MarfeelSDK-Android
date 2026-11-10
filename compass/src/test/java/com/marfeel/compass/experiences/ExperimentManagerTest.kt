@@ -4,12 +4,15 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.marfeel.compass.experiences.model.Experience
 import com.marfeel.compass.experiences.model.ExperienceContentType
-import com.marfeel.compass.experiences.model.ExperienceFilter
-import com.marfeel.compass.experiences.model.ExperienceFilterOperator
+import com.marfeel.compass.experiences.model.ExperienceExperiment
+import com.marfeel.compass.experiences.model.ExperienceSelector
 import com.marfeel.compass.experiences.model.ExperienceType
+import com.marfeel.compass.experiences.model.ExperimentType
+import com.marfeel.compass.experiences.model.Experimentation
 import com.marfeel.compass.storage.MockSharedPreference
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
+import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -48,7 +51,8 @@ class ExperimentManagerTest {
 
 	private fun makeExperience(
 		id: String,
-		filters: List<ExperienceFilter>? = null
+		experiment: ExperienceExperiment? = null,
+		selector: String? = null,
 	): Experience = Experience(
 		id = id,
 		name = id,
@@ -58,10 +62,20 @@ class ExperimentManagerTest {
 		contentType = ExperienceContentType.UNKNOWN,
 		features = null,
 		strategy = null,
-		selectors = null,
-		filters = filters,
+		selectors = selector?.let { listOf(ExperienceSelector(it, "")) },
+		filters = null,
 		rawJson = emptyMap()
-	)
+	).also { it.experiment = experiment }
+
+	private fun testGroup(variantId: String) =
+		ExperienceExperiment(ExperimentType.TEST_GROUP, null, "testGroup", listOf(variantId))
+
+	private fun user(weight: Double) = ExperienceExperiment(ExperimentType.USER, weight, null, null)
+
+	private object FailingRandom : Random() {
+		override fun nextBits(bitCount: Int): Int = throw AssertionError("random must not be used")
+		override fun nextDouble(): Double = throw AssertionError("random must not be used")
+	}
 
 	@Test
 	fun `handleExperimentGroups assigns a variant`() {
@@ -98,76 +112,87 @@ class ExperimentManagerTest {
 	}
 
 	@Test
-	fun `filterByExperiments keeps experience with matching filter`() {
-		val groups = makeExperimentGroups()
-		manager.handleExperimentGroups(groups)
-		val assignedVariant = manager.getAssignments()["testGroup"]!!
+	fun `evaluate keeps assigned variant and drops loser on same slot`() {
+		manager.setAssignment("testGroup", "variant_a")
 
-		val experience = makeExperience(
-			"exp1",
-			filters = listOf(ExperienceFilter("mrf_exp_testGroup", ExperienceFilterOperator.EQUALS, listOf(assignedVariant)))
-		)
-		val filtered = manager.filterByExperiments(listOf(experience))
-		assertEquals(1, filtered.size)
+		val result = manager.evaluate(listOf(
+			makeExperience("exp_a", testGroup("variant_a"), "#slot"),
+			makeExperience("exp_b", testGroup("variant_b"), "#slot"),
+		))
+
+		assertEquals(listOf("exp_a"), result.map { it.id })
+		assertEquals(Experimentation(isControl = false, name = "variant_a"), result[0].experimentation)
 	}
 
 	@Test
-	fun `filterByExperiments drops experience with non-matching filter`() {
-		val groups = makeExperimentGroups()
-		manager.handleExperimentGroups(groups)
+	fun `evaluate marks loser on other slot as control`() {
+		manager.setAssignment("testGroup", "variant_a")
 
-		val experience = makeExperience(
-			"exp1",
-			filters = listOf(ExperienceFilter("mrf_exp_testGroup", ExperienceFilterOperator.EQUALS, listOf("nonexistent_variant")))
-		)
-		val filtered = manager.filterByExperiments(listOf(experience))
-		assertEquals(0, filtered.size)
+		val result = manager.evaluate(listOf(
+			makeExperience("exp_a", testGroup("variant_a"), "#slot-1"),
+			makeExperience("exp_b", testGroup("variant_b"), "#slot-2"),
+		))
+
+		assertEquals(listOf("exp_a", "exp_b"), result.map { it.id })
+		assertEquals(Experimentation(isControl = true, name = "variant_a"), result[1].experimentation)
 	}
 
 	@Test
-	fun `filterByExperiments keeps experience with no filters`() {
-		val experience = makeExperience("exp1")
-		val filtered = manager.filterByExperiments(listOf(experience))
-		assertEquals(1, filtered.size)
+	fun `evaluate uses assignments from handleExperimentGroups`() {
+		manager.handleExperimentGroups(makeExperimentGroups())
+		val assigned = manager.getAssignments()["testGroup"]
+
+		val result = manager.evaluate(listOf(
+			makeExperience("exp_a", testGroup("variant_a"), "#slot"),
+			makeExperience("exp_b", testGroup("variant_b"), "#slot"),
+		))
+
+		assertEquals(1, result.size)
+		assertEquals(assigned, result[0].experimentation?.name)
 	}
 
 	@Test
-	fun `filterByExperiments keeps experience with non-experiment filters`() {
-		val experience = makeExperience(
-			"exp1",
-			filters = listOf(ExperienceFilter("url", ExperienceFilterOperator.EQUALS, listOf("something.com")))
-		)
-		val filtered = manager.filterByExperiments(listOf(experience))
-		assertEquals(1, filtered.size)
+	fun `evaluate keeps test group unmarked without assignment`() {
+		val result = manager.evaluate(listOf(
+			makeExperience("exp_a", testGroup("variant_a"), "#slot"),
+			makeExperience("exp_b", testGroup("variant_b"), "#slot"),
+		))
+
+		assertEquals(2, result.size)
+		assertTrue(result.all { it.experimentation == null })
 	}
 
 	@Test
-	fun `filterByExperiments keeps experience with NOT_EQUALS filter when variant differs`() {
-		val groups = makeExperimentGroups()
-		manager.handleExperimentGroups(groups)
-		val assignedVariant = manager.getAssignments()["testGroup"]!!
-		val otherVariant = if (assignedVariant == "variant_a") "variant_b" else "variant_a"
-
-		val experience = makeExperience(
-			"exp1",
-			filters = listOf(ExperienceFilter("mrf_exp_testGroup", ExperienceFilterOperator.NOT_EQUALS, listOf(otherVariant)))
-		)
-		val filtered = manager.filterByExperiments(listOf(experience))
-		assertEquals(1, filtered.size)
+	fun `evaluate keeps experience without experiment`() {
+		val result = manager.evaluate(listOf(makeExperience("exp1")))
+		assertEquals(1, result.size)
+		assertNull(result[0].experimentation)
 	}
 
 	@Test
-	fun `filterByExperiments drops experience with NOT_EQUALS filter when variant matches`() {
-		val groups = makeExperimentGroups()
-		manager.handleExperimentGroups(groups)
-		val assignedVariant = manager.getAssignments()["testGroup"]!!
+	fun `evaluate hashes user experiments with user id`() {
+		val manager = ExperimentManager(prefs, FailingRandom, { "user-1" }, { "site-user" })
+		val percentage = ExperimentEvaluator.seededPercentage("user-1", "A")
 
-		val experience = makeExperience(
-			"exp1",
-			filters = listOf(ExperienceFilter("mrf_exp_testGroup", ExperienceFilterOperator.NOT_EQUALS, listOf(assignedVariant)))
-		)
-		val filtered = manager.filterByExperiments(listOf(experience))
-		assertEquals(0, filtered.size)
+		val result = manager.evaluate(listOf(
+			makeExperience("A", user(50.0)),
+			makeExperience("A~v1", user(50.0)),
+		))
+
+		assertEquals(listOf(if (percentage <= 50) "A" else "A~v1"), result.map { it.id })
+	}
+
+	@Test
+	fun `evaluate falls back to site user id when user id is empty`() {
+		val manager = ExperimentManager(prefs, FailingRandom, { "" }, { "site-user" })
+		val percentage = ExperimentEvaluator.seededPercentage("site-user", "A")
+
+		val result = manager.evaluate(listOf(
+			makeExperience("A", user(50.0)),
+			makeExperience("A~v1", user(50.0)),
+		))
+
+		assertEquals(listOf(if (percentage <= 50) "A" else "A~v1"), result.map { it.id })
 	}
 
 	@Test

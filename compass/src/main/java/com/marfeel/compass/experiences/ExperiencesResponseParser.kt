@@ -6,6 +6,8 @@ import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import com.marfeel.compass.experiences.model.Experience
 import com.marfeel.compass.experiences.model.ExperienceContentType
+import com.marfeel.compass.experiences.model.ExperienceExperiment
+import com.marfeel.compass.experiences.model.ExperimentType
 import com.marfeel.compass.experiences.model.ExperienceFilter
 import com.marfeel.compass.experiences.model.ExperienceFilterOperator
 import com.marfeel.compass.experiences.model.ExperienceSelector
@@ -88,7 +90,10 @@ internal class ExperiencesResponseParser(
 			filters = parseFilters(action),
 			rawJson = rawJson,
 		family = family,
-		).also { it.contentResolver = contentResolver }
+		).also {
+			it.contentResolver = contentResolver
+			it.experiment = parseExperiment(action.get("experiment"))
+		}
 	}
 
 	private fun parseSelectors(action: JsonObject): List<ExperienceSelector>? {
@@ -169,6 +174,21 @@ internal class ExperiencesResponseParser(
 			key = "mrf_exp_$groupId",
 			operator = ExperienceFilterOperator.EQUALS,
 			values = variantIds,
+		)
+	}
+
+	private fun parseExperiment(element: JsonElement?): ExperienceExperiment? {
+		if (element == null || !element.isJsonObject) return null
+		val experiment = element.asJsonObject
+		val typeKey = experiment.get("type")?.takeIf { it.isJsonPrimitive }?.asString ?: return null
+		val type = ExperimentType.fromKey(typeKey) ?: return null
+		return ExperienceExperiment(
+			type = type,
+			weight = experiment.get("weight")?.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isNumber }?.asDouble,
+			groupId = experiment.get("groupId")?.takeIf { it.isJsonPrimitive }?.asString,
+			variantIds = experiment.get("variantIds")?.takeIf { it.isJsonArray }?.asJsonArray?.mapNotNull { variant ->
+				variant.takeIf { it.isJsonPrimitive }?.asString
+			},
 		)
 	}
 
