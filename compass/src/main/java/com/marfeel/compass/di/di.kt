@@ -118,6 +118,7 @@ internal object CompassComponent : CompassServiceLocator {
             siteUserIdProvider = { storage.readRegisteredUserId() },
             readUserVars = storage::readUserVars,
             writeUserVar = { name, value -> CompassTracker.writeUserVar(name, value) },
+            removeUserVar = { name -> CompassTracker.writeUserVar(name, null) },
         )
     }
     override val networkInfoProvider: NetworkInfoProvider by lazy {

@@ -15,10 +15,14 @@ internal class ExperimentManager(
 	private val siteUserIdProvider: () -> String? = { null },
 	private val readUserVars: () -> Map<String, String> = { emptyMap() },
 	private val writeUserVar: (name: String, value: String) -> Unit = { _, _ -> },
+	private val removeUserVar: (name: String) -> Unit = { _ -> },
 ) {
 	private val gson = Gson()
 	private val evaluator = ExperimentEvaluator(random)
 	private val lock = Any()
+
+	// User-var groups the reader is out of, as of the last response.
+	private var outOfTestGroups: Set<String> = emptySet()
 
 	companion object {
 		private const val EXPERIMENTS_KEY = "experiences_experiments"
@@ -32,19 +36,33 @@ internal class ExperimentManager(
 	 * already in a running test are not reshuffled; groups missing from the response are
 	 * dropped. Every assignment is mirrored to the `mrfExperiment_<groupId>` user var so
 	 * reports see the arm the reader actually got.
+	 *
+	 * A group with `source: USER_VAR` takes its variant from the user var the client sets,
+	 * read on every fetch so the reader follows its current value (no hash, no weights,
+	 * no kept assignment). A missing or unmapped value without a fallback variant takes the
+	 * reader out of the test: no assignment, no user var, nothing served from the group.
 	 */
 	fun handleExperimentGroups(groups: JsonObject?) {
 		if (groups == null) return
 		val userId = currentUserId()
+		val userVars = readUserVars()
 
-		val assignments = synchronized(lock) {
+		val (assignments, outOfTest) = synchronized(lock) {
 			val stored = loadAssignments()
 			val next = mutableMapOf<String, String>()
+			val dropped = mutableSetOf<String>()
 
 			for ((groupId, groupValue) in groups.entrySet()) {
 				if (!groupValue.isJsonObject) continue
 				val groupObj = groupValue.asJsonObject
 				val rawVariants = groupObj.get("variants")?.takeIf { it.isJsonArray }?.asJsonArray ?: continue
+
+				if (UserVarGroup.isUserVar(groupObj)) {
+					val variantId = UserVarGroup.resolveVariant(groupObj, userVars)
+					if (variantId != null) next[groupId] = variantId else dropped.add(groupId)
+					continue
+				}
+
 				val variants = rawVariants.mapNotNull(::parseVariant)
 
 				val kept = stored[groupId]
@@ -62,14 +80,18 @@ internal class ExperimentManager(
 			}
 
 			saveAssignments(next)
-			next
+			outOfTestGroups = dropped
+			next to dropped
 		}
 
-		syncUserVars(assignments)
+		syncUserVars(assignments, userVars, outOfTest)
 	}
 
-	fun evaluate(experiences: List<Experience>): List<Experience> =
-		evaluator.evaluate(experiences, getAssignments(), currentUserId())
+	fun evaluate(experiences: List<Experience>): List<Experience> {
+		val (assignments, outOfTest) = synchronized(lock) { loadAssignments() to outOfTestGroups }
+
+		return evaluator.evaluate(experiences, assignments, currentUserId(), outOfTest)
+	}
 
 	fun getAssignments(): Map<String, String> = synchronized(lock) { loadAssignments() }
 
@@ -84,13 +106,15 @@ internal class ExperimentManager(
 			val assignments = loadAssignments().toMutableMap()
 			assignments[groupId] = variantId
 			saveAssignments(assignments)
+			outOfTestGroups = outOfTestGroups - groupId
 		}
-		syncUserVars(mapOf(groupId to variantId))
+		syncUserVars(mapOf(groupId to variantId), readUserVars())
 	}
 
 	fun clear() {
 		synchronized(lock) {
 			preferences.edit { remove(EXPERIMENTS_KEY) }
+			outOfTestGroups = emptySet()
 		}
 	}
 
@@ -136,14 +160,23 @@ internal class ExperimentManager(
 	private fun JsonObject.stringOrNull(key: String): String? =
 		get(key)?.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isString }?.asString
 
-	/** Writes only what changed, so a fetch does not re-push the user vars to the CDP. */
-	private fun syncUserVars(assignments: Map<String, String>) {
-		if (assignments.isEmpty()) return
-		val userVars = readUserVars()
-
+	/**
+	 * Writes only what changed, so a fetch does not re-push the user vars to the CDP.
+	 * A reader who drops out of a user-var group loses the variant recorded earlier.
+	 */
+	private fun syncUserVars(
+		assignments: Map<String, String>,
+		userVars: Map<String, String>,
+		outOfTest: Set<String> = emptySet(),
+	) {
 		for ((groupId, variantId) in assignments) {
 			val name = "$USER_VAR_PREFIX$groupId"
 			if (userVars[name] != variantId) writeUserVar(name, variantId)
+		}
+
+		for (groupId in outOfTest) {
+			val name = "$USER_VAR_PREFIX$groupId"
+			if (userVars.containsKey(name)) removeUserVar(name)
 		}
 	}
 

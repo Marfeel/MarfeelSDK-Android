@@ -24,6 +24,7 @@ internal class ExperimentEvaluator(
 		val winners: Set<Experience>,
 		val variantId: String?,
 		val failOpen: Boolean,
+		val outOfTest: Boolean = false,
 	)
 
 	private class Evaluation(
@@ -32,14 +33,20 @@ internal class ExperimentEvaluator(
 		val groupSize: Int,
 		val isWinner: Boolean,
 		val name: String,
+		val outOfTest: Boolean,
 	)
 
+	/**
+	 * @param outOfTest test groups the reader is not part of: none of their members is
+	 * served or tagged. Unlike a group without assignment, which fails open.
+	 */
 	fun evaluate(
 		experiences: List<Experience>,
 		assignments: Map<String, String>,
 		userId: String?,
+		outOfTest: Set<String> = emptySet(),
 	): List<Experience> {
-		val evaluations = evaluateExperiences(experiences, assignments, userId)
+		val evaluations = evaluateExperiences(experiences, assignments, userId, outOfTest)
 		val controlIds = identitySet().apply {
 			addAll(testGroupControlIds(experiences, evaluations))
 			addAll(standaloneControlIds(experiences, evaluations))
@@ -47,6 +54,8 @@ internal class ExperimentEvaluator(
 
 		return experiences.mapNotNull { experience ->
 			val evaluation = evaluations[experience] ?: return@mapNotNull experience
+
+			if (evaluation.outOfTest) return@mapNotNull null
 
 			if (evaluation.isWinner) {
 				experience.experimentation = Experimentation(isControl = false, name = evaluation.name)
@@ -69,13 +78,14 @@ internal class ExperimentEvaluator(
 		experiences: List<Experience>,
 		assignments: Map<String, String>,
 		userId: String?,
+		outOfTest: Set<String>,
 	): Map<Experience, Evaluation> {
 		// One draw per evaluation shared by every REQUEST group, taken only when needed.
 		val request by lazy(LazyThreadSafetyMode.NONE) { randomPercentage() }
 		val evaluations = IdentityHashMap<Experience, Evaluation>()
 
 		groupExperiences(experiences).forEach { group ->
-			val outcome = pickOutcome(group, assignments, userId) { request }
+			val outcome = pickOutcome(group, assignments, userId, outOfTest) { request }
 			if (outcome.failOpen) return@forEach
 
 			group.members.forEach { member ->
@@ -86,6 +96,7 @@ internal class ExperimentEvaluator(
 					groupSize = group.members.size,
 					isWinner = isWinner,
 					name = resolveName(member, group, isWinner, outcome.variantId),
+					outOfTest = outcome.outOfTest,
 				)
 			}
 		}
@@ -116,14 +127,23 @@ internal class ExperimentEvaluator(
 		group: Group,
 		assignments: Map<String, String>,
 		userId: String?,
+		outOfTest: Set<String>,
 		request: () -> Double,
 	): Outcome = when (group.type) {
-		ExperimentType.TEST_GROUP -> pickTestGroupOutcome(group, assignments)
+		ExperimentType.TEST_GROUP -> pickTestGroupOutcome(group, assignments, outOfTest)
 		ExperimentType.REQUEST -> pickStandaloneOutcome(group, request())
 		ExperimentType.USER -> pickStandaloneOutcome(group, userRandom(group, userId))
 	}
 
-	private fun pickTestGroupOutcome(group: Group, assignments: Map<String, String>): Outcome {
+	private fun pickTestGroupOutcome(
+		group: Group,
+		assignments: Map<String, String>,
+		outOfTest: Set<String>,
+	): Outcome {
+		if (group.groupKey in outOfTest) {
+			return Outcome(emptySet(), null, failOpen = false, outOfTest = true)
+		}
+
 		val variantId = assignments[group.groupKey]
 			?: return Outcome(emptySet(), null, failOpen = true)
 
