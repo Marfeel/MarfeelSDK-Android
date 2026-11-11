@@ -438,4 +438,54 @@ class ExperimentEvaluatorTest {
 	}
 
 	// endregion
+
+	// region Out of test
+
+	@Test
+	fun `out of test group drops every member and keeps no control`() {
+		val result = evaluator(0.5).evaluate(
+			listOf(
+				makeExperience("X", testGroup("g", "va"), selector = "#s1"),
+				makeExperience("Y", testGroup("g", "vb"), selector = "#s2"),
+			),
+			emptyMap(),
+			null,
+			outOfTest = setOf("g"),
+		)
+
+		assertTrue(result.isEmpty())
+	}
+
+	@Test
+	fun `out of test wins over a stored assignment`() {
+		val result = evaluator(0.5).evaluate(
+			listOf(makeExperience("X", testGroup("g", "va"), selector = "#s1")),
+			mapOf("g" to "va"),
+			null,
+			outOfTest = setOf("g"),
+		)
+
+		assertTrue(result.isEmpty())
+	}
+
+	@Test
+	fun `out of test group leaves other groups and plain experiences alone`() {
+		val result = evaluator(0.5).evaluate(
+			listOf(
+				makeExperience("X", testGroup("g", "va"), selector = "#s1"),
+				makeExperience("Y", testGroup("h", "va"), selector = "#s1"),
+				makeExperience("Z", testGroup("open", "va"), selector = "#s1"),
+				makeExperience("plain", null),
+			),
+			mapOf("h" to "va"),
+			null,
+			outOfTest = setOf("g"),
+		)
+
+		assertEquals(listOf("Y", "Z", "plain"), result.ids())
+		assertEquals(Experimentation(isControl = false, name = "va"), result[0].experimentation)
+		assertNull(result[1].experimentation)
+	}
+
+	// endregion
 }

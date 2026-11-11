@@ -23,6 +23,7 @@ class ExperimentManagerTest {
 	private lateinit var manager: ExperimentManager
 	private val userVars = mutableMapOf<String, String>()
 	private val userVarWrites = mutableListOf<Pair<String, String>>()
+	private val userVarRemovals = mutableListOf<String>()
 
 	private val seedA = "eFmyf219Q3qh6OzYsZOdyw"
 	private val mixedUid = "4a4ffef6-8d7e-4484-9fd4-7a3abd4c7bb0"
@@ -32,6 +33,7 @@ class ExperimentManagerTest {
 		prefs = MockSharedPreference()
 		userVars.clear()
 		userVarWrites.clear()
+		userVarRemovals.clear()
 		manager = makeManager()
 	}
 
@@ -49,6 +51,49 @@ class ExperimentManagerTest {
 			userVars[name] = value
 			userVarWrites.add(name to value)
 		},
+		removeUserVar = { name ->
+			userVars.remove(name)
+			userVarRemovals.add(name)
+		},
+	)
+
+	/** A `testGroup` assigned by the `plan` user var. Variants carry no weight, as the backend allows. */
+	private fun makeUserVarGroups(
+		mapping: List<Pair<String, String>> = listOf(
+			"premium" to "variant_a",
+			"free" to "variant_b",
+			"trial" to "variant_b",
+		),
+		fallback: String? = null,
+	): JsonObject {
+		val group = JsonObject()
+		group.addProperty("id", "testGroup")
+		group.addProperty("name", "Test Group")
+		group.addProperty("source", "USER_VAR")
+		group.addProperty("userVarKey", "plan")
+		group.add("userVarMapping", JsonArray().apply {
+			mapping.forEach { (value, variantId) ->
+				add(JsonObject().apply {
+					addProperty("value", value)
+					addProperty("variantId", variantId)
+				})
+			}
+		})
+		fallback?.let { group.addProperty("fallbackVariantId", it) }
+		group.add("variants", JsonArray().apply {
+			listOf("variant_a", "variant_b").forEach { variantId ->
+				add(JsonObject().apply {
+					addProperty("id", variantId)
+					addProperty("name", variantId)
+				})
+			}
+		})
+		return JsonObject().apply { add("testGroup", group) }
+	}
+
+	private fun testGroupExperiences() = listOf(
+		makeExperience("exp_a", testGroup("variant_a"), selector = "#a"),
+		makeExperience("exp_b", testGroup("variant_b"), selector = "#b"),
 	)
 
 	private fun makeExperimentGroups(): JsonObject {
@@ -456,6 +501,148 @@ class ExperimentManagerTest {
 		manager.handleExperimentGroups(makeExperimentGroups())
 		val entries = manager.getTargetingEntries()
 		assertNotNull(entries["experiment::testGroup"])
+	}
+
+	// endregion
+
+	// region User-var groups
+
+	@Test
+	fun `user var group takes the variant mapped to the user var`() {
+		val manager = makeManager(userId = mixedUid, random = FailingRandom)
+		userVars["plan"] = "trial"
+
+		manager.handleExperimentGroups(makeUserVarGroups())
+
+		assertEquals(mapOf("testGroup" to "variant_b"), manager.getAssignments())
+		assertEquals("variant_b", userVars["mrfExperiment_testGroup"])
+	}
+
+	@Test
+	fun `user var group follows the current value over the stored assignment`() {
+		userVars["plan"] = "premium"
+		manager.handleExperimentGroups(makeUserVarGroups())
+		userVars["plan"] = "free"
+
+		manager.handleExperimentGroups(makeUserVarGroups())
+
+		assertEquals("variant_b", manager.getAssignments()["testGroup"])
+		assertEquals("variant_b", userVars["mrfExperiment_testGroup"])
+	}
+
+	@Test
+	fun `user var group uses the fallback variant for an unmapped value`() {
+		userVars["plan"] = "enterprise"
+
+		manager.handleExperimentGroups(makeUserVarGroups(fallback = "variant_a"))
+
+		assertEquals("variant_a", manager.getAssignments()["testGroup"])
+	}
+
+	@Test
+	fun `user var group uses the fallback variant when the user var is missing`() {
+		manager.handleExperimentGroups(makeUserVarGroups(fallback = "variant_b"))
+
+		assertEquals("variant_b", manager.getAssignments()["testGroup"])
+	}
+
+	@Test
+	fun `user var group without value and fallback leaves the reader out of the test`() {
+		manager.handleExperimentGroups(makeUserVarGroups())
+
+		assertTrue(manager.getAssignments().isEmpty())
+		assertTrue(manager.getTargetingEntries().isEmpty())
+		assertTrue(userVarWrites.isEmpty())
+	}
+
+	@Test
+	fun `user var group compares values exactly`() {
+		userVars["plan"] = "Premium"
+
+		manager.handleExperimentGroups(makeUserVarGroups())
+
+		assertTrue(manager.getAssignments().isEmpty())
+	}
+
+	@Test
+	fun `user var group ignores a mapping to a variant that is not in the group`() {
+		userVars["plan"] = "premium"
+
+		manager.handleExperimentGroups(makeUserVarGroups(mapping = listOf("premium" to "variant_z")))
+
+		assertTrue(manager.getAssignments().isEmpty())
+	}
+
+	@Test
+	fun `user var group removes the recorded variant when the reader drops out`() {
+		userVars["plan"] = "premium"
+		manager.handleExperimentGroups(makeUserVarGroups())
+		userVars.remove("plan")
+
+		manager.handleExperimentGroups(makeUserVarGroups())
+
+		assertNull(userVars["mrfExperiment_testGroup"])
+		assertEquals(listOf("mrfExperiment_testGroup"), userVarRemovals)
+	}
+
+	@Test
+	fun `user var group does not remove a user var that was never recorded`() {
+		manager.handleExperimentGroups(makeUserVarGroups())
+
+		assertTrue(userVarRemovals.isEmpty())
+	}
+
+	@Test
+	fun `explicit MARFEEL source keeps the hash assignment`() {
+		val manager = makeManager(userId = mixedUid, random = FailingRandom)
+		userVars["plan"] = "premium"
+		val groups = makeExperimentGroups()
+		groups.getAsJsonObject("testGroup").addProperty("source", "MARFEEL")
+
+		manager.handleExperimentGroups(groups)
+
+		assertEquals(hashedTestGroupVariant(mixedUid), manager.getAssignments()["testGroup"])
+	}
+
+	@Test
+	fun `evaluate serves the variant mapped to the user var`() {
+		userVars["plan"] = "premium"
+		manager.handleExperimentGroups(makeUserVarGroups())
+
+		val result = manager.evaluate(testGroupExperiences())
+
+		assertEquals(listOf("exp_a", "exp_b"), result.map { it.id })
+		assertEquals(Experimentation(isControl = false, name = "variant_a"), result[0].experimentation)
+		assertEquals(Experimentation(isControl = true, name = "variant_a"), result[1].experimentation)
+	}
+
+	@Test
+	fun `evaluate drops every experience of a group the reader is out of`() {
+		manager.handleExperimentGroups(makeUserVarGroups())
+
+		val result = manager.evaluate(testGroupExperiences() + makeExperience("plain"))
+
+		assertEquals(listOf("plain"), result.map { it.id })
+	}
+
+	@Test
+	fun `evaluate serves the group again once the user var is set`() {
+		manager.handleExperimentGroups(makeUserVarGroups())
+		userVars["plan"] = "free"
+		manager.handleExperimentGroups(makeUserVarGroups())
+
+		val result = manager.evaluate(testGroupExperiences())
+
+		assertEquals(Experimentation(isControl = false, name = "variant_b"), result[1].experimentation)
+	}
+
+	@Test
+	fun `setAssignment puts the reader back in a group they were out of`() {
+		manager.handleExperimentGroups(makeUserVarGroups())
+
+		manager.setAssignment("testGroup", "variant_a")
+
+		assertEquals(2, manager.evaluate(testGroupExperiences()).size)
 	}
 
 	// endregion
