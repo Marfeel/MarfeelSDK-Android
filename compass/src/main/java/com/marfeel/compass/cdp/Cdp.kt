@@ -300,7 +300,16 @@ internal object CdpTracker : Cdp {
 	}
 
 	internal fun onSiteUserId(userId: String) {
-		coroutineScope.launch { cdpManager.linkIdentity(CdpIdentityTypes.REGISTERED_USER_ID, userId, isDeterministic = true) }
+		coroutineScope.launch { cdpManager.linkSiteUserId(userId) }
+	}
+
+	/**
+	 * Link the stored site user id again: called when the CDP starts, at each new session
+	 * and on a consent change. [readSiteUserId] is read when the link runs, so a
+	 * `resetUser()` in between leaves nothing to link.
+	 */
+	internal fun relinkSiteUserId(readSiteUserId: () -> String?) {
+		coroutineScope.launch { cdpManager.relinkSiteUserId(readSiteUserId()) }
 	}
 
 	/**

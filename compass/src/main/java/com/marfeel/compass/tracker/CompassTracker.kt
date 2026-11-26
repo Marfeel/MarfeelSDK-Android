@@ -404,6 +404,13 @@ internal object CompassTracker : CompassTracking {
 
         configureSession()
         pingEmitter.onResumeCallback = ::configureSession
+
+        if (enableCdp) relinkSiteUserId()
+    }
+
+    /** Links the stored login to the CDP profile again; the CDP does it at most once per session. */
+    private fun relinkSiteUserId() {
+        CdpTracker.relinkSiteUserId { storage.readRegisteredUserId() }
     }
 
     private fun configureSession() {
@@ -423,6 +430,7 @@ internal object CompassTracker : CompassTracking {
 
         if (startedNewSession && sessionStorage.readCdpEnabled()) {
             CdpTracker.onSessionStart()
+            relinkSiteUserId()
         }
     }
 
@@ -682,6 +690,7 @@ internal object CompassTracker : CompassTracking {
     override fun setUserConsent(hasConsent: Boolean) {
         storage.updateUserConsent(hasConsent)
         CdpTracker.onConsentChanged()
+        if (sessionStorage.readCdpEnabled()) relinkSiteUserId()
     }
 
     override fun getUserId(): String {

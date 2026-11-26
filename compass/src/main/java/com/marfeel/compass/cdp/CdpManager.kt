@@ -39,6 +39,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.TimeZone
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * The CDP unit: identity resolution + linking, the Server Segments / Server
@@ -92,6 +93,9 @@ internal class CdpManager(
 
 	/** The generation the current resolve memo belongs to; a reset invalidates it under the lock. */
 	private var resolvedGeneration = 0
+
+	/** The last site user id link started, so [relinkSiteUserId] links once per session. */
+	private val siteUserIdLink = AtomicReference<SiteUserIdLink?>(null)
 
 	@Volatile
 	private var identityResolved = false
@@ -257,6 +261,33 @@ internal class CdpManager(
 		syncServerSegments(result.segments)
 		syncServerProperties(result.properties)
 		markIdentityFresh(result)
+	}
+
+	/** `setSiteUserId`: always links, so the host can repeat the call to retry. */
+	suspend fun linkSiteUserId(userId: String) {
+		val link = siteUserIdLinkFor(userId) ?: return
+		siteUserIdLink.set(link)
+		linkIdentity(CdpIdentityTypes.REGISTERED_USER_ID, userId, isDeterministic = true)
+	}
+
+	/**
+	 * Links the stored site user id again, at most once per session (and per process,
+	 * the memo is in memory). `setSiteUserId` alone leaves a reader anonymous when the
+	 * login was stored before the CDP was enabled, when consent was missing, or when
+	 * that one request failed. Matches the web, which links the stored id at each new
+	 * visit and when personalization consent arrives.
+	 *
+	 * A call without consent is not recorded, so the consent change that follows links.
+	 */
+	suspend fun relinkSiteUserId(userId: String?) {
+		val link = siteUserIdLinkFor(userId) ?: return
+		if (siteUserIdLink.getAndSet(link) == link) return
+		linkIdentity(CdpIdentityTypes.REGISTERED_USER_ID, link.userId, isDeterministic = true)
+	}
+
+	private fun siteUserIdLinkFor(userId: String?): SiteUserIdLink? {
+		if (userId.isNullOrEmpty() || !hasConsent()) return null
+		return SiteUserIdLink(getSessionId(), generation.get(), userId)
 	}
 
 	/**
@@ -873,3 +904,6 @@ internal class CdpManager(
 
 	// endregion
 }
+
+/** A site user id link is repeated when the session, the reset generation or the id changes. */
+private data class SiteUserIdLink(val sessionId: String, val generation: Int, val userId: String)
